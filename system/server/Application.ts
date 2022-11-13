@@ -1,5 +1,5 @@
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
-import { ApplicationCallbacks, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from '../Types';
+import { ApplicationCallbacks, ComponentEntry, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from '../Types';
 import { Components } from './Components';
 import { EventEmitter } from 'node:events';
 import conf from '../../app/Config';
@@ -37,19 +37,25 @@ export class Application {
         this.start();
     }
 
-    start(): void {
+    start(): Promise<void> {
         // start the http server
-        this.server = createServer((req, res) => {
-            this.requestHandle(req, res);
-        });
-        this.server.listen(this.port, this.host, () => {
-            let address = (this.host !== undefined ? this.host : '') + ':' + this.port;
-            this.emit('serverStarted');
-            console.log(`Server started on ${address}`);
+        return new Promise((resolve, reject) => {
+            this.server = createServer((req, res) => {
+                this.requestHandle(req, res);
+            });
+            this.server.listen(this.port, this.host, async () => {
+                let address = (this.host !== undefined ? this.host : '') + ':' + this.port;
+                await this.emit('serverStarted');
+                console.log(`Server started on ${address}`);
+                resolve();
+            });
         });
     }
 
     // handle a request
+    // checks whether there is a registered handler for the URL
+    // if not then it tries to serve a static asset if path is allowd by Config.assets.allow
+    // if it's not allowed or the asset does not exits, 404 callback is executed
     async requestHandle(request: IncomingMessage, response: ServerResponse): Promise<void> {
         let uri = request.url || '';
         let handler = this.getRequestHandler(uri, request.method as RequestMethod);
@@ -107,6 +113,10 @@ export class Application {
         response.end();
     }
 
+    // registers an event handler for given request methods, pattern, callback and optional scope
+    // pattern can have matches in it which will later populate ctx.args, eg. /users/(id:num) or /example/(argName)
+    // callback is the request handler, called when the given URL matches the pattern
+    // callback.this will be the scope if scope is provided, otherwise scope is the current Application instance
     addRequestHandler(methods: Array<RequestMethod>, pattern: string|RegExp, callback: RequestCallback, scope?: any) {
 
         if (scope === undefined) {
@@ -133,6 +143,7 @@ export class Application {
         });
     }
 
+    // if there is a handler registered for the given URI, returns the handler, null otherwise
     getRequestHandler(uri: string, method: RequestMethod): null|RequestHandler {
         let segments = uri.split('/');
 
@@ -170,6 +181,8 @@ export class Application {
 
     }
 
+    // extract variables from the given URI, using provided match which is defined by current request handler
+    // hence this only gets executed for requests that have a registered handler
     extractURIArguments(uri: string, match: Array<URISegmentPattern>|RegExp): URIArguments {
         if (match instanceof RegExp) {
             let matches = match.exec(uri);
@@ -231,6 +244,12 @@ export class Application {
         return segments;
     }
 
+    // get ComponentEntry by name, shortcut to Components.getByName
+    component(name: string): ComponentEntry|null {
+        return this.components.getByName(name);
+    }
+
+    // add event listener
     on(evt: ApplicationCallbacks, callback: RequestCallback) {
         this.eventEmitter.on(evt, callback);
     }
@@ -245,15 +264,20 @@ export class Application {
         return;
     }
 
+    // given file extension (or file name), returns the appropriate content-type
     contentType(extension: string): string|false {
         return mime.contentType(extension);
     }
 
+    // send the headers to redirect the client, 302 redirect by default
+    // should be called before any output (before any res.write)
     redirect(response: ServerResponse, to: string, statusCode: number = 302): void {
         response.setHeader('Location', to);
         response.writeHead(statusCode);
     }
 
+    // parse raw request body
+    // if there is a parser then ctx.body is populated with data: URIArgs
     async parseRequestBody(ctx: RequestContext): Promise<void> {
         if (ctx.request.headers['content-type']) {
 
@@ -262,19 +286,17 @@ export class Application {
             if (ctx.request.headers['content-type'].indexOf('urlencoded') > -1) {
                 // application/x-www-form-urlencoded
                 // remove has from the URI
-                let parts = dataRaw.split('#');
-                if (parts.length > 1) {
-                    parts.pop();
-                }
-                let queryString = parts.join('#');
+
+                let queryString = dataRaw.replaceAll('+', ' ');
+
                 let argPairs = queryString.split('&');
                 let args: URIArguments = {}
                 argPairs.forEach((arg) => {
                     let parts = arg.split('=');
-                    if (parts.length >= 2) {
-                        args[parts[0]] = parts.slice(1).join('=');
+                    if (parts.length > 2) {
+                        args[decodeURIComponent(parts[0])] = decodeURIComponent(parts.slice(1).join('='));
                     } else {
-                        args[parts[0]] = parts[1];
+                        args[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
                     }
                 });
                 ctx.body = args;
@@ -282,6 +304,7 @@ export class Application {
         }
     }
 
+    // returns the raw request data (eg. POST'ed data)
     requestDataRaw(request: IncomingMessage): Promise<string> {
         return new Promise((resolve, reject) => {
             let data = '';
