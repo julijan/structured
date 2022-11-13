@@ -16,10 +16,9 @@ Page would render on the server outputting the rendered DOM and which includes t
 Developer would be able to request the entire page, or any specific component to be re-rendered at their will.
 
 TODO:
-- complete the component system
-- templating engine
+- [DONE] complete the component system
+- [DONE] templating engine
 - sessions
 - client side part that allows partial rendering
-- auth
 - separate the code in Application into multiple modules
 - file uploads
