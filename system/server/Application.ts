@@ -1,11 +1,12 @@
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
-import { ApplicationCallbacks, ComponentEntry, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from '../Types';
-import { Components } from './Components';
+import { ApplicationCallbacks, ComponentEntry, LooseObject, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from '../Types';
+import { Components } from './Components.js';
 import { EventEmitter } from 'node:events';
-import conf from '../../app/Config';
-import { existsSync, readFileSync } from 'fs';
+import conf from '../../app/Config.js';
+import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import * as path from 'path';
 import * as mime from 'mime-types';
+import { Session } from './Session.js';
 
 export class Application {
 
@@ -18,6 +19,7 @@ export class Application {
     requestHandlers: Array<RequestHandler> = [];
 
     components: Components = new Components();
+    session: Session;
 
     eventEmitter: EventEmitter = new EventEmitter();
 
@@ -33,6 +35,13 @@ export class Application {
         }
 
         this.components.loadComponents();
+
+        // create the session instance
+        // this won't start the session handler
+        // user needs to explicitly start it by calling Application.Session.start
+        this.session = new Session(this);
+
+        this.registerRoutes();
 
         this.start();
     }
@@ -65,7 +74,8 @@ export class Application {
             response,
             handler,
             args: {},
-            data: {}
+            data: {},
+            cookies: this.parseCookies(request)
         }
 
         await this.emit('beforeRequestHandler', context);
@@ -276,6 +286,13 @@ export class Application {
         response.writeHead(statusCode);
     }
 
+    // set a cookie
+    // header is set, but is not sent, it will be sent with the output
+    setCookie(response: ServerResponse, name: string, value: string|number, lifetimeSeconds: number, path: string = '/') {
+        let expiresAt = new Date(new Date().getTime() + lifetimeSeconds * 1000).toUTCString();
+        response.setHeader('Set-Cookie', `${name}=${value}; Expires=${expiresAt}; Path=${path}`);
+    }
+
     // parse raw request body
     // if there is a parser then ctx.body is populated with data: URIArgs
     async parseRequestBody(ctx: RequestContext): Promise<void> {
@@ -304,6 +321,21 @@ export class Application {
         }
     }
 
+    parseCookies(request: IncomingMessage): LooseObject {
+        if (! request.headers.cookie) {return {};}
+        let cookieString = request.headers.cookie;
+        let cookiePairs = cookieString.split(';');
+
+        let cookies: LooseObject = {}
+
+        cookiePairs.forEach((cookiePair) => {
+            let parts = cookiePair.trim().split('=');
+            cookies[parts.shift() || ''] = parts.join('=');
+        });
+
+        return cookies;
+    }
+
     // returns the raw request data (eg. POST'ed data)
     requestDataRaw(request: IncomingMessage): Promise<string> {
         return new Promise((resolve, reject) => {
@@ -319,6 +351,29 @@ export class Application {
             request.on('error', (e) => {
                 reject(e);
             });
+        });
+    }
+
+    registerRoutes(basePath?: string): void {
+        let routesPath:string;
+        if (basePath) {
+            routesPath = basePath;
+        } else {
+            routesPath = path.resolve(`../build/${conf.routes.path}`);
+        }
+        let files = readdirSync(routesPath);
+        
+        files.forEach(async (file) => {
+            let filePath = path.resolve(routesPath + '/' + file);
+            let isDirectory = statSync(filePath).isDirectory();
+            if (isDirectory) {
+                this.registerRoutes(filePath);
+            } else {
+                let fn = (await import(filePath)).default;
+                if (typeof fn === 'function') {
+                    fn(this);
+                }
+            }
         });
     }
 
