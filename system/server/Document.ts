@@ -58,11 +58,9 @@ export class Document {
                 for (let j = 0; j < componentInstances.length; j++) {
                     componentInstances[j].innerHTML = readFileSync(component.path).toString();
 
-                    if (component.hasJS && component.pathJS) {
+                    if (component.hasJS && component.pathJS && component.module) {
                         // get component data and fill it in
-                        const componentConstructor = require(component.pathJS).default;
-                        let componentInstance = new componentConstructor();
-                        let data = await componentInstance.getData();
+                        let data = await component.module.getData();
                         this.fillComponentData(componentInstances[j], data);
                     }
 
