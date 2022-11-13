@@ -42,11 +42,15 @@ export type ComponentEntry = {
     name: string,
     path: string,
     hasJS: boolean,
-    pathJS?: string
+    pathJS?: string,
+    module?: any
 }
 
 export interface ComponentScaffold  {
-    getData(): Promise<LooseObject>
+    primaryKey: string,
+    getData(): Promise<LooseObject>,
+    create?(entry: LooseObject): Promise<any>,
+    delete?(id: string): Promise<any>
 }
 
 export type LooseObject = {
