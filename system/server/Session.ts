@@ -34,7 +34,6 @@ export class Session {
             }
         });
 
-
         // start garbage collecting
         this.garbageCollect();
     }
@@ -121,5 +120,18 @@ export class Session {
         }
         return null;
     }
-    
+
+    removeValue(sessionId: string, key: string): void {
+        if (this.sessions[sessionId] && this.sessions[sessionId].data[key]) {
+            delete this.sessions[sessionId].data[key];
+        }
+    }
+
+    // remove all stored data for the given session
+    clear(sessionId: string) {
+        if (this.sessions[sessionId]) {
+            this.sessions[sessionId].data = {};
+        }
+    }
+
 }
