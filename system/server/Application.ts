@@ -1,5 +1,5 @@
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
-import { ApplicationCallbacks, ComponentEntry, LooseObject, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from '../Types';
+import { ApplicationCallbacks, ComponentEntry, LooseObject, RequestBodyArguments, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from '../Types';
 import { Components } from './Components.js';
 import { EventEmitter } from 'node:events';
 import conf from '../../app/Config.js';
@@ -307,7 +307,7 @@ export class Application {
                 let queryString = dataRaw.replaceAll('+', ' ');
 
                 let argPairs = queryString.split('&');
-                let args: URIArguments = {}
+                let args: RequestBodyArguments = {}
                 argPairs.forEach((arg) => {
                     let parts = arg.split('=');
                     if (parts.length > 2) {

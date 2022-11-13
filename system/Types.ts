@@ -20,13 +20,17 @@ export type RequestContext = {
     cookies: LooseObject,
 
     // POSTed data, parsed to object
-    body?: URIArguments,
+    body?: RequestBodyArguments,
 
     // user defined data
     data: LooseObject,
 
     // if session is started and user has visited any page
     sessionId?: null|string
+}
+
+export type RequestBodyArguments = {
+    [key: string] : string
 }
 
 export type URISegmentPattern = {
