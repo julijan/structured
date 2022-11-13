@@ -4,8 +4,8 @@ import conf from '../../app/Config.js';
 import * as path from 'path';
 import { Application } from './Application.js';
 import { LooseObject } from '../Types.js';
-import Handlebars = require('handlebars');
-const jsdom = require('jsdom');
+import * as Handlebars  from 'handlebars';
+import * as jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
 export class Document {
@@ -21,7 +21,7 @@ export class Document {
         this.body = '';
     }
 
-    async loadView(pathRelative: string): Promise<boolean> {
+    async loadView(pathRelative: string, data?: LooseObject): Promise<boolean> {
 
         let viewPath = path.resolve('../' + conf.views.path + '/' + pathRelative + (pathRelative.endsWith('.html') ? '' : '.html'));
 
@@ -33,6 +33,11 @@ export class Document {
         let html = readFileSync(viewPath).toString();
 
         let dom = new JSDOM(html);
+
+        if (data !== undefined) {
+            // data provided, fill in before loading the components
+            this.fillComponentData(dom.window.document.body, data);
+        }
 
         await this.loadComponents(dom.window.document.body);
 
@@ -75,8 +80,9 @@ export class Document {
         return;
     }
 
-    fillComponentData(scope: any, data: Promise<LooseObject>): void {
-        let template = Handlebars.compile(scope.innerHTML);
+    fillComponentData(scope: any, data: LooseObject): void {
+        // @ts-ignore
+        let template = Handlebars.default.compile(scope.innerHTML);
         scope.innerHTML = template(data);
     }
 
