@@ -35,10 +35,23 @@ export class Components {
                         hasJS : existsSync(jsPath),
                         pathJS: jsPath
                     }
+
+                    if (entry.hasJS && entry.pathJS) {
+                        // load and instantiate component's module
+                        const componentConstructor = require(entry.pathJS).default;
+                        entry.module = new componentConstructor();
+                    }
+
                     this.components.push(entry);
                 }
             }
         });
+    }
+
+    getByName(name: string): null|ComponentEntry {
+        return this.components.find((componentEntry) => {
+            return componentEntry.name == name;
+        }) || null;
     }
 
 }
