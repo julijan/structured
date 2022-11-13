@@ -17,10 +17,16 @@ export type RequestContext = {
     args: URIArguments,
     handler: null|RequestHandler,
 
+    cookies: LooseObject,
+
+    // POSTed data, parsed to object
     body?: URIArguments,
 
     // user defined data
-    data: LooseObject
+    data: LooseObject,
+
+    // if session is started and user has visited any page
+    sessionId?: null|string
 }
 
 export type URISegmentPattern = {
@@ -58,3 +64,9 @@ export type LooseObject = {
 }
 
 export type ApplicationCallbacks = 'serverStarted'|'beforeRequestHandler'|'afterRequestHandler';
+
+export type SessionEntry = {
+    sessionId : string,
+    lastRequest: number,
+    data: LooseObject
+}
