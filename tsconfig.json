@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "strictPropertyInitialization": true,
+        "noUnusedLocals": true,
+        "moduleResolution" : "Node",
+        "outDir": "./build",
+        "module": "CommonJS",
+        "target": "ES2022"
+    },
+    "include": ["./system/*", "./app/**/*", "index.ts"],
+    "exclude": []
+}
