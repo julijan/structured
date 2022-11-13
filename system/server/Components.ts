@@ -13,7 +13,7 @@ export class Components {
         }
         let components = readdirSync(relativeToPath);
         
-        components.forEach((component) => {
+        components.forEach(async (component) => {
             // check if directory
             let pathCurrent = relativeToPath + '/' + component;
             let isDirectory = statSync(pathCurrent).isDirectory();
@@ -38,8 +38,8 @@ export class Components {
 
                     if (entry.hasJS && entry.pathJS) {
                         // load and instantiate component's module
-                        const componentConstructor = require(entry.pathJS).default;
-                        entry.module = new componentConstructor();
+                        const componentConstructor = await import(entry.pathJS);
+                        entry.module = new componentConstructor.default();
                     }
 
                     this.components.push(entry);
