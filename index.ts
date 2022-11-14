@@ -1,9 +1,14 @@
 import { Application } from './system/server/Application.js';
 import { Document } from './system/server/Document.js';
+import { writeFileSync } from 'node:fs';
+import * as path from 'path';
 
 const app = new Application(9090);
 
-app.addRequestHandler(['GET'], '/', async ({ response }) => {
+app.session.start();
+
+app.addRequestHandler(['GET'], '/', async ({ request, response }) => {
+    console.log(request.headers['cookie']);
     response.write('hi');
 });
 
@@ -41,10 +46,43 @@ app.addRequestHandler(['GET'], '/todo', async ({ response }) => {
     response.write(doc.toString());
 });
 
-app.addRequestHandler(['POST'], '/todo', async ({ body, response }) => {
-    
-    app.redirect(response, '/todo');
+app.addRequestHandler(['POST'], '/todo', async (ctx) => {
+    // create a todo task
+    let todoList = app.component('TodoList');
+
+    if (todoList?.module && ctx.body) {
+        ctx.body.createdAt = new Date().getTime().toString();
+        await todoList.module.create(ctx.body);
+    }
+
+    app.redirect(ctx.response, '/todo');
 });
+
+app.addRequestHandler(['GET'], '/todo/delete/(id)', async (ctx) => {
+    // create a todo task
+    let todoList = app.component('TodoList');
+
+    if (todoList?.module) {
+        await todoList.module.delete(ctx.args.id);
+    }
+
+    app.redirect(ctx.response, '/todo');
+});
+
+app.addRequestHandler(['GET'], '/upload', async ({ response }) => {
+    let doc = new Document(app, 'Upload');
+    await doc.loadView('/pages/upload');
+    response.write(doc.toString());
+});
+
+app.addRequestHandler(['POST'], '/upload', async (ctx) => {
+    if (ctx.files) {
+        let filePath = path.resolve('../assets/uploads/' + ctx.files.file.fileName);
+        console.log(filePath);
+        writeFileSync(filePath, ctx.files.file.data);
+    }
+});
+
 
 app.on('beforeRequestHandler', async (ctx) => {
     console.log('About to handle request', ctx.request.url);
