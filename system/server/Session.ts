@@ -38,15 +38,15 @@ export class Session {
         this.garbageCollect();
     }
 
-    start(): void {
+    public start(): void {
         this.enabled = true;
     }
 
-    stop(): void {
+    public stop(): void {
         this.enabled = false;
     }
 
-    sessionInit(ctx: RequestContext): void {
+    private sessionInit(ctx: RequestContext): void {
         ctx.sessionId = this.generateId();
         this.application.setCookie(ctx.response, conf.session.cookieName, ctx.sessionId, conf.session.durationSeconds);
 
@@ -60,7 +60,7 @@ export class Session {
         this.sessions[ctx.sessionId] = sessionEntry;
     }
 
-    generateId(): string {
+    private generateId(): string {
         let generators = [
             // uppercase letters
             function(): string {
@@ -87,7 +87,7 @@ export class Session {
     }
 
     // remove expired session entries
-    garbageCollect(): void {
+    private garbageCollect(): void {
         let time = new Date().getTime();
         let sessDurationMilliseconds = conf.session.durationSeconds * 1000;
 
@@ -105,7 +105,9 @@ export class Session {
         }, conf.session.garbageCollectIntervalSeconds * 1000);
     }
 
-    setValue(sessionId: string, key: string, value: any): void {
+    // reason for sessionId being allowed as undefined|null is that RequestContext.sessionId can be undefined
+    public setValue(sessionId: string|undefined, key: string, value: any): void {
+        if (sessionId === undefined) {return;}
         if (this.sessions[sessionId]) {
             let session = this.sessions[sessionId];
             session.data[key] = value;
@@ -113,7 +115,8 @@ export class Session {
     }
     
     // value or null if session does not exist
-    getValue(sessionId: string, key: string): any {
+    public getValue(sessionId: string|undefined, key: string): any {
+        if (sessionId === undefined) {return null;}
         if (this.sessions[sessionId]) {
             let session = this.sessions[sessionId];
             return session.data[key];
@@ -121,14 +124,16 @@ export class Session {
         return null;
     }
 
-    removeValue(sessionId: string, key: string): void {
+    public removeValue(sessionId: string|undefined, key: string): void {
+        if (sessionId === undefined) {return;}
         if (this.sessions[sessionId] && this.sessions[sessionId].data[key]) {
             delete this.sessions[sessionId].data[key];
         }
     }
 
     // remove all stored data for the given session
-    clear(sessionId: string) {
+    public clear(sessionId: string|undefined) {
+        if (sessionId === undefined) {return;}
         if (this.sessions[sessionId]) {
             this.sessions[sessionId].data = {};
         }
