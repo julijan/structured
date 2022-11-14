@@ -21,7 +21,7 @@ export class Document {
         this.body = '';
     }
 
-    async loadView(pathRelative: string, data?: LooseObject): Promise<boolean> {
+    public async loadView(pathRelative: string, data?: LooseObject): Promise<boolean> {
 
         let viewPath = path.resolve('../' + conf.views.path + '/' + pathRelative + (pathRelative.endsWith('.html') ? '' : '.html'));
 
@@ -46,7 +46,7 @@ export class Document {
         return true;
     }
 
-    async loadComponents(scope: any): Promise<void> {
+    private async loadComponents(scope: any): Promise<void> {
         let componentTags = this.application.components.components.map((componentEntry) => {
             return componentEntry.name;
         });
@@ -80,13 +80,13 @@ export class Document {
         return;
     }
 
-    fillComponentData(scope: any, data: LooseObject): void {
+    private fillComponentData(scope: any, data: LooseObject): void {
         // @ts-ignore
         let template = Handlebars.default.compile(scope.innerHTML);
         scope.innerHTML = template(data);
     }
 
-    toString(): string {
+    public toString(): string {
         return `<!DOCTYPE html>
         <html lang="${this.language}">
         ${this.head.toString()}
