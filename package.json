@@ -1,5 +1,5 @@
 {
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "buildAssetsJS": "tsc assets/ts/* --outDir assets/js/",
     "build": "tsc && npm run buildAssetsJS",
@@ -11,11 +11,14 @@
   "devDependencies": {
     "@types/jsdom": "^20.0.1",
     "@types/mime-types": "^2.1.1",
-    "@types/node": "^18.11.9"
+    "@types/node": "^18.11.9",
+    "tailwindcss": "^3.2.4"
   },
   "dependencies": {
     "handlebars": "^4.7.7",
     "jsdom": "^20.0.2",
-    "mime-types": "^2.1.35"
+    "mime-types": "^2.1.35",
+    "mongodb": "^4.11.0",
+    "parse-multipart-data": "^1.5.0"
   }
 }
