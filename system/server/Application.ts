@@ -128,7 +128,11 @@ export class Application {
     // pattern can have matches in it which will later populate ctx.args, eg. /users/(id:num) or /example/(argName)
     // callback is the request handler, called when the given URL matches the pattern
     // callback.this will be the scope if scope is provided, otherwise scope is the current Application instance
-    public addRequestHandler(methods: Array<RequestMethod>, pattern: string|RegExp, callback: RequestCallback, scope?: any) {
+    public addRequestHandler(methods: RequestMethod|Array<RequestMethod>, pattern: string|RegExp, callback: RequestCallback, scope?: any) {
+
+        if (! (methods instanceof Array)) {
+            methods = [methods];
+        }
 
         if (scope === undefined) {
             scope = this;
