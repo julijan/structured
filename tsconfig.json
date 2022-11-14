@@ -6,8 +6,11 @@
         "noUnusedLocals": true,
         "moduleResolution" : "Node",
         "outDir": "./build",
-        "module": "CommonJS",
-        "target": "ES2022"
+        "module": "ES2020",
+        "target": "ES2022",
+        // "isolatedModules": true,
+        "alwaysStrict": true,
+        // "esModuleInterop": true
     },
     "include": ["./system/*", "./app/**/*", "index.ts"],
     "exclude": []
