@@ -32,7 +32,7 @@ export type RequestContext = {
     data: LooseObject,
 
     // if session is started and user has visited any page
-    sessionId?: null|string
+    sessionId?: string
 }
 
 export type RequestBodyArguments = {
@@ -89,4 +89,25 @@ export type SessionEntry = {
     sessionId : string,
     lastRequest: number,
     data: LooseObject
+}
+
+export type ValidationRuleWithArguments = [string, any];
+export type FormValidationEntry = {
+    // field_name, human readable name
+    field: [string, string],
+    rules: Array<string|ValidationRuleWithArguments|ValidatorFunction>
+}
+export type ValidatorFunction = (data: RequestBodyArguments, field: string, arg: number, rules: Array<string|ValidationRuleWithArguments|ValidatorFunction>) => Promise<boolean>;
+export type ValidatorErrorDecorator = (fieldHumanReadable: string, data: RequestBodyArguments, field: string, arg: any) => string;
+export type ValidationErrors = {
+    [field: string] : Array<string>
+}
+
+export type ValidationErrorsSingle = {
+    [field: string] : string
+}
+
+export type ValidationResult = {
+    valid: boolean,
+    errors: ValidationErrors|ValidationErrorsSingle
 }
