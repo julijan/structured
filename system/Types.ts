@@ -22,6 +22,12 @@ export type RequestContext = {
     // POSTed data, parsed to object
     body?: RequestBodyArguments,
 
+    bodyRaw?: Buffer,
+
+    // files extracted from request body
+    // currently only multipart/form-data
+    files?: RequestBodyFiles,
+
     // user defined data
     data: LooseObject,
 
@@ -31,6 +37,16 @@ export type RequestContext = {
 
 export type RequestBodyArguments = {
     [key: string] : string
+}
+
+export type RequestBodyFiles = {
+    [key: string] : RequestBodyFile
+}
+
+export type RequestBodyFile = {
+    fileName: string,
+    data: Buffer,
+    type: string
 }
 
 export type URISegmentPattern = {
