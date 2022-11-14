@@ -1,2 +1,7 @@
 node_modules
 build
+app/views/*
+app/routes/*
+app/models/*
+assets/*
+tailwind.config.cjs
