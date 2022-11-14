@@ -1,5 +1,5 @@
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
-import { ApplicationCallbacks, ComponentEntry, LooseObject, RequestBodyArguments, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from '../Types';
+import { ApplicationCallbacks, ComponentEntry, LooseObject, RequestBodyArguments, RequestBodyFiles, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from '../Types';
 import { Components } from './Components.js';
 import { EventEmitter } from 'node:events';
 import conf from '../../app/Config.js';
@@ -7,6 +7,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import * as path from 'path';
 import * as mime from 'mime-types';
 import { Session } from './Session.js';
+import * as multipartFormDataParser from 'parse-multipart-data';
 
 export class Application {
 
@@ -298,13 +299,13 @@ export class Application {
     async parseRequestBody(ctx: RequestContext): Promise<void> {
         if (ctx.request.headers['content-type']) {
 
-            const dataRaw = await this.requestDataRaw(ctx.request);
+            ctx.bodyRaw = await this.requestDataRaw(ctx.request);
 
             if (ctx.request.headers['content-type'].indexOf('urlencoded') > -1) {
                 // application/x-www-form-urlencoded
-                // remove has from the URI
 
-                let queryString = dataRaw.replaceAll('+', ' ');
+                // replace + with spaces
+                let queryString = ctx.bodyRaw.toString().replaceAll('+', ' ');
 
                 let argPairs = queryString.split('&');
                 let args: RequestBodyArguments = {}
@@ -317,8 +318,41 @@ export class Application {
                     }
                 });
                 ctx.body = args;
+            } else if (ctx.request.headers['content-type'].indexOf('multipart/form-data') > -1) {
+                let boundary: RegExpExecArray|null|string = /^multipart\/form-data; boundary=(.+)$/.exec(ctx.request.headers['content-type']);
+                if (boundary) {
+                    boundary = boundary[1];
+                    let data = multipartFormDataParser.parse(ctx.bodyRaw, boundary);
+
+                    // format data as LooseObject
+                    let dataFormatted:LooseObject = {};
+                    let files: RequestBodyFiles = {};
+
+                    data.forEach((item) => {
+                        if (item.name) {
+                            if (! item.filename) {
+                                dataFormatted[item.name] = item.data.toString();
+                            } else {
+                                // file, keep entire item
+                                files[item.name] = {
+                                    fileName: item.filename,
+                                    data : item.data,
+                                    type : item.type
+                                };
+                            }
+                        }
+                    });
+
+                    ctx.body = dataFormatted;
+                    ctx.files = files;
+
+                }
+            } else if (ctx.request.headers['content-type'].indexOf('application/json') > -1) {
+                // application/json
+                ctx.body = JSON.parse(ctx.bodyRaw.toString());
             }
         }
+        return;
     }
 
     parseCookies(request: IncomingMessage): LooseObject {
@@ -337,14 +371,25 @@ export class Application {
     }
 
     // returns the raw request data (eg. POST'ed data)
-    requestDataRaw(request: IncomingMessage): Promise<string> {
+    requestDataRaw(request: IncomingMessage): Promise<Buffer> {
+
+        let chunks: Array<Buffer> = [];
+
+
         return new Promise((resolve, reject) => {
-            let data = '';
             request.on('data', (chunk) => {
-                data += chunk.toString();
+                chunks.push(chunk);
             });
     
             request.on('close', () => {
+                // calculate the total size of all chunks
+                let size = chunks.reduce((prev, curr) => {
+                    return prev + curr.length;
+                }, 0);
+
+                // combine the chunks to form final data
+                let data = Buffer.concat(chunks, size);
+                
                 resolve(data);
             });
 
