@@ -47,7 +47,7 @@ export class Application {
         this.start();
     }
 
-    start(): Promise<void> {
+    public start(): Promise<void> {
         // start the http server
         return new Promise((resolve, reject) => {
             this.server = createServer((req, res) => {
@@ -66,7 +66,7 @@ export class Application {
     // checks whether there is a registered handler for the URL
     // if not then it tries to serve a static asset if path is allowd by Config.assets.allow
     // if it's not allowed or the asset does not exits, 404 callback is executed
-    async requestHandle(request: IncomingMessage, response: ServerResponse): Promise<void> {
+    private async requestHandle(request: IncomingMessage, response: ServerResponse): Promise<void> {
         let uri = request.url || '';
         let handler = this.getRequestHandler(uri, request.method as RequestMethod);
         
@@ -128,7 +128,7 @@ export class Application {
     // pattern can have matches in it which will later populate ctx.args, eg. /users/(id:num) or /example/(argName)
     // callback is the request handler, called when the given URL matches the pattern
     // callback.this will be the scope if scope is provided, otherwise scope is the current Application instance
-    addRequestHandler(methods: Array<RequestMethod>, pattern: string|RegExp, callback: RequestCallback, scope?: any) {
+    public addRequestHandler(methods: Array<RequestMethod>, pattern: string|RegExp, callback: RequestCallback, scope?: any) {
 
         if (scope === undefined) {
             scope = this;
@@ -155,7 +155,7 @@ export class Application {
     }
 
     // if there is a handler registered for the given URI, returns the handler, null otherwise
-    getRequestHandler(uri: string, method: RequestMethod): null|RequestHandler {
+    private getRequestHandler(uri: string, method: RequestMethod): null|RequestHandler {
         let segments = uri.split('/');
 
         let possible = this.requestHandlers.filter((handler) => {
@@ -194,7 +194,7 @@ export class Application {
 
     // extract variables from the given URI, using provided match which is defined by current request handler
     // hence this only gets executed for requests that have a registered handler
-    extractURIArguments(uri: string, match: Array<URISegmentPattern>|RegExp): URIArguments {
+    private extractURIArguments(uri: string, match: Array<URISegmentPattern>|RegExp): URIArguments {
         if (match instanceof RegExp) {
             let matches = match.exec(uri);
             if (matches) {
@@ -222,7 +222,7 @@ export class Application {
     // allows easy access to URI segments
     // (varname) - match any value
     // (varname:num) - match a number
-    patternToSegments(pattern: string): Array<URISegmentPattern> {
+    private patternToSegments(pattern: string): Array<URISegmentPattern> {
         let segments: Array<URISegmentPattern> = [];
 
         let segmentsIn = pattern.split('/');
@@ -256,18 +256,18 @@ export class Application {
     }
 
     // get ComponentEntry by name, shortcut to Components.getByName
-    component(name: string): ComponentEntry|null {
+    public component(name: string): ComponentEntry|null {
         return this.components.getByName(name);
     }
 
     // add event listener
-    on(evt: ApplicationCallbacks, callback: RequestCallback) {
+    public on(evt: ApplicationCallbacks, callback: RequestCallback) {
         this.eventEmitter.on(evt, callback);
     }
 
     // we want to be able to await it so we won't call EventEmitter.emit
     // instead we'll manually execute the listeners awaiting each in the process
-    async emit(evt: ApplicationCallbacks, payload?: any): Promise<void> {
+    public async emit(evt: ApplicationCallbacks, payload?: any): Promise<void> {
         let listeners = this.eventEmitter.rawListeners(evt);
         for (let i = 0; i < listeners.length; i++) {
             await listeners[i](payload);
@@ -276,27 +276,27 @@ export class Application {
     }
 
     // given file extension (or file name), returns the appropriate content-type
-    contentType(extension: string): string|false {
+    public contentType(extension: string): string|false {
         return mime.contentType(extension);
     }
 
     // send the headers to redirect the client, 302 redirect by default
     // should be called before any output (before any res.write)
-    redirect(response: ServerResponse, to: string, statusCode: number = 302): void {
+    public redirect(response: ServerResponse, to: string, statusCode: number = 302): void {
         response.setHeader('Location', to);
         response.writeHead(statusCode);
     }
 
     // set a cookie
     // header is set, but is not sent, it will be sent with the output
-    setCookie(response: ServerResponse, name: string, value: string|number, lifetimeSeconds: number, path: string = '/') {
+    public setCookie(response: ServerResponse, name: string, value: string|number, lifetimeSeconds: number, path: string = '/') {
         let expiresAt = new Date(new Date().getTime() + lifetimeSeconds * 1000).toUTCString();
         response.setHeader('Set-Cookie', `${name}=${value}; Expires=${expiresAt}; Path=${path}`);
     }
 
     // parse raw request body
     // if there is a parser then ctx.body is populated with data: URIArgs
-    async parseRequestBody(ctx: RequestContext): Promise<void> {
+    private async parseRequestBody(ctx: RequestContext): Promise<void> {
         if (ctx.request.headers['content-type']) {
 
             ctx.bodyRaw = await this.requestDataRaw(ctx.request);
@@ -355,7 +355,7 @@ export class Application {
         return;
     }
 
-    parseCookies(request: IncomingMessage): LooseObject {
+    private parseCookies(request: IncomingMessage): LooseObject {
         if (! request.headers.cookie) {return {};}
         let cookieString = request.headers.cookie;
         let cookiePairs = cookieString.split(';');
@@ -371,7 +371,7 @@ export class Application {
     }
 
     // returns the raw request data (eg. POST'ed data)
-    requestDataRaw(request: IncomingMessage): Promise<Buffer> {
+    private requestDataRaw(request: IncomingMessage): Promise<Buffer> {
 
         let chunks: Array<Buffer> = [];
 
@@ -399,7 +399,7 @@ export class Application {
         });
     }
 
-    registerRoutes(basePath?: string): void {
+    private registerRoutes(basePath?: string): void {
         let routesPath:string;
         if (basePath) {
             routesPath = basePath;
