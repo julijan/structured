@@ -2,6 +2,8 @@ Node.js framework for creating server-side rendered web apps
 
 Idea is to allow the developer to develop self-contained, independent components which are rendered server side and allow rendering only a subset of components when the need arises thus still having the same benefits that clinet side frameworks offer.
 
+The framework allows the developer to rely as much or as little on client side rendering. Entire web app could be rendered on the server, but it's also possible to render the entire page using a client side framework, and only develop the API's.
+
 Without sacrificing speed, the added benefits of the server side rendering would be:
 - SEO friendly pages
 - Page usable in browsers without JS support
@@ -18,7 +20,8 @@ Developer would be able to request the entire page, or any specific component to
 TODO:
 - [DONE] complete the component system
 - [DONE] templating engine
-- sessions
+- [DONE] sessions
+- [DONE] file uploads
 - client side part that allows partial rendering
-- separate the code in Application into multiple modules
-- file uploads
+- form validation
+- emails
