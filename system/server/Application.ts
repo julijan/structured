@@ -48,11 +48,14 @@ export class Application {
         // specially handled URI pattern (views.componentRenderURIPattern) that responds with a single rendered component
         // it will load any components included in it recursively
         let trailingSlash = conf.views.componentRenderURI.endsWith('/');
-        let renderURIPattern = conf.views.componentRenderURI + (trailingSlash ? '' : '/') + '(componentName)/(primaryKey)';
-        this.addRequestHandler('GET', renderURIPattern, async ({ response, args }) => {
+        let renderURIPatterns = [
+            conf.views.componentRenderURI + (trailingSlash ? '' : '/') + '(componentName)',
+            conf.views.componentRenderURI + (trailingSlash ? '' : '/') + '(componentName)/(primaryKey)',
+        ]
+        this.addRequestHandler('GET', renderURIPatterns, async ({ response, args }) => {
             if (conf.views.componentRenderURIEnable) {
                 let componentName = args.componentName as string;
-                let primaryKey = args.primaryKey as string;
+                let primaryKey = (args.primaryKey || '') as string;
                 await this.respondWithComponent(response, componentName, primaryKey);
             }
         });
@@ -150,7 +153,7 @@ export class Application {
     // pattern can have matches in it which will later populate ctx.args, eg. /users/(id:num) or /example/(argName)
     // callback is the request handler, called when the given URL matches the pattern
     // callback.this will be the scope if scope is provided, otherwise scope is the current Application instance
-    public addRequestHandler(methods: RequestMethod|Array<RequestMethod>, pattern: string|RegExp, callback: RequestCallback, scope?: any) {
+    public addRequestHandler(methods: RequestMethod|Array<RequestMethod>, pattern: string|RegExp|Array<string|RegExp>, callback: RequestCallback, scope?: any): void {
 
         if (! (methods instanceof Array)) {
             methods = [methods];
@@ -160,7 +163,15 @@ export class Application {
             scope = this;
         }
 
-        let match = typeof pattern === 'string' ? this.patternToSegments(pattern) : pattern;
+        // if pattern was given as an array, call addRequestHandler with each item in array
+        if (pattern instanceof Array) {
+            pattern.forEach((p) => {
+                this.addRequestHandler(methods, p, callback, scope);
+            });
+            return;
+        }
+
+        let match = ((typeof pattern === 'string' ? this.patternToSegments(pattern) : pattern) as RegExp|Array<URISegmentPattern>);
 
         let handler: RequestHandler = {
             match,
