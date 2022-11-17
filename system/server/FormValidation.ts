@@ -148,7 +148,7 @@ export class FormValidation {
     
                     if (typeof rule === 'function') {
                         // custom callback (ValidatorFunction)
-                        let valid = await rule.apply(this, [data, entry.field[0], undefined, entry.rules]);
+                        let valid = await rule.apply(this, [data, entry.field[0], 0, entry.rules]);
                         if (! valid) {
                             this.addError(result.errors, data, entry.field, 'callback')
                         }
@@ -157,7 +157,7 @@ export class FormValidation {
                         if (typeof rule === 'string') {
                             // no arguments
                             if (this.validators[rule]) {
-                                let valid = await this.validators[rule].apply(this, [data, entry.field[0], undefined, entry.rules]);
+                                let valid = await this.validators[rule].apply(this, [data, entry.field[0], 0, entry.rules]);
                                 if (! valid) {
                                     this.addError(result.errors, data, entry.field, rule);
                                 }
