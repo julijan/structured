@@ -1,9 +1,9 @@
 {
   "type": "module",
   "scripts": {
-    "buildAssetsJS": "tsc assets/ts/* --outDir assets/js/",
+    "buildAssetsJS": "cd system/client/app && tsc",
     "build": "tsc && npm run buildAssetsJS",
-    "developAssets": "tsc --watch assets/ts/* --outDir assets/js/",
+    "developAssets": "cd system/client/app && tsc --watch",
     "develop": "tsc --watch",
     "start": "cd build && node index.js",
     "startDev": "cd build && nodemon index.js"
