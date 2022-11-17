@@ -1,5 +1,6 @@
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
 import { ApplicationCallbacks, ComponentEntry, LooseObject, RequestBodyArguments, RequestBodyFiles, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from '../Types';
+import { Document } from './Document.js';
 import { Components } from './Components.js';
 import { EventEmitter } from 'node:events';
 import conf from '../../app/Config.js';
@@ -44,6 +45,18 @@ export class Application {
 
         this.registerRoutes();
 
+        // specially handled URI pattern (views.componentRenderURIPattern) that responds with a single rendered component
+        // it will load any components included in it recursively
+        let trailingSlash = conf.views.componentRenderURI.endsWith('/');
+        let renderURIPattern = conf.views.componentRenderURI + (trailingSlash ? '' : '/') + '(componentName)/(primaryKey)';
+        this.addRequestHandler('GET', renderURIPattern, async ({ response, args }) => {
+            if (conf.views.componentRenderURIEnable) {
+                let componentName = args.componentName as string;
+                let primaryKey = args.primaryKey as string;
+                await this.respondWithComponent(response, componentName, primaryKey);
+            }
+        });
+
         this.start();
     }
 
@@ -68,6 +81,15 @@ export class Application {
     // if it's not allowed or the asset does not exits, 404 callback is executed
     private async requestHandle(request: IncomingMessage, response: ServerResponse): Promise<void> {
         let uri = request.url || '';
+
+        if (uri === '/assets/js/framework-client-js') {
+            // special request, serve the client side JS
+            response.setHeader('Content-Type', 'application/javascript');
+            response.write(readFileSync(path.resolve('./system/client/Client.js')));
+            response.end();
+            return;
+        }
+
         let handler = this.getRequestHandler(uri, request.method as RequestMethod);
         
         let context: RequestContext = {
@@ -424,6 +446,48 @@ export class Application {
                 }
             }
         });
+    }
+
+    private async respondWithComponent(response: ServerResponse, componentName: string, primaryKey: string|number): Promise<boolean> {
+        const component = this.component(componentName);
+
+        if (component === null) {
+            // component not found
+            response.write(JSON.stringify({
+                error: `Component ${componentName} was not found`
+            }));
+            return false;
+        }
+
+        let data = {};
+
+        if (component.module) {
+            // set primary key and get data
+            component.module.primaryKey = primaryKey;
+            data = await component.module.getData();
+        }
+
+        // create the document loading component as template
+        let doc = new Document(this, '');
+
+        await doc.setView(component.html, data);
+
+        let html = doc.toString();
+
+        let bodyStart = /(<body>)/.exec(html);
+        let bodyEnd = /(<\/body>)/.exec(html);
+
+        response.setHeader('Content-Type', 'text/html');
+
+
+        if (bodyStart && bodyEnd) {
+            response.write(html.substring(bodyStart.index + bodyStart[1].length, bodyEnd.index));
+        } else {
+            response.write(html);
+        }
+
+        return true;
+
     }
 
 }
