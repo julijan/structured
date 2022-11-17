@@ -61,6 +61,9 @@ export type URIArguments = {
 
 export type DocumentResource = {
     path: string,
+    attributes: {
+        [propertyName: string] : string|null
+    }
     priority: number
 }
 
@@ -69,12 +72,13 @@ export type ComponentEntry = {
     path: string,
     hasJS: boolean,
     pathJS?: string,
-    module?: any
+    module?: any,
+    html : string
 }
 
 export interface ComponentScaffold  {
-    primaryKey: string,
-    getData(): Promise<LooseObject>,
+    primaryKey: string|number,
+    getData(attributeData: RequestBodyArguments): Promise<LooseObject>,
     create?(entry: LooseObject): Promise<any>,
     delete?(id: string): Promise<any>
 }
