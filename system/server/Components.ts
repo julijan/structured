@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, statSync } from 'fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import * as path from 'path';
 import conf from '../../app/Config.js';
 import { ComponentEntry } from '../Types';
@@ -7,7 +7,7 @@ export class Components {
 
     components: Array<ComponentEntry> = [];
 
-    loadComponents(relativeToPath?: string): void {
+    public loadComponents(relativeToPath?: string): void {
         if (relativeToPath === undefined) {
             relativeToPath = path.resolve('../' + conf.views.path + '/' + conf.views.componentsPath);
         }
@@ -33,7 +33,8 @@ export class Components {
                         name: componentName,
                         path: pathCurrent,
                         hasJS : existsSync(jsPath),
-                        pathJS: jsPath
+                        pathJS: jsPath,
+                        html: this.loadHTML(pathCurrent)
                     }
 
                     if (entry.hasJS && entry.pathJS) {
@@ -48,10 +49,14 @@ export class Components {
         });
     }
 
-    getByName(name: string): null|ComponentEntry {
+    public getByName(name: string): null|ComponentEntry {
         return this.components.find((componentEntry) => {
             return componentEntry.name == name;
         }) || null;
+    }
+
+    private loadHTML(path: string): string {
+        return readFileSync(path).toString();
     }
 
 }
