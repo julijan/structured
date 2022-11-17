@@ -3,15 +3,16 @@
         "noImplicitAny": true,
         "strictNullChecks": true,
         "strictPropertyInitialization": true,
+        "strictBindCallApply": true,
         "noUnusedLocals": true,
         "moduleResolution" : "Node",
         "outDir": "./build",
         "module": "ES2020",
-        "target": "ES2022",
-        // "isolatedModules": true,
+        "target": "ES2021",
         "alwaysStrict": true,
-        // "esModuleInterop": true
+        "allowSyntheticDefaultImports": true, // albe to do import { default as varname } from 'module'
+        "preserveSymlinks": true
     },
-    "include": ["./system/*", "./app/**/*", "index.ts"],
-    "exclude": []
+    "include": ["./system/**/*", "./app/**/*", "index.ts"],
+    "exclude": ["./system/client/app"]
 }
