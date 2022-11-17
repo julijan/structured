@@ -17,14 +17,14 @@ export class DocumentHead {
         this.title = title;
     }
 
-    addJS(path: string, priority: number = 0): DocumentResource {
-        let resource = this.toResource(path, priority);
+    addJS(path: string, priority: number = 0, attributes: { [ attributeName: string ] : string|null } = {}): DocumentResource {
+        let resource = this.toResource(path, priority, attributes);
         this.js.push(resource);
         return resource;
     }
 
-    addCSS(path: string, priority: number = 0): DocumentResource {
-        let resource = this.toResource(path, priority);
+    addCSS(path: string, priority: number = 0, attributes: { [ attributeName: string ] : string|null } = {}): DocumentResource {
+        let resource = this.toResource(path, priority, attributes);
         this.css.push(resource);
         return resource;
     }
@@ -43,21 +43,35 @@ export class DocumentHead {
         this.css.splice(index, 1);
     }
 
-    toResource(path: string, priority: number): DocumentResource {
+    private toResource(path: string, priority: number = 0, attributes: { [ attributeName: string ] : string|null } = {}): DocumentResource {
         return {
             path,
-            priority
+            priority,
+            attributes
         };
     }
 
-    toString(): string {
+    private attributesString(resource: DocumentResource): string {
+        let attributesString = '';
+        for (let attributeName in resource.attributes) {
+            let val = resource.attributes[attributeName]
+            if (val === null) {
+                attributesString += ` ${attributeName}`;
+            } else {
+                attributesString += ` ${attributeName}="${val}"`;
+            }
+        }
+        return attributesString;
+    }
+
+    public toString(): string {
 
         let css = this.css.reduce((prev, curr) => {
-            return prev + '\n' + `<link rel="stylesheet" href="${curr.path}">`;
+            return prev + '\n' + `<link rel="stylesheet" href="${curr.path}"${this.attributesString(curr)}>`;
         }, '');
 
         let js = this.js.reduce((prev, curr) => {
-            return prev + '\n' + `<script src="${curr.path}"></script>`;
+            return prev + '\n' + `<script src="${curr.path}"${this.attributesString(curr)}></script>`;
         }, '');
 
         return `<head>
