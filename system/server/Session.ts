@@ -1,5 +1,5 @@
 import conf from '../../app/Config.js';
-import { RequestContext, SessionEntry } from '../Types.js';
+import { LooseObject, RequestContext, SessionEntry } from '../Types.js';
 import { Application } from './Application.js';
 
 export class Session {
@@ -137,6 +137,24 @@ export class Session {
         if (this.sessions[sessionId]) {
             this.sessions[sessionId].data = {};
         }
+    }
+
+    // extract given keys from session and return them as an object
+    // key in keys can be a string in which case the key will remain the same in returned object
+    // or it can be an object { keyInSession : keyInReturnedData } in which case key in returned data will be keyInReturnedData
+    public extract(sessionId: string|undefined, keys: Array<string|{ [keyInSession: string] : string }>): LooseObject {
+        if (sessionId === undefined) {return {};}
+        let data: LooseObject = {};
+        keys.forEach((key) => {
+            if (typeof key === 'string') {
+                data[key] = this.getValue(sessionId, key);
+            } else {
+                let keyInSession = Object.keys(key)[0];
+                let keyReturned = key[keyInSession];
+                data[keyReturned] = this.getValue(sessionId, keyInSession);
+            }
+        });
+        return data;
     }
 
 }
