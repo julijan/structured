@@ -1,4 +1,4 @@
-Node.js framework for creating server-side rendered web apps
+Node.js framework for creating server-side rendered web apps and API's.
 
 Idea is to allow the developer to develop self-contained, independent components which are rendered server side and allow rendering only a subset of components when the need arises thus still having the same benefits that clinet side frameworks offer.
 
@@ -22,6 +22,7 @@ TODO:
 - [DONE] templating engine
 - [DONE] sessions
 - [DONE] file uploads
+- [DONE] form validation
 - client side part that allows partial rendering
-- form validation
 - emails
+- gzip support
