@@ -11,7 +11,9 @@
         "target": "ES2021",
         "alwaysStrict": true,
         "allowSyntheticDefaultImports": true, // albe to do import { default as varname } from 'module'
-        "preserveSymlinks": true
+        "preserveSymlinks": true,
+        "baseUrl": ".",
+        "rootDir": "."
     },
     "include": ["./system/**/*", "./app/**/*", "index.ts"],
     "exclude": ["./system/client/app"]
