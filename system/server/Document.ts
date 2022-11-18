@@ -6,6 +6,7 @@ import { Application } from './Application.js';
 import { LooseObject, RequestBodyArguments } from '../Types.js';
 import { default as Handlebars }  from 'handlebars';
 import * as jsdom from 'jsdom';
+import { ServerResponse } from 'http';
 const { JSDOM } = jsdom;
 
 export class Document {
@@ -54,13 +55,13 @@ export class Document {
             this.fillComponentData(dom.window.document.body, data);
         }
     
-        await this.loadComponents(dom.window.document.body);
+        await this.loadComponents(dom.window.document.body, data);
     
         this.body = dom.window.document.body.innerHTML;
         return;
     }
 
-    private async loadComponents(scope: any): Promise<void> {
+    private async loadComponents(scope: any, parentData?: LooseObject): Promise<void> {
         let componentTags = this.application.components.components.map((componentEntry) => {
             return componentEntry.name;
         });
@@ -82,16 +83,34 @@ export class Document {
                     // extract attributes from component's DOM node
                     // returned in format { attributeName: val }
                     // can be used to pass data down to child components
+                    // if components tag has data-use attribute data will include the keys from parentData
+                    // eg. <ComponentName data-use="a, b"></ComponentName> would import a and b from parentData
                     let attributesData = this.attributesData(componentInstances[j]);
 
+                    // whatever component.Model.getData returns
+                    let componentData: any;
+                    
                     if (component.hasJS && component.pathJS && component.module) {
+
+                        if (! attributesData.key) {
+                            console.warn(`Component ${component.name} has attached module but is initialized without data-key attribute.`);
+                        }
+
+                        if (attributesData.use) {
+                            // data-use was found on component tag
+                            // if parent data contains it, include it with data
+                            attributesData = Object.assign(this.importedParentData(parentData || {}, attributesData.use), attributesData);
+                        }
+
                         // get component data and fill it in
-                        let data = await component.module.getData(attributesData);
-                        this.fillComponentData(componentInstances[j], data);
+                        componentData = await component.module.getData(attributesData, this.application);
+
+
+                        this.fillComponentData(componentInstances[j], componentData);
                     }
 
                     // load components recursively within just loaded component
-                    await this.loadComponents(componentInstances[j]);
+                    await this.loadComponents(componentInstances[j], componentData);
                 }
     
             }
@@ -99,6 +118,52 @@ export class Document {
         }
         
         return;
+    }
+
+    // use string is coming from data-use attribute defined on the component
+    // use string can include multiple entries separated by a coma
+    // each entry can be a simple string which is the key in parent data
+    // but it can also use array item access key[index] and dot notation key.subkey or a combination key[index].subkey
+    private importedParentData(parentData: LooseObject, useString: string): LooseObject {
+
+        let data: LooseObject = {}
+
+        // split by a coma and convert into array of "data paths"
+        // data path is an array of strings and numbers, and it's used to navigate the given parentData and extract a value
+        let usePaths: Array<Array<string|number>> = useString.split(',').map((key) => {
+            return key.split(/\.|\[(\d+)\]/).filter((s) => {return s !== undefined && s.length > 0 }).map((s) => {
+                return /^\d+$/.test(s) ? parseInt(s) : s;
+            });
+        });
+
+        // try to extract data for each path
+        usePaths.forEach((dataPath) => {
+            let dataCurrent:any = parentData;
+            for (let i = 0; i < dataPath.length; i++) {
+                let segment = dataPath[i];
+                if (typeof dataCurrent[segment] === 'undefined') {
+                    // not included in parentData, skip
+                    dataCurrent = undefined;
+                    break;
+                }
+                dataCurrent = dataCurrent[segment];
+            }
+
+            // last segment is the key
+            let dataKey = dataPath[dataPath.length - 1];
+
+            // set the data
+            data[dataKey] = dataCurrent;
+        });
+
+        if (usePaths.length == 1 && typeof usePaths[0][usePaths[0].length - 1] === 'number') {
+            // if only a single import
+            // and it ends with a number (indexed array) do not return { number : data }
+            // instead return the data
+            return data[usePaths[0][usePaths[0].length - 1]];
+        }
+
+        return data;
     }
 
     // parse all data-attr attributes into data object converting the data-attr to camelCase
@@ -128,6 +193,18 @@ export class Document {
     private fillComponentData(scope: any, data: LooseObject): void {
         let template = Handlebars.compile(scope.innerHTML);
         scope.innerHTML = template(data);
+    }
+
+    // HTTP2 push, Link headers
+    push(response: ServerResponse): void {
+        let resourcesJS = this.head.js.map((resource) => {
+            return `<${resource.path}>; rel=${conf.http.linkHeaderRel}; as=script; crossorigin=anonymous`;
+        });
+        let resourcesCSS = this.head.css.map((resource) => {
+            return `<${resource.path}>; rel=${conf.http.linkHeaderRel}; as=style; crossorigin=anonymous`;
+        });
+        let value = resourcesCSS.concat(resourcesJS).join(', ');
+        response.setHeader('Link', value);
     }
 
     public toString(): string {
