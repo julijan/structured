@@ -101,7 +101,8 @@ export class Application {
             handler,
             args: {},
             data: {},
-            cookies: this.parseCookies(request)
+            cookies: this.parseCookies(request),
+            isAjax : request.headers['x-requested-with'] == 'xmlhttprequest'
         }
 
         await this.emit('beforeRequestHandler', context);
@@ -153,6 +154,7 @@ export class Application {
     // pattern can have matches in it which will later populate ctx.args, eg. /users/(id:num) or /example/(argName)
     // callback is the request handler, called when the given URL matches the pattern
     // callback.this will be the scope if scope is provided, otherwise scope is the current Application instance
+    // if pattern is given as array, one request handler will be created for each element of the array
     public addRequestHandler(methods: RequestMethod|Array<RequestMethod>, pattern: string|RegExp|Array<string|RegExp>, callback: RequestCallback, scope?: any): void {
 
         if (! (methods instanceof Array)) {
@@ -326,9 +328,9 @@ export class Application {
 
     // set a cookie
     // header is set, but is not sent, it will be sent with the output
-    public setCookie(response: ServerResponse, name: string, value: string|number, lifetimeSeconds: number, path: string = '/') {
+    public setCookie(response: ServerResponse, name: string, value: string|number, lifetimeSeconds: number, path: string = '/', sameSite: string = 'Strict') {
         let expiresAt = new Date(new Date().getTime() + lifetimeSeconds * 1000).toUTCString();
-        response.setHeader('Set-Cookie', `${name}=${value}; Expires=${expiresAt}; Path=${path}`);
+        response.setHeader('Set-Cookie', `${name}=${value}; Expires=${expiresAt}; Path=${path}; SameSite=${sameSite}`);
     }
 
     // parse raw request body
