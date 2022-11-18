@@ -109,7 +109,7 @@ export class Component {
     // fetch from server and replace with new HTML
     public async redraw() {
         let net = new Net();
-        let html = await net.get('/component/' + this.name + '/' + 1);
+        let html = await net.get('/component/' + this.name + (this.data.key ? '/' + this.data.key : ''));
         this.domNode.innerHTML = html;
 
         // re-init children because their associated domNode is no longer part of the DOM
@@ -181,16 +181,6 @@ export class Net {
     public async request(method: RequestMethod, url: string, headers: IncomingHttpHeaders = {}, body?: any): Promise<string> {
         return new Promise((resolve, reject) => {
             let xhr = new XMLHttpRequest();
-
-            // set request headers
-            for (let header in headers) {
-                let headerValue = headers[header];
-                if (typeof headerValue === 'string') {
-                    xhr.setRequestHeader(header, headerValue);
-                } else {
-                    console.warn('Only string header values are supported');
-                }
-            }
     
             // listen for state change
             xhr.onreadystatechange = () => {
@@ -205,8 +195,25 @@ export class Net {
                 reject(err);
             }
     
-            // send the request
+            // init request
             xhr.open(method, url);
+            
+            // set the X-Requested-With: xmlhttprequest header if not set by user
+            if (! ('x-requested-with' in headers)) {
+                headers['x-requested-with'] = 'xmlhttprequest';
+            }
+
+            // set request headers
+            for (let header in headers) {
+                let headerValue = headers[header];
+                if (typeof headerValue === 'string') {
+                    xhr.setRequestHeader(header, headerValue);
+                } else {
+                    console.warn('Only string header values are supported');
+                }
+            }
+            
+            // send the request
             xhr.send(body);
         });
     }
@@ -220,7 +227,13 @@ export class Net {
     }
 
     public async post(url: string, data: any, headers: IncomingHttpHeaders = {}): Promise<string> {
-        return this.request('POST', url, headers, data);
+        if (typeof data === 'object' && ! headers['content-type']) {
+            // if data is object and no content/type header is specified default to application/json
+            headers['content-type'] = 'application/json';
+            // convert data to JSON
+            data = JSON.stringify(data);
+        }
+        return await this.request('POST', url, headers, data);
     }
 
     public async put(url: string, data: any, headers: IncomingHttpHeaders = {}): Promise<string> {
