@@ -32,7 +32,10 @@ export type RequestContext = {
     data: LooseObject,
 
     // if session is started and user has visited any page
-    sessionId?: string
+    sessionId?: string,
+
+    // true if x-requested-with header is received and it equals 'xmlhttprequest'
+    isAjax: boolean
 }
 
 export type RequestBodyArguments = {
