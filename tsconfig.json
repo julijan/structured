@@ -15,6 +15,5 @@
         "baseUrl": ".",
         "rootDir": "."
     },
-    "include": ["./system/**/*", "./app/**/*", "index.ts"],
-    "exclude": ["./system/client/app"]
+    "include": ["./system/**/*", "./app/**/*", "index.ts"]
 }
