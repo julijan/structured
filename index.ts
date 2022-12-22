@@ -1,6 +1,8 @@
 import { Application } from './system/server/Application.js';
 
-const app = new Application(9090);
+new Application(9090);
+
+// const app = new Application(9090);
 
 // app.on('beforeRequestHandler', async (ctx) => {
 //     console.log('About to handle request', ctx.request.method, ctx.request.url);
