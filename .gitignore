@@ -6,3 +6,4 @@ app/models/*
 assets/*
 system/client/app/*.ts
 tailwind.config.cjs
+.vscode
