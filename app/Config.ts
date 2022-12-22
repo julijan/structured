@@ -28,8 +28,8 @@ const conf = {
     },
     session: {
         cookieName: 'session',
-        keyLength: 32,
-        durationSeconds: 60 * 30,
+        keyLength: 24,
+        durationSeconds: 60 * 60,
         garbageCollectIntervalSeconds: 60
     },
     http: {
