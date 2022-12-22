@@ -3,40 +3,49 @@ import { DocumentResource } from '../Types';
 export class DocumentHead {
 
     title: string;
-    js: Array<DocumentResource>;
-    css: Array<DocumentResource>;
+    js: Array<DocumentResource> = [];
+    css: Array<DocumentResource> = [];
+    custom: Array<string> = [];
     charset = 'UTF-8';
 
     constructor(title: string) {
         this.title = title;
-        this.js = [];
-        this.css = [];
     }
 
-    setTitle(title: string): void {
+    public setTitle(title: string): void {
         this.title = title;
     }
 
-    addJS(path: string, priority: number = 0, attributes: { [ attributeName: string ] : string|null } = {}): DocumentResource {
+    public add(str: string): void {
+        this.custom.push(str);
+    }
+
+    public remove(str: string): void {
+        this.custom = this.custom.filter((strExisting) => {
+            return strExisting !== str;
+        });
+    }
+
+    public addJS(path: string, priority: number = 0, attributes: { [ attributeName: string ] : string|null } = {}): DocumentResource {
         let resource = this.toResource(path, priority, attributes);
         this.js.push(resource);
         return resource;
     }
 
-    addCSS(path: string, priority: number = 0, attributes: { [ attributeName: string ] : string|null } = {}): DocumentResource {
+    public addCSS(path: string, priority: number = 0, attributes: { [ attributeName: string ] : string|null } = {}): DocumentResource {
         let resource = this.toResource(path, priority, attributes);
         this.css.push(resource);
         return resource;
     }
 
-    removeJS(path: string): void {
+    public removeJS(path: string): void {
         let index = this.js.findIndex((resource) => {
             return resource.path == path;
         });
         this.js.splice(index, 1);
     }
 
-    removeCSS(path: string): void {
+    public removeCSS(path: string): void {
         let index = this.css.findIndex((resource) => {
             return resource.path == path;
         });
@@ -74,6 +83,10 @@ export class DocumentHead {
             return prev + '\n' + `<script src="${curr.path}"${this.attributesString(curr)}></script>`;
         }, '');
 
+        let custom = this.custom.reduce((prev, curr) => {
+            return prev + '\n' + curr;
+        }, '');
+
         return `<head>
             <meta charset="${this.charset}">
             <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -81,6 +94,7 @@ export class DocumentHead {
             <title>${this.title}</title>
             ${css}
             ${js}
+            ${custom}
         </head>`;
 
     }
