@@ -1,3 +1,4 @@
+import { randomString } from '../Util.js';
 import conf from '../../app/Config.js';
 import { LooseObject, RequestContext, SessionEntry } from '../Types.js';
 import { Application } from './Application.js';
@@ -61,29 +62,7 @@ export class Session {
     }
 
     private generateId(): string {
-        let generators = [
-            // uppercase letters
-            function(): string {
-                return String.fromCharCode(65 + Math.floor(Math.random() * 25));
-            },
-            // lowercase letters
-            function(): string {
-                return String.fromCharCode(97 + Math.floor(Math.random() * 25));
-            },
-            // numbers
-            function(): string {
-                return String.fromCharCode(48 + Math.floor(Math.random() * 10));
-            }
-        ]
-
-        let id = '';
-
-        while (id.length < conf.session.keyLength) {
-            let generator = generators[Math.floor(Math.random() * generators.length)];
-            id += generator();
-        }
-
-        return id;
+        return randomString(conf.session.keyLength);
     }
 
     // remove expired session entries
