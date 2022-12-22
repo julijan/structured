@@ -1,4 +1,5 @@
 import { IncomingMessage, ServerResponse } from "http";
+import { Component, Net } from "./client/Client";
 
 export type RequestMethod = 'GET'|'POST'|'PUT'|'PATCH'|'DELETE';
 
@@ -75,13 +76,30 @@ export type ComponentEntry = {
     path: string,
     hasJS: boolean,
     pathJS?: string,
-    module?: any,
-    html : string
+    html : string,
+    
+    // server side component module
+    module?: ComponentScaffold,
+
+    // default is "div"
+    renderTagName?: string,
+
+    // whether to set data-component-data on rendered component so it's available client side
+    exportData: boolean,
+    
+    // client side component initializer
+    initializer?: InitializerFunction
 }
 
 export interface ComponentScaffold  {
-    primaryKey: string|number,
-    getData(attributeData: RequestBodyArguments): Promise<LooseObject>,
+    primaryKey?: string|number,
+
+    // rendered tag name (default is "div")
+    tagName?: string,
+
+    exportData?: boolean,
+
+    getData(attributeData: RequestBodyArguments, ctx: undefined|RequestContext): Promise<LooseObject>,
     create?(entry: LooseObject): Promise<any>,
     delete?(id: string): Promise<any>
 }
@@ -118,3 +136,19 @@ export type ValidationResult = {
     valid: boolean,
     errors: ValidationErrors|ValidationErrorsSingle
 }
+
+export type InitializerFunction = {
+    (this: Component, ctx : InitializerFunctionContext) : void
+}
+
+export type Initializers = {
+    [key: string] : InitializerFunction
+}
+
+export type InitializerFunctionContext = {
+    net: Net
+}
+
+export type StoreChangeCallback = (key: string, value: any, oldValue: any, componentId: string) => void
+
+export type AsteriskAny = '*';
