@@ -16,13 +16,3 @@ The framework would consist of server side code (Node.js), and a much smaller cl
 
 Page would render on the server outputting the rendered DOM and which includes the client-side JS.
 Developer would be able to request the entire page, or any specific component to be re-rendered at their will.
-
-TODO:
-- [DONE] complete the component system
-- [DONE] templating engine
-- [DONE] sessions
-- [DONE] file uploads
-- [DONE] form validation
-- client side part that allows partial rendering
-- emails
-- gzip support
