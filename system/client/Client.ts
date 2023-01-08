@@ -217,6 +217,8 @@ export class Component {
                 net : new Net()
             }]);
         }
+
+        this.loaded = true;
     }
 
     private initConditionals(node?: HTMLElement): void {
