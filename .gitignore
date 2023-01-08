@@ -1,8 +1,9 @@
 node_modules
 build
-app/views/*
-app/routes/*
-app/models/*
+app/views/components/*
+app/views/pages/*
+app/routes/*.ts
+app/models/*.ts
 assets/*
 system/client/app/*.ts
 tailwind.config.cjs
