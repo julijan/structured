@@ -22,11 +22,11 @@ export class FormValidation {
         'number' : async (data, field) => {
             // does not need to be a number, but rather contain only numbers
             // eg. 14
-            return /^\d+$/.test(data[field]);
+            return /^-?\d+$/.test(data[field]);
         },
         'float' : async (data, field) => {
             // 14.2
-            return /^\d+\.\d+$/.test(data[field]);
+            return /^-?\d+\.\d+$/.test(data[field]);
         },
         'numeric' : async (data, field, arg, rules) => {
             // 14 or 14.2
