@@ -60,6 +60,7 @@ export class Components {
 
                         entry.renderTagName = entry.module?.tagName || 'div';
                         entry.exportData = entry.module?.exportData || false;
+                        entry.exportFields = entry.module?.exportFields;
                     }
 
                     this.components.push(entry);
