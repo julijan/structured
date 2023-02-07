@@ -1,4 +1,5 @@
 const conf = {
+    autoInit: true,
     routes: {
         path: '/app/routes'
     },
@@ -30,7 +31,8 @@ const conf = {
         cookieName: 'session',
         keyLength: 24,
         durationSeconds: 60 * 60,
-        garbageCollectIntervalSeconds: 60
+        garbageCollectIntervalSeconds: 60,
+        garbageCollectAfterSeconds: 500
     },
     http: {
         linkHeaderRel : 'preload' // used by Document.push, can be preload or preconnect
