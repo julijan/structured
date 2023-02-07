@@ -84,6 +84,21 @@ export class Component {
             this.entry = null;
         }
 
+        // register handlebars helpers
+
+        if (! (this instanceof Document)) {
+            // this.document.application.on('handlebarsRegisterHelper', async (payload: {
+            //     name: string,
+            //     helper: HelperDelegate
+            // }) => {
+            //     Handlebars.registerHelper(payload.name, payload.helper);
+            // });
+    
+            this.document.application.handlebarsHelpers.forEach((helperItem) => {
+                Handlebars.registerHelper(helperItem.name, helperItem.helper);
+            });
+        }
+
     }
 
     // load the view from file system
@@ -108,7 +123,7 @@ export class Component {
     // if force is true, component will be rendered even if it has a data-if attribute
     public async init(html: string, data?: LooseObject, force: boolean = false): Promise<void> {
 
-        console.log("INIT DATA", force, data);
+        // console.log("INIT DATA", force, data);
 
         // extract data-atributes
         this.attributes = this.getAttributesData();
@@ -145,20 +160,28 @@ export class Component {
             // set data-component-parent when a component uses parent data
             // it will be needed when the component is individually rendered
             // componentInstances[j].setAttribute('data-component-parent', parentName);
-            this.attributes = Object.assign(this.importedParentData(this.parent.data), this.attributes);
+            this.attributes = Object.assign(this.importedParentData(this.parent.data) || {}, this.attributes);
         }
 
         // previously was setting this.html = html here
 
         if (! this.attributes.if || force) {
             // load data
-            if (data === undefined && this.entry && this.entry.module) {
-                console.log('getData', this.name);
-                this.data = await this.entry.module.getData(this.attributes, this.document.ctx);
-    
-                if (! this.attributes.key) {
-                    console.warn(`Component ${this.name} has attached module but is initialized without data-key attribute.`);
+            if (data === undefined) {
+                // console.log('getData', this.name);
+                // this.data = await this.entry.module.getData(this.attributes, this.document.ctx);
+                if (this.entry && this.entry.module) {
+                    // component has a server side part, fetch data using getData
+                    this.data = await this.entry.module.getData.apply(this, [this.attributes, this.document.ctx, this.document.application]);
+                } else {
+                    // if the component has no server side part
+                    // then use attributes as data
+                    this.data = Object.assign({}, this.attributes);
                 }
+    
+                // if (! this.attributes.key) {
+                //     console.warn(`Component ${this.name} has attached module but is initialized without data-key attribute.`);
+                // }
             }
     
             if (data !== undefined) {
@@ -170,7 +193,8 @@ export class Component {
             // we want those to be found as children
             this.fillData(data === undefined ? this.data : data);
 
-            await this.initChildren(data, force);
+            // await this.initChildren(data, force);
+            await this.initChildren(undefined, force);
         }
     
         // this.html = this.dom.innerHTML;
@@ -185,7 +209,17 @@ export class Component {
         }
 
         if (this.entry?.exportData) {
-            this.dom.setAttribute('data-component-data', JSON.stringify(this.data));
+            this.dom.setAttribute('data-component-data', JSON.stringify(this.data), false);
+        }
+
+        if (this.entry?.exportFields) {
+            this.entry.exportFields.forEach((field) => {
+                let val = this.data[field];
+                if (typeof val === 'object') {
+                    val = JSON.stringify(val);
+                }
+                this.dom.setAttribute('data-' + field, val);
+            })
         }
 
         return;
@@ -282,14 +316,14 @@ export class Component {
                 let key = toCamelCase(domNode.attributes[i].name.substring(5));
                 data[key] = domNode.attributes[i].value;
             }
-            console.log('***val', domNode.attributes[i].value);
+            // console.log('***val', domNode.attributes[i].value);
             this.attributesRaw[domNode.attributes[i].name] = domNode.attributes[i].value;
         }
         return data;
     }
 
     protected fillData(data: LooseObject): void {
-        console.log('filling with', data);
+        // console.log('filling with', data);
         let template = Handlebars.compile(this.entry ? this.entry.html : this.dom.innerHTML);
         this.dom.innerHTML = template(data);
     }
