@@ -7,6 +7,7 @@ import { Application } from './Application.js';
 import { DocumentHead } from './DocumentHead.js';
 import { Component } from './Component.js';
 import { randomString } from '../Util.js';
+import { default as Handlebars } from 'handlebars';
 
 
 export class Document extends Component {
@@ -16,6 +17,7 @@ export class Document extends Component {
     application: Application;
 
     initializers: Initializers = {};
+    initializersInitialized: boolean = false;
 
     componentIds: Array<string> = [];
 
@@ -30,6 +32,25 @@ export class Document extends Component {
         // include client side JS, not an actual URL, Application.ts adds a request handler
         // for routes starting with /assets/client-js/
         this.head.addJS('/assets/client-js/client/Client.js', 0, { type: 'module', defer: '' });
+
+        // this.application.on('handlebarsRegisterHelper', async (payload: {
+        //     name: string,
+        //     helper: HelperDelegate
+        // }) => {
+        //     Handlebars.registerHelper(payload.name, payload.helper);
+        // });
+
+        this.application.handlebarsHelpers.forEach((helperItem) => {
+            Handlebars.registerHelper(helperItem.name, helperItem.helper);
+        });
+
+        // include common CSS/JS
+        this.application.commonJS.forEach((res) => {
+            this.head.addJS(res.path, res.priority, res.attributes);
+        });
+        this.application.commonCSS.forEach((res) => {
+            this.head.addCSS(res.path, res.priority, res.attributes);
+        });
     }
 
 
@@ -51,19 +72,22 @@ export class Document extends Component {
 
     public toString(): string {
 
-        const initializers: {
-            [key: string] : string
-        } = {};
-
-        for (let name in this.initializers) {
-            initializers[name] = this.initializers[name].toString();
+        if (! this.initializersInitialized) {
+            const initializers: {
+                [key: string] : string
+            } = {};
+    
+            for (let name in this.initializers) {
+                initializers[name] = this.initializers[name].toString();
+            }
+    
+            const initializersString = '<script type="application/javascript">const initializers = ' + JSON.stringify(initializers, (key, value) => {
+                return value;
+            }) + '</script>';
+    
+            this.head.add(initializersString);
+            this.initializersInitialized = true;
         }
-
-        const initializersString = '<script type="application/javascript">const initializers = ' + JSON.stringify(initializers, (key, value) => {
-            return value;
-        }) + '</script>';
-
-        this.head.add(initializersString);
 
         return `<!DOCTYPE html>
         <html lang="${this.language}">
