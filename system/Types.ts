@@ -1,5 +1,8 @@
 import { IncomingMessage, ServerResponse } from "http";
-import { Component, Net } from "./client/Client";
+import { ClientComponent, Net } from "./client/Client";
+import { Application } from "./server/Application.js";
+import { Component } from "./server/Component.js";
+import { symbolArrays } from "./Symbols.js";
 
 export type RequestMethod = 'GET'|'POST'|'PUT'|'PATCH'|'DELETE';
 
@@ -36,11 +39,16 @@ export type RequestContext = {
     sessionId?: string,
 
     // true if x-requested-with header is received and it equals 'xmlhttprequest'
-    isAjax: boolean
+    isAjax: boolean,
+
+    respondWith: (data: any) => void
 }
 
-export type RequestBodyArguments = {
-    [key: string] : string
+export interface RequestBodyArguments {
+    [key: string] : string,
+    [symbolArrays]? : {
+        [key: string] : Array<string>
+    }
 }
 
 export type RequestBodyFiles = {
@@ -86,6 +94,9 @@ export type ComponentEntry = {
 
     // whether to set data-component-data on rendered component so it's available client side
     exportData: boolean,
+
+    // selectively export data
+    exportFields? : Array<string>,
     
     // client side component initializer
     initializer?: InitializerFunction
@@ -98,8 +109,12 @@ export interface ComponentScaffold  {
     tagName?: string,
 
     exportData?: boolean,
+    // selectively export data
+    exportFields? : Array<string>,
 
-    getData(attributeData: RequestBodyArguments, ctx: undefined|RequestContext): Promise<LooseObject>,
+    getData: (this: Component, attributeData: RequestBodyArguments|LooseObject, ctx: undefined|RequestContext, app: Application) => Promise<LooseObject>
+
+    // getData(this: Component, attributeData: RequestBodyArguments, ctx: undefined|RequestContext): Promise<LooseObject>,
     create?(entry: LooseObject): Promise<any>,
     delete?(id: string): Promise<any>
 }
@@ -108,7 +123,7 @@ export type LooseObject = {
     [key: string] : any
 }
 
-export type ApplicationCallbacks = 'serverStarted'|'beforeRequestHandler'|'afterRequestHandler';
+export type ApplicationCallbacks = 'serverStarted'|'beforeRequestHandler'|'afterRequestHandler'|'beforeRoutes'|'beforeComponentLoad';
 
 export type SessionEntry = {
     sessionId : string,
@@ -138,7 +153,7 @@ export type ValidationResult = {
 }
 
 export type InitializerFunction = {
-    (this: Component, ctx : InitializerFunctionContext) : void
+    (this: ClientComponent, ctx : InitializerFunctionContext) : void
 }
 
 export type Initializers = {
