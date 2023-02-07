@@ -20,12 +20,6 @@ export class App {
             net: new Net()
         }
     }
-
-    // // fetch a component from the server as HTML string
-    // public async fetch(componentName: string, primaryKey?: string|number): Promise<string> {
-    //     return this.net.get(`${this.componentRenderURI}/${componentName}/${primaryKey || ''}`);
-    // }
-
 }
 
 export class ClientComponent {
@@ -192,23 +186,6 @@ export class ClientComponent {
 
     // fetch from server and replace with new HTML
     public async redraw(): Promise<void> {
-        // let net = new Net();
-        // let html = await net.get('/component/' + this.name + (this.data.key ? '/' + this.data.key : ''));
-        // this.domNode.innerHTML = html;
-
-        // // re-init children because their associated domNode is no longer part of the DOM
-        // // component initializers will get lost
-        // this.children = [];
-        // this.initChildren(this.domNode, this);
-
-        // // run the initializer
-        // if (this.initializer) {
-        //     this.initializer.apply(this, [{
-        //         net : new Net()
-        //     }]);
-        // }
-
-        console.log('redraw', this.name);
 
         // component can't be redrawn if it uses data of it's parent component (data-use)
         // if the current node uses data, get the first parent that can be redrawn

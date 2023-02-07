@@ -33,13 +33,6 @@ export class Document extends Component {
         // for routes starting with /assets/client-js/
         this.head.addJS('/assets/client-js/client/Client.js', 0, { type: 'module', defer: '' });
 
-        // this.application.on('handlebarsRegisterHelper', async (payload: {
-        //     name: string,
-        //     helper: HelperDelegate
-        // }) => {
-        //     Handlebars.registerHelper(payload.name, payload.helper);
-        // });
-
         this.application.handlebarsHelpers.forEach((helperItem) => {
             Handlebars.registerHelper(helperItem.name, helperItem.helper);
         });
@@ -107,7 +100,6 @@ export class Document extends Component {
         }
 
         // ideally, ID will be the MD5 sum of the component's rendered HTML
-        // let id = Md5.hashStr(component.dom.outerHTML);
         let id = Md5.hashStr(`${component.name}:${component.path}:${JSON.stringify(component.attributesRaw)}`);
         
         // but multiple components might render the exact same thing

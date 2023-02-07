@@ -87,13 +87,7 @@ export class Component {
         // register handlebars helpers
 
         if (! (this instanceof Document)) {
-            // this.document.application.on('handlebarsRegisterHelper', async (payload: {
-            //     name: string,
-            //     helper: HelperDelegate
-            // }) => {
-            //     Handlebars.registerHelper(payload.name, payload.helper);
-            // });
-    
+            // register all handlebars helpers registerd on Application
             this.document.application.handlebarsHelpers.forEach((helperItem) => {
                 Handlebars.registerHelper(helperItem.name, helperItem.helper);
             });
@@ -103,7 +97,6 @@ export class Component {
 
     // load the view from file system
     public async loadView(pathRelative: string, data?: LooseObject): Promise<boolean> {
-
         let viewPath = path.resolve('../' + conf.views.path + '/' + pathRelative + (pathRelative.endsWith('.html') ? '' : '.html'));
 
         if (! existsSync(viewPath)) {
@@ -122,9 +115,6 @@ export class Component {
     // load any nested components recursively
     // if force is true, component will be rendered even if it has a data-if attribute
     public async init(html: string, data?: LooseObject, force: boolean = false): Promise<void> {
-
-        // console.log("INIT DATA", force, data);
-
         // extract data-atributes
         this.attributes = this.getAttributesData();
 
@@ -168,8 +158,6 @@ export class Component {
         if (! this.attributes.if || force) {
             // load data
             if (data === undefined) {
-                // console.log('getData', this.name);
-                // this.data = await this.entry.module.getData(this.attributes, this.document.ctx);
                 if (this.entry && this.entry.module) {
                     // component has a server side part, fetch data using getData
                     this.data = await this.entry.module.getData.apply(this, [this.attributes, this.document.ctx, this.document.application]);
@@ -178,10 +166,6 @@ export class Component {
                     // then use attributes as data
                     this.data = Object.assign({}, this.attributes);
                 }
-    
-                // if (! this.attributes.key) {
-                //     console.warn(`Component ${this.name} has attached module but is initialized without data-key attribute.`);
-                // }
             }
     
             if (data !== undefined) {
@@ -316,14 +300,12 @@ export class Component {
                 let key = toCamelCase(domNode.attributes[i].name.substring(5));
                 data[key] = domNode.attributes[i].value;
             }
-            // console.log('***val', domNode.attributes[i].value);
             this.attributesRaw[domNode.attributes[i].name] = domNode.attributes[i].value;
         }
         return data;
     }
 
     protected fillData(data: LooseObject): void {
-        // console.log('filling with', data);
         let template = Handlebars.compile(this.entry ? this.entry.html : this.dom.innerHTML);
         this.dom.innerHTML = template(data);
     }
