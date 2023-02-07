@@ -16,7 +16,7 @@ export class Session {
         this.application = app;
 
         // bind the event listener to beforeRequestHandler
-        this.application.on('beforeRequestHandler', async (ctx) => {
+        this.application.on('beforeRequestHandler', async (ctx: RequestContext) => {
             if (this.enabled) {
                 let sessionCookie = ctx.cookies[conf.session.cookieName];
 
@@ -30,6 +30,7 @@ export class Session {
                     if (ctx.sessionId) {
                         // refresh cookie
                         this.application.setCookie(ctx.response, conf.session.cookieName, ctx.sessionId, conf.session.durationSeconds);
+                        this.sessions[ctx.sessionId].lastRequest = new Date().getTime();
                     }
                 }
             }
@@ -68,7 +69,7 @@ export class Session {
     // remove expired session entries
     private garbageCollect(): void {
         let time = new Date().getTime();
-        let sessDurationMilliseconds = conf.session.durationSeconds * 1000;
+        let sessDurationMilliseconds = conf.session.garbageCollectAfterSeconds * 1000;
 
         for (let sessionId in this.sessions) {
             let sess = this.sessions[sessionId];
@@ -101,6 +102,13 @@ export class Session {
             return session.data[key];
         }
         return null;
+    }
+
+    // return value and clear it from session
+    public getClear(sessionId: string|undefined, key: string): any {
+        const val = this.getValue(sessionId, key);
+        this.removeValue(sessionId, key);
+        return val;
     }
 
     public removeValue(sessionId: string|undefined, key: string): void {
