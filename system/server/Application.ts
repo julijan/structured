@@ -6,10 +6,12 @@ import * as mime from 'mime-types';
 import * as multipartFormDataParser from 'parse-multipart-data';
 
 import conf from '../../app/Config.js';
-import { ApplicationCallbacks, ComponentEntry, LooseObject, RequestBodyArguments, RequestBodyFiles, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from '../Types';
+import { ApplicationCallbacks, ComponentEntry, DocumentResource, LooseObject, RequestBodyArguments, RequestBodyFiles, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from '../Types';
 import { Document } from './Document.js';
 import { Components } from './Components.js';
 import { Session } from './Session.js';
+import { HelperDelegate } from 'handlebars';
+import { symbolArrays } from '../Symbols.js';
 
 export class Application {
 
@@ -26,18 +28,21 @@ export class Application {
 
     eventEmitter: EventEmitter = new EventEmitter();
 
+    // CSS/JS included with each page
+    commonCSS: Array<DocumentResource> = [];
+    commonJS: Array<DocumentResource> = [];
+
     pagneNotFoundCallback: RequestCallback;
+
+    handlebarsHelpers: Array<{
+        name: string,
+        helper: HelperDelegate
+    }> = [];
 
     constructor(port: number, host?: string) {
         this.host = host;
         this.port = port;
 
-        this.pagneNotFoundCallback = async ({ response }) => {
-            response.statusCode = 404;
-            response.write('Page not found');
-        }
-
-        this.components.loadComponents();
 
         // create the session instance
         // this won't start the session handler
@@ -47,7 +52,80 @@ export class Application {
         // enable sessions
         this.session.start();
 
-        this.registerRoutes();
+        this.pagneNotFoundCallback = async ({ response }) => {
+            response.statusCode = 404;
+            response.write('Page not found');
+        }
+
+        if (conf.autoInit) {
+            this.init();
+        }
+    }
+
+    public async init() {
+
+        this.eventEmitter.setMaxListeners(10);
+
+        // {{{htmlTag tagName}}} outputs <tagName></tagName>
+        await this.handlebarsRegisterHelper('htmlTag', function(...args) {
+            // output a tag with given name
+            return `<${args[0]}></${args[0]}>`;
+        });
+
+        // {{{layoutComponent componentName data}}} outputs <tagName data-use="data.key0,data.key1..."></tagName>
+        await this.handlebarsRegisterHelper('layoutComponent', function(...args) {
+            // output a tag with given name
+            if (args.length < 2 || args.length > 4) {
+                console.warn('layoutComponent expects 1 - 3 arguments (componentName, data?, attributes?) got ' + (args.length - 1));
+            }
+
+            const componentName = args[0];
+            let data = {}
+            let attributes: LooseObject = {};
+
+            let useString = '';
+            let attributesString = '';
+
+            if (args.length > 2) {
+                // got data
+                data = args[1];
+                if (data) {
+                    const useKeys = Object.keys(data);
+                    useString = useKeys.map((item) => {
+                        return `data.${item}`;
+                    }).join(',');
+                }
+            }
+
+            if (args.length > 3) {
+                // got attributes
+                attributes = args[2];
+                if (attributes) {
+                    const attrNames = Object.keys(attributes);
+                    attributesString = attrNames.map((attrName) => {
+                        const val = attributes[attrName];
+                        if (typeof val === 'string' || typeof val === 'number') {
+                            return `${attrName}="${val}"`
+                        }
+                        if (val === true) {
+                            return attrName;
+                        }
+                        return null;
+                    }).filter((val) => val !== null).join(' ');
+                }
+            }
+            
+            return `<${componentName}${useString.length > 0 ? ` data-use="${useString}"` : ''} ${attributesString}></${componentName}>`;
+        });
+
+        await this.emit('beforeComponentLoad');
+        this.components.loadComponents();
+        await this.emit('afterComponentLoad');
+
+
+        await this.emit('beforeRoutes');
+        await this.registerRoutes();
+        await this.emit('afterRoutes');
 
         this.addRequestHandler('POST', '/componentRender', async (ctx) => {
             const input = ctx.body as unknown as {
@@ -69,7 +147,7 @@ export class Application {
             return;
         });
 
-        this.start();
+        await this.start();
     }
 
     public start(): Promise<void> {
@@ -78,7 +156,7 @@ export class Application {
             this.server = createServer((req, res) => {
                 this.requestHandle(req, res);
             });
-            this.server.listen(this.port, this.host, async () => {
+            this.server.listen(this.port, this.host || '127.0.0.1', async () => {
                 let address = (this.host !== undefined ? this.host : '') + ':' + this.port;
                 await this.emit('serverStarted');
                 console.log(`Server started on ${address}`);
@@ -103,7 +181,18 @@ export class Application {
             args: {},
             data: {},
             cookies: this.parseCookies(request),
-            isAjax : request.headers['x-requested-with'] == 'xmlhttprequest'
+            isAjax : request.headers['x-requested-with'] == 'xmlhttprequest',
+            respondWith: function (data: any) {
+                if (typeof data === 'string') {
+                    response.write(data);
+                } else if (data instanceof Document) {
+                    response.write(data.toString());
+                } else if (data === undefined || data === null) {
+                    response.write('');
+                } else {
+                    response.write(JSON.stringify(data, null, 4));
+                }
+            }
         }
 
         await this.emit('beforeRequestHandler', context);
@@ -228,8 +317,26 @@ export class Application {
             console.warn(`Multiple request handlers for ${uri}`);
         }
 
-        return possible[0];
+        // prefer constant matches over RegExp
+        possible.sort((a, b) => {
+            if (a.match instanceof Array && b.match instanceof Array) {
+                // a an b are of same length
+                for (let i = a.match.length - 1; i > -1; i--) {
+                    const aVal = a.match[i].pattern instanceof RegExp ? 1 : 0;
+                    const bVal = b.match[i].pattern instanceof RegExp ? 1 : 0;
+                    if (aVal != bVal) {
+                        return aVal - bVal;
+                    }
+                }
+                return 0;
+            }
 
+            const aVal = a.match instanceof RegExp ? 1 : 0;
+            const bVal = b.match instanceof RegExp ? 1 : 0;
+            return aVal - bVal;
+        });
+
+        return possible[0];
     }
 
     // extract variables from the given URI, using provided match which is defined by current request handler
@@ -301,13 +408,13 @@ export class Application {
     }
 
     // add event listener
-    public on(evt: ApplicationCallbacks, callback: RequestCallback) {
+    public on(evt: ApplicationCallbacks|string, callback: RequestCallback|((payload?: any) => void)) {
         this.eventEmitter.on(evt, callback);
     }
 
     // we want to be able to await it so we won't call EventEmitter.emit
     // instead we'll manually execute the listeners awaiting each in the process
-    public async emit(evt: ApplicationCallbacks, payload?: any): Promise<void> {
+    public async emit(evt: ApplicationCallbacks|string, payload?: any): Promise<void> {
         let listeners = this.eventEmitter.rawListeners(evt);
         for (let i = 0; i < listeners.length; i++) {
             await listeners[i](payload);
@@ -330,7 +437,7 @@ export class Application {
     // set a cookie
     // header is set, but is not sent, it will be sent with the output
     public setCookie(response: ServerResponse, name: string, value: string|number, lifetimeSeconds: number, path: string = '/', sameSite: string = 'Strict') {
-        let expiresAt = new Date(new Date().getTime() + lifetimeSeconds * 1000).toUTCString();
+        let expiresAt = lifetimeSeconds > 0 ? new Date(new Date().getTime() + lifetimeSeconds * 1000).toUTCString() : 0;
         response.setHeader('Set-Cookie', `${name}=${value}; Expires=${expiresAt}; Path=${path}; SameSite=${sameSite}`);
     }
 
@@ -351,10 +458,38 @@ export class Application {
                 let args: RequestBodyArguments = {}
                 argPairs.forEach((arg) => {
                     let parts = arg.split('=');
+                    let key = decodeURIComponent(parts[0]);
+                    const isArray = key.endsWith('[]');
+                    if (isArray) {
+                        key = key.slice(0, key.length - 2);
+                    }
+                    if (isArray && ! args[symbolArrays]) {
+                        args[symbolArrays] = {};
+                    }
                     if (parts.length > 2) {
-                        args[decodeURIComponent(parts[0])] = decodeURIComponent(parts.slice(1).join('='));
+                        if (! isArray) {
+                            args[key] = decodeURIComponent(parts.slice(1).join('='));
+                        } else {
+                            // @ts-ignore
+                            if (! args[symbolArrays][key]) {
+                                // @ts-ignore
+                                args[symbolArrays][key] = [];
+                            }
+                            // @ts-ignore
+                            args[symbolArrays][key].push(parts.slice(1).join('='));
+                        }
                     } else {
-                        args[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
+                        if (! isArray) {
+                            args[key] = decodeURIComponent(parts[1]);
+                        } else {
+                            // @ts-ignore
+                            if (! args[symbolArrays][key]) {
+                                // @ts-ignore
+                                args[symbolArrays][key] = [];
+                            }
+                            // @ts-ignore
+                            args[symbolArrays][key].push(decodeURIComponent(parts[1]));
+                        }
                     }
                 });
                 ctx.body = args;
@@ -389,7 +524,12 @@ export class Application {
                 }
             } else if (ctx.request.headers['content-type'].indexOf('application/json') > -1) {
                 // application/json
-                ctx.body = JSON.parse(ctx.bodyRaw.toString());
+                try {
+                    ctx.body = JSON.parse(ctx.bodyRaw.toString());
+                } catch (e) {
+                    // failed to parse the body
+                    ctx.body = undefined;
+                }
             }
         }
         return;
@@ -439,7 +579,7 @@ export class Application {
         });
     }
 
-    private registerRoutes(basePath?: string): void {
+    private async registerRoutes(basePath?: string): Promise<void> {
         let routesPath:string;
         if (basePath) {
             routesPath = basePath;
@@ -447,24 +587,27 @@ export class Application {
             routesPath = path.resolve(`../build/${conf.routes.path}`);
         }
         let files = readdirSync(routesPath);
-        
-        files.forEach(async (file) => {
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
             let filePath = path.resolve(routesPath + '/' + file);
             let isDirectory = statSync(filePath).isDirectory();
             if (isDirectory) {
-                this.registerRoutes(filePath);
+                await this.registerRoutes(filePath);
             } else {
                 let fn = (await import(filePath)).default;
                 if (typeof fn === 'function') {
-                    fn(this);
+                    await fn(this);
                 }
             }
-        });
+        }
+
+        return;
     }
 
     private async respondWithComponent(ctx: RequestContext, componentName: string, attributes: RequestBodyArguments, data?: LooseObject, unwrap: boolean = true): Promise<boolean> {
 
-        console.log('unwrap', unwrap);
+        // console.log('unwrap', unwrap);
 
         const component = this.component(componentName);
         if (component) {
@@ -475,7 +618,8 @@ export class Application {
                 attributesArray.push(attr);
             }
             const attributesString = attributesArray.join(' ');
-            await document.init(`<${componentName} ${attributesString}></${componentName}>`, data, true);
+            const useString = data ? ' data-use="'+ Object.keys(data).join(',') +'"' : '';
+            await document.init(`<${componentName} ${attributesString}${useString}></${componentName}>`, data, true);
 
             if (unwrap) {
                 ctx.response.write(document.children[0].dom.innerHTML);
@@ -486,6 +630,11 @@ export class Application {
             return true;
         }
         return false;
+    }
+
+    public async handlebarsRegisterHelper(name: string, helper: HelperDelegate): Promise<void> {
+        const helperItem = {name, helper};
+        this.handlebarsHelpers.push(helperItem);
     }
 
 }
