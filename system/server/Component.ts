@@ -1,6 +1,6 @@
 import conf from '../../app/Config.js';
 import { Document } from './Document.js';
-import { toCamelCase } from '../Util.js';
+import { attributeValueFromString, attributeValueToString, toCamelCase } from '../Util.js';
 import { ComponentEntry, LooseObject, RequestBodyArguments } from '../Types.js';
 
 import { existsSync, readFileSync } from 'fs';
@@ -87,7 +87,13 @@ export class Component {
         // register handlebars helpers
 
         if (! (this instanceof Document)) {
-            // register all handlebars helpers registerd on Application
+            // this.document.application.on('handlebarsRegisterHelper', async (payload: {
+            //     name: string,
+            //     helper: HelperDelegate
+            // }) => {
+            //     Handlebars.registerHelper(payload.name, payload.helper);
+            // });
+    
             this.document.application.handlebarsHelpers.forEach((helperItem) => {
                 Handlebars.registerHelper(helperItem.name, helperItem.helper);
             });
@@ -97,6 +103,7 @@ export class Component {
 
     // load the view from file system
     public async loadView(pathRelative: string, data?: LooseObject): Promise<boolean> {
+
         let viewPath = path.resolve('../' + conf.views.path + '/' + pathRelative + (pathRelative.endsWith('.html') ? '' : '.html'));
 
         if (! existsSync(viewPath)) {
@@ -158,6 +165,8 @@ export class Component {
         if (! this.attributes.if || force) {
             // load data
             if (data === undefined) {
+                // console.log('getData', this.name);
+                // this.data = await this.entry.module.getData(this.attributes, this.document.ctx);
                 if (this.entry && this.entry.module) {
                     // component has a server side part, fetch data using getData
                     this.data = await this.entry.module.getData.apply(this, [this.attributes, this.document.ctx, this.document.application]);
@@ -166,6 +175,10 @@ export class Component {
                     // then use attributes as data
                     this.data = Object.assign({}, this.attributes);
                 }
+    
+                // if (! this.attributes.key) {
+                //     console.warn(`Component ${this.name} has attached module but is initialized without data-key attribute.`);
+                // }
             }
     
             if (data !== undefined) {
@@ -192,18 +205,26 @@ export class Component {
             this.id = this.attributes.componentId;
         }
 
-        if (this.entry?.exportData) {
-            this.dom.setAttribute('data-component-data', JSON.stringify(this.data), false);
+        if (this.entry === undefined || this.entry?.exportData) {
+            Object.keys(this.data).forEach((field) => {
+                this.dom.setAttribute('data-' + field, attributeValueToString(field, this.data[field]));
+            });
+        } else if (this.entry?.exportFields) {
+            this.entry.exportFields.forEach((field) => {
+                this.dom.setAttribute('data-' + field, attributeValueToString(field, this.data[field]));
+            });
         }
 
-        if (this.entry?.exportFields) {
-            this.entry.exportFields.forEach((field) => {
-                let val = this.data[field];
-                if (typeof val === 'object') {
-                    val = JSON.stringify(val);
-                }
-                this.dom.setAttribute('data-' + field, val);
-            })
+        // add style display = none to all data-if's
+        // this will prevent twitching client side
+        // (otherwise elements that should be hidden might appear for a brief second)
+        if (this.isRoot) {
+            const dataIf = this.dom.querySelectorAll('[data-if]');
+
+            for (let i = 0; i < dataIf.length; i++) {
+                dataIf[i].style.display = 'none';
+            }
+
         }
 
         return;
@@ -289,23 +310,88 @@ export class Component {
     }
 
     // parse all data-attr attributes into data object converting the data-attr to camelCase
-    protected getAttributesData(domNode?: any): RequestBodyArguments {
+    protected getAttributesData(domNode?: any): LooseObject {
         if (domNode === undefined) {
             domNode = this.dom;
         }
-        let data: RequestBodyArguments = {}
+        let data: LooseObject = {}
         for (let i = 0; i < domNode.attributes.length; i++) {
-            if (domNode.attributes[i].name.indexOf('data-') === 0) {
+            const attrNameRaw = domNode.attributes[i].name;
+            const attrNameUnprefixed = this.attributeUnpreffixed(attrNameRaw);
+            if (attrNameUnprefixed.indexOf('data-') === 0) {
+                const attrDataType = this.attributeDataType(attrNameRaw);
+                
+                const dataRaw = attributeValueFromString(domNode.attributes[i].value);
+                const valRaw = typeof dataRaw === 'string' ? dataRaw : dataRaw.value as string;
+                const key = typeof dataRaw !== 'string' ? dataRaw.key : toCamelCase(attrNameUnprefixed.substring(5));
+                let val: string|number|boolean|LooseObject|null = '';
+
+                if (attrDataType === 'any' || attrDataType === 'string') {
+                    val = valRaw;
+                } else if (attrDataType === 'number') {
+                    val = parseFloat(valRaw);
+                } else if (attrDataType === 'boolean') {
+                    val = !!valRaw;
+                } else if (attrDataType === 'object') {
+                    if (typeof valRaw === 'string') {
+                        if (valRaw.trim().length > 1) {
+                            val = JSON.parse(valRaw);
+                        } else {
+                            val = null;
+                        }
+                    } else {
+                        val = valRaw;
+                    }
+                }
+
+                data[key] = val;
+
+                // console.log(key, val);
+                
                 // data-attr, convert to dataAttr and store value
-                let key = toCamelCase(domNode.attributes[i].name.substring(5));
-                data[key] = domNode.attributes[i].value;
+                const attrData = attributeValueToString(key, val);
+
+                domNode.setAttribute(attrNameRaw, attrData);
+
             }
             this.attributesRaw[domNode.attributes[i].name] = domNode.attributes[i].value;
         }
         return data;
     }
 
+    private attributePreffix(attrName: string): string|null {
+        const index = attrName.indexOf(':');
+        if (index < 0) {
+            return null;
+        }
+        return attrName.substring(0, index);
+    }
+
+    private attributeDataType(attrName: string): 'string'|'number'|'object'|'boolean'|'any' {
+        const preffix = this.attributePreffix(attrName);
+        if (preffix === null) {
+            // no preffix
+            return 'any';
+        }
+
+        if (['string', 'number', 'object', 'boolean', 'any'].includes(preffix)) {
+            return preffix as 'string'|'number'|'object'|'boolean'|'any';
+        }
+
+        // unrecognized attribute preffix
+        return 'any';
+    }
+
+    private attributeUnpreffixed(attrName: string): string {
+        const index = attrName.indexOf(':');
+        if (index < 0) {
+            return attrName;
+        }
+        return attrName.substring(index + 1);
+    }
+
     protected fillData(data: LooseObject): void {
+        // console.log('filling with', data);
         let template = Handlebars.compile(this.entry ? this.entry.html : this.dom.innerHTML);
         this.dom.innerHTML = template(data);
     }
