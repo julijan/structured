@@ -8,6 +8,14 @@ export class DocumentHead {
     custom: Array<string> = [];
     charset = 'UTF-8';
 
+    favicon: {
+        image: string|null,
+        type: string
+    } = {
+        image: null,
+        type: 'image/png'
+    }
+
     constructor(title: string) {
         this.title = title;
     }
@@ -92,10 +100,51 @@ export class DocumentHead {
             <meta http-equiv="X-UA-Compatible" content="IE=edge">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>${this.title}</title>
+            <link rel="icon" type="${this.favicon.type}" href="${this.favicon.image}">
             ${css}
             ${js}
             ${custom}
         </head>`;
 
+    }
+
+    public setFavicon(faviconPath: string|{
+        image: string|null,
+        type: string
+    }): void {
+        if (typeof faviconPath === 'string') {
+            this.favicon = {
+                image: faviconPath,
+                type: this.faviconType(faviconPath)
+            }
+            return;
+        }
+        // favicon given as object
+        if (faviconPath.type === '') {
+            // detect type
+            faviconPath.type = faviconPath.image ? this.faviconType(faviconPath.image) : 'image/png';
+        }
+        this.favicon = faviconPath;
+    }
+
+    private faviconType(file: string): string {
+        let ext: RegExpExecArray|string|null = /\.([^.]+)$/.exec(file);
+        let type = 'image/png';
+        if (ext !== null) {
+            ext = ext[1].toLowerCase();
+            const types: {
+                [key: string] : string
+            } = {
+                'png' : 'image/png',
+                'jpg' : 'image/jpeg',
+                'jpeg' : 'image/jpeg',
+                'gif' : 'image/gif',
+                'ico' : 'image/x-icon'
+            }
+            if (types[ext]) {
+                type = types[ext];
+            }
+        }
+        return type;
     }
 }
