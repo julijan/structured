@@ -1,7 +1,7 @@
 
 import { IncomingHttpHeaders } from 'http';
-import { AsteriskAny, InitializerFunction, InitializerFunctionContext, LooseObject, RequestMethod, StoreChangeCallback } from '../Types.js';
-import { toCamelCase } from '../Util.js';
+import { AsteriskAny, ClientComponentTransition, ClientComponentTransitions, InitializerFunction, InitializerFunctionContext, LooseObject, RequestMethod, StoreChangeCallback } from '../Types.js';
+import { attributeValueFromString, attributeValueToString, isAsync, toCamelCase } from '../Util.js';
 
 export class App {
 
@@ -20,6 +20,12 @@ export class App {
             net: new Net()
         }
     }
+
+    // // fetch a component from the server as HTML string
+    // public async fetch(componentName: string, primaryKey?: string|number): Promise<string> {
+    //     return this.net.get(`${this.componentRenderURI}/${componentName}/${primaryKey || ''}`);
+    // }
+
 }
 
 export class ClientComponent {
@@ -33,10 +39,33 @@ export class ClientComponent {
     store: DataStoreView;
     storeGlobal: DataStore;
 
+    // optional user defined callbacks
+    onDestroy?: Function;
+    onRedraw?: Function;
+
     conditionals: Array<HTMLElement> = [];
     refs: {
         [key: string] : HTMLElement
     } = {};
+
+    // used for showing/hiding conditionals
+    transitions: ClientComponentTransitions = {
+        show: {
+            fade: false,
+            slide: false
+        },
+        hide: {
+            fade: false,
+            slide: false
+        }
+    }
+
+    // a place for user-defined "methods"
+    // executed using run method
+    // these should be arrow functions in order to keep the context
+    callbacks: {
+        [key: string] : Function
+    } = {}
 
     loaded: boolean;
 
@@ -46,7 +75,7 @@ export class ClientComponent {
 
     // data-attr are parsed into an object
     data: {
-        [key: string] : string
+        [key: string] : any
     } = {};
 
     dataAttributes: {
@@ -76,16 +105,17 @@ export class ClientComponent {
         this.initChildren(this.domNode, this);
 
         this.loaded = ! this.data.if;
+        
+        // update conditionals as soon as component is initialized
+        if (this.conditionals.length > 0) {
+            this.updateConditionals(false);
+        }
 
         // update conditionals whenever any data in component's store has changed
         this.store.onChange('*', function () {
-            this.updateConditionals();
+            this.updateConditionals(true);
         });
 
-        // update conditionals as soon as component is initialized
-        if (this.conditionals.length > 0) {
-            this.updateConditionals();
-        }
 
         // @ts-ignore
         if (initializers && initializers[this.name]) {
@@ -110,16 +140,18 @@ export class ClientComponent {
             this.dataAttributes[this.domNode.attributes[i].name] = this.domNode.attributes[i].value;
 
             // data-attr, convert to dataAttr and store value
-            if (this.domNode.attributes[i].name.indexOf('data-') === 0) {
-                const key = toCamelCase(this.domNode.attributes[i].name.substring(5));
+            // if (this.domNode.attributes[i].name.indexOf('data-') === 0) {
+            if (/^((number|string|boolean|object|any):)?data-[^\s]+/.test(this.domNode.attributes[i].name)) {
                 let value = this.domNode.attributes[i].value;
-                if (key === 'componentData') {
-                    value = JSON.parse(value);
+                const attrData = attributeValueFromString(value);
+
+                if (typeof attrData === 'object') {
+                    this.data[attrData.key] = attrData.value;
+                } else {
+                    // not a valid attribute data string, assign as is (string)
+                    const key = toCamelCase(this.domNode.attributes[i].name.substring(5));
+                    this.data[key] = attrData;
                 }
-                if (value === null) {
-                    value = '';
-                }
-                this.data[key] = value;
             }
         }
     }
@@ -142,12 +174,13 @@ export class ClientComponent {
     }
 
     // set a data value (data-attr)
-    set(key: string, value: string|number) {
+    set(key: string, value: any) {
         const dataKey = 'data-' + key;
-        const val = typeof value === 'number' ? value.toString() : value;
+
+        let val = attributeValueToString(key, value);
         this.domNode.setAttribute(dataKey, val);
         this.dataAttributes[dataKey] = val;
-        this.data[toCamelCase(dataKey.substring(5))] = val;
+        this.data[toCamelCase(dataKey.substring(5))] = value;
     }
 
     // first parent that can be redrawn (has no data-use)
@@ -186,20 +219,31 @@ export class ClientComponent {
 
     // fetch from server and replace with new HTML
     public async redraw(): Promise<void> {
-
         // component can't be redrawn if it uses data of it's parent component (data-use)
         // if the current node uses data, get the first parent that can be redrawn
         if (this.data.uses) {
             const redrawable = this.redrawableParent();
-            redrawable.redraw();
+            await redrawable.redraw();
             return;
         }
 
-        // console.log('redraw', this.name);
+        if (typeof this.onRedraw === 'function') {
+            this.run(this.onRedraw);
+        }
+
+        this.loaded = false;
+
+        console.log('redraw', this.name);
         let net = new Net();
+
+        const dataSent = Object.keys(this.data).reduce((prev, key) => {
+            prev[`data-${key}`] = attributeValueToString(key, this.data[key]);
+            return prev;
+        }, {} as LooseObject);
+
         let html = await net.post('/componentRender', {
             component: this.name,
-            attributes: this.dataAttributes
+            attributes: Object.assign(Object.assign({}, this.dataAttributes), dataSent)
         });
         this.domNode.innerHTML = html;
 
@@ -213,7 +257,7 @@ export class ClientComponent {
         this.conditionals = [];
         this.initRefs();
         this.initConditionals();
-        this.updateConditionals();
+        this.updateConditionals(false);
 
         // run the initializer
         if (this.initializer) {
@@ -263,7 +307,7 @@ export class ClientComponent {
         return this.refs[refName] as T;
     }
 
-    private updateConditionals() {
+    private updateConditionals(enableTransition: boolean) {
         this.conditionals.forEach((node) => {
             let condition = node.getAttribute('data-if') as string;
             let show: any = false;
@@ -315,18 +359,34 @@ export class ClientComponent {
                             }
                         }
                     }
-                    node.style.display = '';
+                    // node.style.display = '';
+                    this.show(node, enableTransition);
                 } else {
-                    node.style.display = 'none';
+                    // node.style.display = 'none';
+                    this.hide(node, enableTransition);
                 }
             }
         });
     }
 
     // remove the DOM node and delete from parent.children effectively removing self from the tree
-    public remove() {
+    // the method could be sync, but since we want to allow for potentially async user destructors
+    // it is async
+    public async remove() {
         if (! this.isRoot) {
+
+            // remove children recursively
+            for (let i = 0; i < this.children.length; i++) {
+                await this.children[i].remove();
+            }
+
+            // call user defined destructor
+            await this.destroy();
+
+            // remove node
             this.domNode.parentElement?.removeChild(this.domNode);
+
+            // remove from parent's children array
             if (this.parent) {
                 this.parent.children.splice(this.parent.children.indexOf(this), 1);
             }
@@ -423,13 +483,215 @@ export class ClientComponent {
     //     }, []);
     // }
 
-    componentData(key: string): any {
-        if (! this.data.componentData) {
-            return this.data[key];
+    public componentData<T>(key?: string): T {
+        if (! key) {
+            return this.data as T;
+        }
+        return this.data[key] as T;
+    }
+
+    public setTransition(action: keyof ClientComponentTransitions, transition: keyof ClientComponentTransition, durationMs: false|number): void {
+        this.transitions[action][transition] = durationMs;
+    }
+
+    public show(domNode: HTMLElement, enableTransition: boolean) {
+        if (! enableTransition) {
+            domNode.style.display = '';
+            return;
         }
 
-        const data = this.data.componentData as unknown as LooseObject;
-        return data[key];
+        if (domNode.style.display !== 'none') {return false;}
+
+        // const transitions = this.transitions.show;
+        const transitions = this.transitionAttributes(domNode).show;
+
+        const transitionsActive = Object.keys(transitions).filter((key: keyof ClientComponentTransition) => {
+            return transitions[key] !== false;
+        }).reduce((prev, curr) => {
+            const key = curr as keyof ClientComponentTransition;
+            prev[key] = transitions[key];
+            return prev;
+        }, {} as {[key in keyof ClientComponentTransition] : false|number});
+        
+        if (Object.keys(transitionsActive).length === 0) {
+            domNode.style.display = '';
+            return;
+        }
+
+        domNode.style.display = '';
+
+        const onTransitionEnd = (e: any) => {
+            domNode.style.opacity = '1';
+            domNode.style.transition = '';
+            domNode.style.transformOrigin = 'unset';
+            domNode.removeEventListener('transitionend', onTransitionEnd);
+            domNode.removeEventListener('transitioncancel', onTransitionEnd);
+        }
+        
+        domNode.addEventListener('transitionend', onTransitionEnd);
+        domNode.addEventListener('transitioncancel', onTransitionEnd);
+        
+        if (transitionsActive.slide) {
+
+            // if specified use given transformOrigin
+            const transformOrigin = domNode.getAttribute('data-transform-origin-show') || '50% 0';
+
+            // domNode.style.overflow = 'hidden';
+            // const height = domNode.clientHeight;
+            // domNode.style.height = '0px';
+            domNode.style.transformOrigin = transformOrigin;
+            const axis = this.transitionAxis(domNode, 'show');
+            domNode.style.transform = `scale${axis}(0.01)`;
+            domNode.style.transition = `transform ${transitionsActive.slide / 1000}s`;
+            setTimeout(() => {
+                // domNode.style.height = height + 'px';
+                domNode.style.transform = `scale${axis}(1)`;
+            }, 100);
+        }
+
+        if (transitionsActive.fade) {
+            domNode.style.opacity = '0';
+            domNode.style.transition = `opacity ${transitionsActive.fade / 1000}s`;
+            setTimeout(() => {
+                domNode.style.opacity = '1';
+            }, 100);
+        }
+
+    }
+
+    public hide(domNode: HTMLElement, enableTransition: boolean) {
+
+        if (! enableTransition) {
+            domNode.style.display = 'none';
+            return;
+        }
+
+        if (domNode.style.display === 'none') {return false;}
+
+        // const transitions = this.transitions.hide;
+        const transitions = this.transitionAttributes(domNode).hide;
+        
+        const transitionsActive = Object.keys(transitions).filter((key: keyof ClientComponentTransition) => {
+            return transitions[key] !== false;
+        }).reduce((prev, curr) => {
+            const key = curr as keyof ClientComponentTransition;
+            prev[key] = transitions[key];
+            return prev;
+        }, {} as {[key in keyof ClientComponentTransition] : false|number});
+        
+        if (Object.keys(transitionsActive).length === 0) {
+            // no transitions
+            domNode.style.display = 'none';
+        } else {
+
+            const onTransitionEnd = (e: any) => {
+                domNode.style.display = 'none';
+                domNode.style.opacity = '1';
+                domNode.style.transition = '';
+                domNode.style.transformOrigin = 'unset';
+                domNode.removeEventListener('transitionend', onTransitionEnd);
+                domNode.removeEventListener('transitioncancel', onTransitionEnd);
+            }
+            
+            domNode.addEventListener('transitionend', onTransitionEnd);
+            domNode.addEventListener('transitioncancel', onTransitionEnd);
+
+            if (transitionsActive.slide) {
+                // domNode.style.overflowY = 'hidden';
+                // domNode.style.height = domNode.clientHeight + 'px';
+
+                // if specified use given transformOrigin
+                const transformOrigin = domNode.getAttribute('data-transform-origin-hide') || '50% 100%';
+
+                domNode.style.transformOrigin = transformOrigin;
+                domNode.style.transition = `transform ${transitionsActive.slide / 1000}s ease`;
+                setTimeout(() => {
+                    // domNode.style.height = '2px';
+                    const axis = this.transitionAxis(domNode, 'hide');
+                    domNode.style.transform = `scale${axis}(0.01)`;
+                }, 100);
+            }
+    
+            if (transitionsActive.fade) {
+                domNode.style.opacity = '1';
+                domNode.style.transition = `opacity ${transitionsActive.fade / 1000}s`;
+                setTimeout(() => {
+                    domNode.style.opacity = '0';
+                }, 100);
+            }
+
+        }
+        
+    }
+
+    private transitionAttributes(domNode: HTMLElement): ClientComponentTransitions {
+        const transitions: ClientComponentTransitions = {
+            show: {
+                slide: false,
+                fade: false
+            },
+            hide: {
+                slide: false,
+                fade: false
+            }
+        }
+
+        for (let action in transitions) {
+            for (let transition in transitions[action as keyof ClientComponentTransitions]) {
+                const attrName = `data-transition-${action}-${transition}`;
+                if (domNode.hasAttribute(attrName)) {
+                    transitions[action as keyof ClientComponentTransitions][transition as keyof ClientComponentTransition] = parseInt(domNode.getAttribute(attrName) || '0');
+                }
+            }
+        }
+
+        return transitions;
+    }
+
+    private transitionAxis(domNode: HTMLElement, showHide: 'show'|'hide'): 'X'|'Y'|'' {
+        const key = `data-transition-axis-${showHide}`;
+        let val = domNode.getAttribute(key);
+        if (typeof val === 'string') {
+            val = val.toUpperCase();
+            if (val.length > 0) {
+                val = val.substring(0, 1);
+            }
+
+            if (val != 'X' && val != 'Y') {
+                // unrecognized value
+                return '';
+            }
+
+            return val;
+        }
+        return '';
+    }
+
+    // run a user defined callback
+    async run<T>(callbackNameOrFn: string|Function, args: Array<any> = []): Promise<T|undefined> {
+        let fn = callbackNameOrFn;
+
+        if (typeof fn === 'string') {
+            fn = this.callbacks[fn];
+        }
+
+        if (typeof fn === 'function') {
+            if (isAsync(fn)) {
+                return await fn(...args) as T;
+            } else {
+                return fn(...args) as T;
+            }
+        }
+        // calback not defined
+        console.error(`Callback ${callbackNameOrFn} is not defined`);
+        return undefined;
+    }
+
+    private async destroy(): Promise<void> {
+        // if the user has defined a destroy callback, run it
+        if (typeof this.onDestroy === 'function') {
+            await this.run(this.onDestroy);
+        }
     }
 
 }
@@ -597,6 +859,10 @@ export class DataStoreView {
 
     get(key: string): any {
         return this.store.get(this.component.data.componentId, key);
+    }
+
+    toggle(key: string) {
+        this.set(key, ! this.get(key));
     }
 
     // add callback to be called when a given key's value is changed
