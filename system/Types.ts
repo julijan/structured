@@ -167,3 +167,13 @@ export type InitializerFunctionContext = {
 export type StoreChangeCallback = (key: string, value: any, oldValue: any, componentId: string) => void
 
 export type AsteriskAny = '*';
+
+export type ClientComponentTransition = {
+    fade: false|number,
+    slide: false|number
+}
+
+export type ClientComponentTransitions = {
+    show: ClientComponentTransition,
+    hide: ClientComponentTransition
+}
