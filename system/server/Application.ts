@@ -32,6 +32,14 @@ export class Application {
     commonCSS: Array<DocumentResource> = [];
     commonJS: Array<DocumentResource> = [];
 
+    favicon: {
+        image: string|null,
+        type: string
+    } = {
+        image: null,
+        type: 'image/png'
+    };
+
     pagneNotFoundCallback: RequestCallback;
 
     handlebarsHelpers: Array<{
@@ -199,12 +207,21 @@ export class Application {
 
         if (handler !== null) {
 
-            await this.parseRequestBody(context);
+            try {
+                await this.parseRequestBody(context);
+            } catch(e) {
+                console.log('Error parsing request body');
+            }
 
-            // run the request handler
             let URIArgs = this.extractURIArguments(uri, handler.match);
             context.args = URIArgs;
-            await handler.callback.apply(handler.scope, [context]);
+            
+            // run the request handler
+            try {
+                await handler.callback.apply(handler.scope, [context]);
+            } catch(e) {
+                console.log('Error executing request handler ', e, handler.callback.toString());
+            }
 
             await this.emit('afterRequestHandler', context);
         } else {
@@ -506,7 +523,60 @@ export class Application {
                     data.forEach((item) => {
                         if (item.name) {
                             if (! item.filename) {
-                                dataFormatted[item.name] = item.data.toString();
+                                // not a file
+                                // fix arrays
+                                const isArray = /\[.*?\]/.test(item.name);
+                                if (! isArray) {
+                                    dataFormatted[item.name] = item.data.toString();
+                                } else {
+                                    // an array
+                                    const name = item.name.substring(0, item.name.indexOf('['));
+                                    let dataObject = dataFormatted;
+
+                                    if (! dataObject[name]) {
+                                        const obj: Array<any> = [];
+                                        dataObject[name] = obj;
+                                        dataObject = obj;
+                                    } else {
+                                        dataObject = dataObject[name];
+                                    }
+
+                                    let itemName = item.name;
+                                    let path = [];
+                                    while (/\[.*\]/.test(itemName) != null) {
+                                        const res = /\[(.*?)\]/.exec(itemName);
+                                        if (res) {
+                                            itemName = itemName.substring(res.index + res[1].length + 2);
+                                            path.push(/^\d+$/.test(res[1]) ? parseInt(res[1]) : res[1]);
+                                        } else {
+                                            break;
+                                        }
+
+                                    }
+
+                                    // create path
+                                    if (path.length > 1) {
+                                        // nested
+                                        const parts = path.slice(0, path.length - 1);
+                                        parts.forEach((part) => {
+                                            if (! dataObject[part]) {
+                                                let obj: Array<any> = [];
+                                                dataObject[part] = obj;
+                                                dataObject = obj;
+                                            } else {
+                                                dataObject = dataObject[part];
+                                            }
+                                        })
+                                    }
+
+                                    const key = path[path.length - 1];
+
+                                    if (key !== '') {
+                                        dataObject[key] = item.data.toString();
+                                    } else {
+                                        dataObject.push(item.data.toString());
+                                    }
+                                }
                             } else {
                                 // file, keep entire item
                                 files[item.name] = {
@@ -614,6 +684,8 @@ export class Application {
             const document = new Document(this, '', ctx);
             const attributesArray: Array<string> = [];
             for (const attributeName in attributes) {
+                // const attrData = attributeValueFromString(attributes[attributeName]);
+                // console.log(attrData);
                 const attr = `${attributeName}="${attributes[attributeName]}"`;
                 attributesArray.push(attr);
             }
