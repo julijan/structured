@@ -61,13 +61,13 @@ export class Document extends Component {
 
     // HTTP2 push, Link headers
     push(response: ServerResponse): void {
-        let resourcesJS = this.head.js.map((resource) => {
+        const resourcesJS = this.head.js.map((resource) => {
             return `<${resource.path}>; rel=${conf.http.linkHeaderRel}; as=script; crossorigin=anonymous`;
         });
-        let resourcesCSS = this.head.css.map((resource) => {
+        const resourcesCSS = this.head.css.map((resource) => {
             return `<${resource.path}>; rel=${conf.http.linkHeaderRel}; as=style; crossorigin=anonymous`;
         });
-        let value = resourcesCSS.concat(resourcesJS).join(', ');
+        const value = resourcesCSS.concat(resourcesJS).join(', ');
         response.setHeader('Link', value);
     }
 
@@ -82,7 +82,7 @@ export class Document extends Component {
                 [key: string] : string
             } = {};
     
-            for (let name in this.initializers) {
+            for (const name in this.initializers) {
                 initializers[name] = this.initializers[name].toString();
             }
     

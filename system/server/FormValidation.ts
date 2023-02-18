@@ -98,7 +98,7 @@ export class FormValidation {
     }
 
     public addRule(fieldName: string, nameHumanReadable: string, rules: Array<string|ValidationRuleWithArguments|ValidatorFunction>): void {
-        let rule: FormValidationEntry = {
+        const rule: FormValidationEntry = {
             field: [fieldName, nameHumanReadable],
             rules
         }
@@ -121,34 +121,30 @@ export class FormValidation {
 
     public async validate(data: RequestBodyArguments): Promise<ValidationResult> {
 
-        let result: ValidationResult = {
+        const result: ValidationResult = {
             valid: true,
             errors: {}
         }
 
         // run all validation rules
         for (let i = 0; i < this.fieldRules.length; i++) {
-            let entry = this.fieldRules[i];
+            const entry = this.fieldRules[i];
 
-            let isRequired = entry.rules.includes('required');
+            const isRequired = entry.rules.includes('required');
 
             // content - a non required field that is not passed or is blank
             // will pass all checks, for example rules ['numeric']
             // we expect the field to contain a numeric value, but we don't expect the field to exist in the first place
             // se all validators are skipped for content entries
-            let isContent = ! isRequired && (! data[entry.field[0]] || data[entry.field[0]].trim().length == 0);
-
-            // let requiredMissing = isRequired && ! this.validators.required(data, entry.field[0], 0, entry.rules);
-
-
+            const isContent = ! isRequired && (! data[entry.field[0]] || data[entry.field[0]].trim().length == 0);
 
             if (! isContent) {
                 for (let j = 0; j < entry.rules.length; j++) {
-                    let rule = entry.rules[j];
+                    const rule = entry.rules[j];
     
                     if (typeof rule === 'function') {
                         // custom callback (ValidatorFunction)
-                        let valid = await rule.apply(this, [data, entry.field[0], 0, entry.rules]);
+                        const valid = await rule.apply(this, [data, entry.field[0], 0, entry.rules]);
                         if (! valid) {
                             this.addError(result.errors, data, entry.field, 'callback')
                         }
@@ -157,17 +153,17 @@ export class FormValidation {
                         if (typeof rule === 'string') {
                             // no arguments
                             if (this.validators[rule]) {
-                                let valid = await this.validators[rule].apply(this, [data, entry.field[0], 0, entry.rules]);
+                                const valid = await this.validators[rule].apply(this, [data, entry.field[0], 0, entry.rules]);
                                 if (! valid) {
                                     this.addError(result.errors, data, entry.field, rule);
                                 }
                             }
                         } else {
                             // rule with arguments
-                            let validatorName = rule[0];
-                            let arg = rule[1];
+                            const validatorName = rule[0];
+                            const arg = rule[1];
                             if (this.validators[validatorName]) {
-                                let valid = await this.validators[validatorName].apply(this, [data, entry.field[0], arg, entry.rules]);
+                                const valid = await this.validators[validatorName].apply(this, [data, entry.field[0], arg, entry.rules]);
                                 if (! valid) {
                                     this.addError(result.errors, data, entry.field, validatorName, arg);
                                 }

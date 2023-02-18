@@ -12,12 +12,12 @@ export class Components {
         if (relativeToPath === undefined) {
             relativeToPath = path.resolve('../' + conf.views.path + '/' + conf.views.componentsPath);
         }
-        let components = readdirSync(relativeToPath);
+        const components = readdirSync(relativeToPath);
         
         components.forEach(async (component) => {
             // check if directory
-            let pathCurrent = relativeToPath + '/' + component;
-            let isDirectory = statSync(pathCurrent).isDirectory();
+            const pathCurrent = relativeToPath + '/' + component;
+            const isDirectory = statSync(pathCurrent).isDirectory();
 
             if (isDirectory) {
                 this.loadComponents(pathCurrent);
@@ -28,7 +28,7 @@ export class Components {
                     // name = name.substring(0, name.length - 5);
 
                     // server side module
-                    let jsPathRelative = path.relative(path.resolve('../'), pathCurrent);
+                    const jsPathRelative = path.relative(path.resolve('../'), pathCurrent);
                     let jsPath = path.resolve('../build/' + jsPathRelative);
                     jsPath = jsPath.substring(0, jsPath.length - 5) + '.js';
 
@@ -39,7 +39,7 @@ export class Components {
                     const initializerPath = `${p}/${componentName}.client.js`;
                     const hasInitializer = existsSync(initializerPath);
                     
-                    let entry: ComponentEntry = {
+                    const entry: ComponentEntry = {
                         name: componentName,
                         path: pathCurrent,
                         hasJS : existsSync(jsPath),

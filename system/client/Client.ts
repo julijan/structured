@@ -142,7 +142,7 @@ export class ClientComponent {
             // data-attr, convert to dataAttr and store value
             // if (this.domNode.attributes[i].name.indexOf('data-') === 0) {
             if (/^((number|string|boolean|object|any):)?data-[^\s]+/.test(this.domNode.attributes[i].name)) {
-                let value = this.domNode.attributes[i].value;
+                const value = this.domNode.attributes[i].value;
                 const attrData = attributeValueFromString(value);
 
                 if (typeof attrData === 'object') {
@@ -177,7 +177,7 @@ export class ClientComponent {
     set(key: string, value: any) {
         const dataKey = 'data-' + key;
 
-        let val = attributeValueToString(key, value);
+        const val = attributeValueToString(key, value);
         this.domNode.setAttribute(dataKey, val);
         this.dataAttributes[dataKey] = val;
         this.data[toCamelCase(dataKey.substring(5))] = value;
@@ -202,7 +202,7 @@ export class ClientComponent {
         }
 
         for (let i = 0; i < scope.childNodes.length; i++) {
-            let childNode = scope.childNodes[i];
+            const childNode = scope.childNodes[i];
             if (childNode.nodeType == 1) {
                 // TODO: use config value - currently cant import Conf.ts as it would have to be exposed to client
                 // which is a bad idea as it may contain sensitive data
@@ -234,14 +234,14 @@ export class ClientComponent {
         this.loaded = false;
 
         console.log('redraw', this.name);
-        let net = new Net();
+        const net = new Net();
 
         const dataSent = Object.keys(this.data).reduce((prev, key) => {
             prev[`data-${key}`] = attributeValueToString(key, this.data[key]);
             return prev;
         }, {} as LooseObject);
 
-        let html = await net.post('/componentRender', {
+        const html = await net.post('/componentRender', {
             component: this.name,
             attributes: Object.assign(Object.assign({}, this.dataAttributes), dataSent)
         });
@@ -270,7 +270,7 @@ export class ClientComponent {
     }
 
     private initConditionals(node?: HTMLElement): void {
-        let isSelf = node === undefined;
+        const isSelf = node === undefined;
         if (node === undefined) {
             node = this.domNode;
         }
@@ -287,7 +287,7 @@ export class ClientComponent {
     }
 
     private initRefs(node?: HTMLElement): void {
-        let isSelf = node === undefined;
+        const isSelf = node === undefined;
         if (node === undefined) {
             node = this.domNode;
         }
@@ -433,7 +433,7 @@ export class ClientComponent {
     // find another component within this component recursively, returns all found components with given name
     public query(componentName: string, results: Array<ClientComponent> = []): Array<ClientComponent> {
         for (let i = 0; i < this.children.length; i++) {
-            let child = this.children[i];
+            const child = this.children[i];
             if (child.name == componentName) {
                 // found it
                 results.push(child);
@@ -457,8 +457,8 @@ export class ClientComponent {
             return;
         }
         
-        let net = new Net();
-        let html = await net.post('/componentRender', {
+        const net = new Net();
+        const html = await net.post('/componentRender', {
             component: componentName,
             data,
             attributes,
@@ -636,8 +636,8 @@ export class ClientComponent {
             }
         }
 
-        for (let action in transitions) {
-            for (let transition in transitions[action as keyof ClientComponentTransitions]) {
+        for (const action in transitions) {
+            for (const transition in transitions[action as keyof ClientComponentTransitions]) {
                 const attrName = `data-transition-${action}-${transition}`;
                 if (domNode.hasAttribute(attrName)) {
                     transitions[action as keyof ClientComponentTransitions][transition as keyof ClientComponentTransition] = parseInt(domNode.getAttribute(attrName) || '0');
@@ -701,7 +701,7 @@ export class Net {
     // Make a HTTP request
     public async request(method: RequestMethod, url: string, headers: IncomingHttpHeaders = {}, body?: any, responseType: XMLHttpRequestResponseType = 'text'): Promise<string> {
         return new Promise((resolve, reject) => {
-            let xhr = new XMLHttpRequest();
+            const xhr = new XMLHttpRequest();
     
             // listen for state change
             xhr.onreadystatechange = () => {
@@ -727,8 +727,8 @@ export class Net {
             }
 
             // set request headers
-            for (let header in headers) {
-                let headerValue = headers[header];
+            for (const header in headers) {
+                const headerValue = headers[header];
                 if (typeof headerValue === 'string') {
                     xhr.setRequestHeader(header, headerValue);
                 } else {

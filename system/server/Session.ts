@@ -18,9 +18,9 @@ export class Session {
         // bind the event listener to beforeRequestHandler
         this.application.on('beforeRequestHandler', async (ctx: RequestContext) => {
             if (this.enabled) {
-                let sessionCookie = ctx.cookies[conf.session.cookieName];
+                const sessionCookie = ctx.cookies[conf.session.cookieName];
 
-                let invalidSessionId = sessionCookie && ! this.sessions[sessionCookie];
+                const invalidSessionId = sessionCookie && ! this.sessions[sessionCookie];
 
                 if (! sessionCookie || invalidSessionId) {
                     // user has no started session, initialize session
@@ -53,7 +53,7 @@ export class Session {
         this.application.setCookie(ctx.response, conf.session.cookieName, ctx.sessionId, conf.session.durationSeconds);
 
         // create and store session entry
-        let sessionEntry: SessionEntry = {
+        const sessionEntry: SessionEntry = {
             sessionId: ctx.sessionId,
             lastRequest: new Date().getTime(),
             data: {}
@@ -68,11 +68,11 @@ export class Session {
 
     // remove expired session entries
     private garbageCollect(): void {
-        let time = new Date().getTime();
-        let sessDurationMilliseconds = conf.session.garbageCollectAfterSeconds * 1000;
+        const time = new Date().getTime();
+        const sessDurationMilliseconds = conf.session.garbageCollectAfterSeconds * 1000;
 
-        for (let sessionId in this.sessions) {
-            let sess = this.sessions[sessionId];
+        for (const sessionId in this.sessions) {
+            const sess = this.sessions[sessionId];
             if (time - sess.lastRequest > sessDurationMilliseconds) {
                 // expired session
                 delete this.sessions[sessionId];
@@ -89,7 +89,7 @@ export class Session {
     public setValue(sessionId: string|undefined, key: string, value: any): void {
         if (sessionId === undefined) {return;}
         if (this.sessions[sessionId]) {
-            let session = this.sessions[sessionId];
+            const session = this.sessions[sessionId];
             session.data[key] = value;
         }
     }
@@ -98,7 +98,7 @@ export class Session {
     public getValue(sessionId: string|undefined, key: string): any {
         if (sessionId === undefined) {return null;}
         if (this.sessions[sessionId]) {
-            let session = this.sessions[sessionId];
+            const session = this.sessions[sessionId];
             return session.data[key];
         }
         return null;
@@ -131,13 +131,13 @@ export class Session {
     // or it can be an object { keyInSession : keyInReturnedData } in which case key in returned data will be keyInReturnedData
     public extract(sessionId: string|undefined, keys: Array<string|{ [keyInSession: string] : string }>): LooseObject {
         if (sessionId === undefined) {return {};}
-        let data: LooseObject = {};
+        const data: LooseObject = {};
         keys.forEach((key) => {
             if (typeof key === 'string') {
                 data[key] = this.getValue(sessionId, key);
             } else {
-                let keyInSession = Object.keys(key)[0];
-                let keyReturned = key[keyInSession];
+                const keyInSession = Object.keys(key)[0];
+                const keyReturned = key[keyInSession];
                 data[keyReturned] = this.getValue(sessionId, keyInSession);
             }
         });

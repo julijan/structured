@@ -104,14 +104,14 @@ export class Component {
     // load the view from file system
     public async loadView(pathRelative: string, data?: LooseObject): Promise<boolean> {
 
-        let viewPath = path.resolve('../' + conf.views.path + '/' + pathRelative + (pathRelative.endsWith('.html') ? '' : '.html'));
+        const viewPath = path.resolve('../' + conf.views.path + '/' + pathRelative + (pathRelative.endsWith('.html') ? '' : '.html'));
 
         if (! existsSync(viewPath)) {
             console.warn(`Couldn't load document ${this.document.head.title}: ${viewPath}`);
             return false;
         }
 
-        let html = readFileSync(viewPath).toString();
+        const html = readFileSync(viewPath).toString();
 
         await this.init(html, data);
         
@@ -231,16 +231,16 @@ export class Component {
     }
 
     private async initChildren(passData?: LooseObject, force: boolean = false): Promise<void> {
-        let componentTags = this.document.application.components.componentNames;
+        const componentTags = this.document.application.components.componentNames;
 
         for (let i = 0; i < componentTags.length; i++) {
-            let tag = componentTags[i];
-            let component = this.document.application.components.components.find((cmp) => {
+            const tag = componentTags[i];
+            const component = this.document.application.components.components.find((cmp) => {
                 return cmp.name == tag;
             });
     
             if (component) {
-                let componentInstances = this.dom.querySelectorAll(tag);
+                const componentInstances = this.dom.querySelectorAll(tag);
     
                 for (let j = 0; j < componentInstances.length; j++) {
                     const child = new Component(component.name, componentInstances[j], this, false);
@@ -265,7 +265,7 @@ export class Component {
             return {};
         }
 
-        let data: LooseObject = {}
+        const data: LooseObject = {}
 
         if (this.attributes.use === null) {
             return data;
@@ -273,7 +273,7 @@ export class Component {
 
         // split by a coma and convert into array of "data paths"
         // data path is an array of strings and numbers, and it's used to navigate the given parentData and extract a value
-        let usePaths: Array<Array<string|number>> = this.attributes.use.split(',').map((key) => {
+        const usePaths: Array<Array<string|number>> = this.attributes.use.split(',').map((key) => {
             return key.split(/\.|\[(\d+)\]/).filter((s) => {return s !== undefined && s.length > 0 }).map((s) => {
                 return /^\d+$/.test(s) ? parseInt(s) : s;
             });
@@ -283,7 +283,7 @@ export class Component {
         usePaths.forEach((dataPath) => {
             let dataCurrent:any = parentData;
             for (let i = 0; i < dataPath.length; i++) {
-                let segment = dataPath[i];
+                const segment = dataPath[i];
                 if (typeof dataCurrent[segment] === 'undefined') {
                     // not included in parentData, skip
                     dataCurrent = undefined;
@@ -293,7 +293,7 @@ export class Component {
             }
 
             // last segment is the key
-            let dataKey = dataPath[dataPath.length - 1];
+            const dataKey = dataPath[dataPath.length - 1];
 
             // set the data
             data[dataKey] = dataCurrent;
@@ -314,7 +314,7 @@ export class Component {
         if (domNode === undefined) {
             domNode = this.dom;
         }
-        let data: LooseObject = {}
+        const data: LooseObject = {}
         for (let i = 0; i < domNode.attributes.length; i++) {
             const attrNameRaw = domNode.attributes[i].name;
             const attrNameUnprefixed = this.attributeUnpreffixed(attrNameRaw);
@@ -392,7 +392,7 @@ export class Component {
 
     protected fillData(data: LooseObject): void {
         // console.log('filling with', data);
-        let template = Handlebars.compile(this.entry ? this.entry.html : this.dom.innerHTML);
+        const template = Handlebars.compile(this.entry ? this.entry.html : this.dom.innerHTML);
         this.dom.innerHTML = template(data);
     }
 
