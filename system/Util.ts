@@ -128,3 +128,7 @@ export function attributeValueFromString(attributeValue: string): string|{
     }
     return attributeValue;
 }
+
+export function attributeValueEscape(str: string): string {
+    return str.replaceAll('"', '&quot;');
+}
