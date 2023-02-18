@@ -165,7 +165,7 @@ export class Application {
                 this.requestHandle(req, res);
             });
             this.server.listen(this.port, this.host || '127.0.0.1', async () => {
-                let address = (this.host !== undefined ? this.host : '') + ':' + this.port;
+                const address = (this.host !== undefined ? this.host : '') + ':' + this.port;
                 await this.emit('serverStarted');
                 console.log(`Server started on ${address}`);
                 resolve();
@@ -178,11 +178,13 @@ export class Application {
     // if not then it tries to serve a static asset if path is allowd by Config.assets.allow
     // if it's not allowed or the asset does not exits, 404 callback is executed
     private async requestHandle(request: IncomingMessage, response: ServerResponse): Promise<void> {
-        let uri = request.url || '';
+        const uri = request.url || '';
 
-        let handler = this.getRequestHandler(uri, request.method as RequestMethod);
+        const handler = this.getRequestHandler(uri, request.method as RequestMethod);
+
+        const app = this;
         
-        let context: RequestContext = {
+        const context: RequestContext = {
             request,
             response,
             handler,
@@ -200,7 +202,15 @@ export class Application {
                 } else {
                     response.write(JSON.stringify(data, null, 4));
                 }
-            }
+            },
+            redirect: function(to: string, statusCode: number = 302) {
+                app.redirect(response, to, statusCode);
+            },
+            show404: async function() {}
+        }
+
+        context.show404 = async function() {
+            await app.pagneNotFoundCallback.apply(this, [context]);
         }
 
         await this.emit('beforeRequestHandler', context);
@@ -213,7 +223,7 @@ export class Application {
                 console.log('Error parsing request body');
             }
 
-            let URIArgs = this.extractURIArguments(uri, handler.match);
+            const URIArgs = this.extractURIArguments(uri, handler.match);
             context.args = URIArgs;
             
             // run the request handler
@@ -232,11 +242,11 @@ export class Application {
             if (conf.assets.allow(context.request.url || '')) {
                 // static asset
                 // directory up to get out of build
-                let assetPath = path.resolve('../' + context.request.url);
+                const assetPath = path.resolve('../' + context.request.url);
                 if (existsSync(assetPath)) {
-                    let extension = (context.request.url || '').split('.').pop();
+                    const extension = (context.request.url || '').split('.').pop();
                     if (extension) {
-                        let contentType = this.contentType(extension);
+                        const contentType = this.contentType(extension);
                         if (contentType) {
                             response.setHeader('Content-Type',  contentType);
                         }
@@ -248,7 +258,7 @@ export class Application {
 
             if (! staticAsset) {
                 // no request handler found nor a static asset - 404
-                this.pagneNotFoundCallback.apply(this, [context]);
+                await this.pagneNotFoundCallback.apply(this, [context]);
             }
 
         }
@@ -280,9 +290,9 @@ export class Application {
             return;
         }
 
-        let match = ((typeof pattern === 'string' ? this.patternToSegments(pattern) : pattern) as RegExp|Array<URISegmentPattern>);
+        const match = ((typeof pattern === 'string' ? this.patternToSegments(pattern) : pattern) as RegExp|Array<URISegmentPattern>);
 
-        let handler: RequestHandler = {
+        const handler: RequestHandler = {
             match,
             methods,
             callback,
@@ -293,8 +303,8 @@ export class Application {
 
         // sort request handlers so that non-regexp uri's come first, to speed up search
         this.requestHandlers.sort((a, b) => {
-            let valA: number = a.match instanceof RegExp ? 1 : 0;
-            let valB: number = b.match instanceof RegExp ? 1 : 0;
+            const valA: number = a.match instanceof RegExp ? 1 : 0;
+            const valB: number = b.match instanceof RegExp ? 1 : 0;
 
             return valA - valB;
         });
@@ -302,7 +312,7 @@ export class Application {
 
     // if there is a handler registered for the given URI, returns the handler, null otherwise
     private getRequestHandler(uri: string, method: RequestMethod): null|RequestHandler {
-        let segments = uri.split('/');
+        const segments = uri.split('/');
 
         let possible = this.requestHandlers.filter((handler) => {
             // method allowed and
@@ -315,7 +325,7 @@ export class Application {
                 if (handler.match instanceof RegExp) {
                     return handler.match.test(uri);
                 } else {
-                    let pattern = handler.match[i].pattern;
+                    const pattern = handler.match[i].pattern;
                     if (typeof pattern === 'string') {
                         return pattern == segments[i];
                     }
@@ -360,7 +370,7 @@ export class Application {
     // hence this only gets executed for requests that have a registered handler
     private extractURIArguments(uri: string, match: Array<URISegmentPattern>|RegExp): URIArguments {
         if (match instanceof RegExp) {
-            let matches = match.exec(uri);
+            const matches = match.exec(uri);
             if (matches) {
                 return {
                     matches
@@ -370,9 +380,9 @@ export class Application {
             }
         }
 
-        let uriArgs:URIArguments = {};
+        const uriArgs:URIArguments = {};
 
-        let segments = uri.split('/');
+        const segments = uri.split('/');
 
         match.forEach((segmentPattern, i) => {
             if (segmentPattern.name) {
@@ -387,19 +397,19 @@ export class Application {
     // (varname) - match any value
     // (varname:num) - match a number
     private patternToSegments(pattern: string): Array<URISegmentPattern> {
-        let segments: Array<URISegmentPattern> = [];
+        const segments: Array<URISegmentPattern> = [];
 
-        let segmentsIn = pattern.split('/');
+        const segmentsIn = pattern.split('/');
 
         segmentsIn.forEach((segmentIn) => {
-            let named = /^\([^\/]+\)$/.test(segmentIn);
-            let segmentPattern: URISegmentPattern = {
+            const named = /^\([^\/]+\)$/.test(segmentIn);
+            const segmentPattern: URISegmentPattern = {
                 pattern: segmentIn,
                 type: 'string'
             }
             if (named) {
-                let nameParts = /^\(([^\/:\)]+)/.exec(segmentIn);
-                let isNumber = /:num\)$/.test(segmentIn);
+                const nameParts = /^\(([^\/:\)]+)/.exec(segmentIn);
+                const isNumber = /:num\)$/.test(segmentIn);
                 if (nameParts) {
                     segmentPattern.name = nameParts[1];
                     if (isNumber) {
@@ -432,7 +442,7 @@ export class Application {
     // we want to be able to await it so we won't call EventEmitter.emit
     // instead we'll manually execute the listeners awaiting each in the process
     public async emit(evt: ApplicationCallbacks|string, payload?: any): Promise<void> {
-        let listeners = this.eventEmitter.rawListeners(evt);
+        const listeners = this.eventEmitter.rawListeners(evt);
         for (let i = 0; i < listeners.length; i++) {
             await listeners[i](payload);
         }
@@ -454,7 +464,7 @@ export class Application {
     // set a cookie
     // header is set, but is not sent, it will be sent with the output
     public setCookie(response: ServerResponse, name: string, value: string|number, lifetimeSeconds: number, path: string = '/', sameSite: string = 'Strict') {
-        let expiresAt = lifetimeSeconds > 0 ? new Date(new Date().getTime() + lifetimeSeconds * 1000).toUTCString() : 0;
+        const expiresAt = lifetimeSeconds > 0 ? new Date(new Date().getTime() + lifetimeSeconds * 1000).toUTCString() : 0;
         response.setHeader('Set-Cookie', `${name}=${value}; Expires=${expiresAt}; Path=${path}; SameSite=${sameSite}`);
     }
 
@@ -469,12 +479,12 @@ export class Application {
                 // application/x-www-form-urlencoded
 
                 // replace + with spaces
-                let queryString = ctx.bodyRaw.toString().replaceAll('+', ' ');
+                const queryString = ctx.bodyRaw.toString().replaceAll('+', ' ');
 
-                let argPairs = queryString.split('&');
-                let args: RequestBodyArguments = {}
+                const argPairs = queryString.split('&');
+                const args: RequestBodyArguments = {}
                 argPairs.forEach((arg) => {
-                    let parts = arg.split('=');
+                    const parts = arg.split('=');
                     let key = decodeURIComponent(parts[0]);
                     const isArray = key.endsWith('[]');
                     if (isArray) {
@@ -514,11 +524,11 @@ export class Application {
                 let boundary: RegExpExecArray|null|string = /^multipart\/form-data; boundary=(.+)$/.exec(ctx.request.headers['content-type']);
                 if (boundary) {
                     boundary = boundary[1];
-                    let data = multipartFormDataParser.parse(ctx.bodyRaw, boundary);
+                    const data = multipartFormDataParser.parse(ctx.bodyRaw, boundary);
 
                     // format data as LooseObject
-                    let dataFormatted:LooseObject = {};
-                    let files: RequestBodyFiles = {};
+                    const dataFormatted:LooseObject = {};
+                    const files: RequestBodyFiles = {};
 
                     data.forEach((item) => {
                         if (item.name) {
@@ -542,7 +552,7 @@ export class Application {
                                     }
 
                                     let itemName = item.name;
-                                    let path = [];
+                                    const path = [];
                                     while (/\[.*\]/.test(itemName) != null) {
                                         const res = /\[(.*?)\]/.exec(itemName);
                                         if (res) {
@@ -560,7 +570,7 @@ export class Application {
                                         const parts = path.slice(0, path.length - 1);
                                         parts.forEach((part) => {
                                             if (! dataObject[part]) {
-                                                let obj: Array<any> = [];
+                                                const obj: Array<any> = [];
                                                 dataObject[part] = obj;
                                                 dataObject = obj;
                                             } else {
@@ -607,13 +617,13 @@ export class Application {
 
     private parseCookies(request: IncomingMessage): LooseObject {
         if (! request.headers.cookie) {return {};}
-        let cookieString = request.headers.cookie;
-        let cookiePairs = cookieString.split(';');
+        const cookieString = request.headers.cookie;
+        const cookiePairs = cookieString.split(';');
 
-        let cookies: LooseObject = {}
+        const cookies: LooseObject = {}
 
         cookiePairs.forEach((cookiePair) => {
-            let parts = cookiePair.trim().split('=');
+            const parts = cookiePair.trim().split('=');
             cookies[parts.shift() || ''] = parts.join('=');
         });
 
@@ -623,8 +633,7 @@ export class Application {
     // returns the raw request data (eg. POST'ed data)
     private requestDataRaw(request: IncomingMessage): Promise<Buffer> {
 
-        let chunks: Array<Buffer> = [];
-
+        const chunks: Array<Buffer> = [];
 
         return new Promise((resolve, reject) => {
             request.on('data', (chunk) => {
@@ -633,12 +642,12 @@ export class Application {
     
             request.on('close', () => {
                 // calculate the total size of all chunks
-                let size = chunks.reduce((prev, curr) => {
+                const size = chunks.reduce((prev, curr) => {
                     return prev + curr.length;
                 }, 0);
 
                 // combine the chunks to form final data
-                let data = Buffer.concat(chunks, size);
+                const data = Buffer.concat(chunks, size);
                 
                 resolve(data);
             });
@@ -656,16 +665,16 @@ export class Application {
         } else {
             routesPath = path.resolve(`../build/${conf.routes.path}`);
         }
-        let files = readdirSync(routesPath);
+        const files = readdirSync(routesPath);
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            let filePath = path.resolve(routesPath + '/' + file);
-            let isDirectory = statSync(filePath).isDirectory();
+            const filePath = path.resolve(routesPath + '/' + file);
+            const isDirectory = statSync(filePath).isDirectory();
             if (isDirectory) {
                 await this.registerRoutes(filePath);
             } else {
-                let fn = (await import(filePath)).default;
+                const fn = (await import(filePath)).default;
                 if (typeof fn === 'function') {
                     await fn(this);
                 }
