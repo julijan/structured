@@ -41,7 +41,11 @@ export type RequestContext = {
     // true if x-requested-with header is received and it equals 'xmlhttprequest'
     isAjax: boolean,
 
-    respondWith: (data: any) => void
+    respondWith: (data: any) => void,
+
+    redirect: (to: string, statusCode?: number) => void,
+
+    show404: () => Promise<void>
 }
 
 export interface RequestBodyArguments {
