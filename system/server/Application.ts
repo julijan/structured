@@ -12,6 +12,7 @@ import { Components } from './Components.js';
 import { Session } from './Session.js';
 import { HelperDelegate } from 'handlebars';
 import { symbolArrays } from '../Symbols.js';
+import { toSnakeCase } from '../Util.js';
 
 export class Application {
 
@@ -31,6 +32,7 @@ export class Application {
     // CSS/JS included with each page
     commonCSS: Array<DocumentResource> = [];
     commonJS: Array<DocumentResource> = [];
+    commonCustom: Array<string> = [];
 
     favicon: {
         image: string|null,
@@ -178,7 +180,11 @@ export class Application {
     // if not then it tries to serve a static asset if path is allowd by Config.assets.allow
     // if it's not allowed or the asset does not exits, 404 callback is executed
     private async requestHandle(request: IncomingMessage, response: ServerResponse): Promise<void> {
-        const uri = request.url || '';
+        let uri = request.url || '';
+
+        if (conf.removeTrailingSlashURL && uri.endsWith('/')) {
+            uri = uri.substring(0, uri.length - 1);
+        }
 
         const handler = this.getRequestHandler(uri, request.method as RequestMethod);
 
@@ -497,24 +503,26 @@ export class Application {
                         if (! isArray) {
                             args[key] = decodeURIComponent(parts.slice(1).join('='));
                         } else {
-                            // @ts-ignore
+                            if (! args[symbolArrays]) {
+                                args[symbolArrays] = {};
+                            }
+
                             if (! args[symbolArrays][key]) {
-                                // @ts-ignore
                                 args[symbolArrays][key] = [];
                             }
-                            // @ts-ignore
                             args[symbolArrays][key].push(parts.slice(1).join('='));
                         }
                     } else {
                         if (! isArray) {
                             args[key] = decodeURIComponent(parts[1]);
                         } else {
-                            // @ts-ignore
+                            if (! args[symbolArrays]) {
+                                args[symbolArrays] = {};
+                            }
+
                             if (! args[symbolArrays][key]) {
-                                // @ts-ignore
                                 args[symbolArrays][key] = [];
                             }
-                            // @ts-ignore
                             args[symbolArrays][key].push(decodeURIComponent(parts[1]));
                         }
                     }
@@ -685,16 +693,11 @@ export class Application {
     }
 
     private async respondWithComponent(ctx: RequestContext, componentName: string, attributes: RequestBodyArguments, data?: LooseObject, unwrap: boolean = true): Promise<boolean> {
-
-        // console.log('unwrap', unwrap);
-
         const component = this.component(componentName);
         if (component) {
             const document = new Document(this, '', ctx);
             const attributesArray: Array<string> = [];
             for (const attributeName in attributes) {
-                // const attrData = attributeValueFromString(attributes[attributeName]);
-                // console.log(attrData);
                 const attr = `${attributeName}="${attributes[attributeName]}"`;
                 attributesArray.push(attr);
             }
@@ -716,6 +719,23 @@ export class Application {
     public async handlebarsRegisterHelper(name: string, helper: HelperDelegate): Promise<void> {
         const helperItem = {name, helper};
         this.handlebarsHelpers.push(helperItem);
+    }
+
+    memoryUsage(): NodeJS.MemoryUsage {
+        return process.memoryUsage();
+    }
+
+    printMemoryUsage(): void {
+        const usage = this.memoryUsage();
+        let total = 0;
+        const totals = Object.keys(usage).reduce((prev, key: keyof NodeJS.MemoryUsage) => {
+            const usedMb = usage[key] / 1000000;
+            prev[toSnakeCase(key).replaceAll('_', ' ')] = [parseFloat(usedMb.toFixed(1)), 'Mb'];
+            total += usedMb;
+            return prev;
+        }, {} as LooseObject);
+        totals.total = [parseFloat(total.toFixed(1)), 'Mb'];
+        console.table(totals);
     }
 
 }
