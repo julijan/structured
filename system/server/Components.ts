@@ -25,13 +25,11 @@ export class Components {
                 // file, register component entry
                 if (component.endsWith('.html')) {
                     const componentName = component.substring(0, component.length - 5);
-                    // name = name.substring(0, name.length - 5);
 
                     // server side module
                     const jsPathRelative = path.relative(path.resolve('../'), pathCurrent);
                     let jsPath = path.resolve('../build/' + jsPathRelative);
                     jsPath = jsPath.substring(0, jsPath.length - 5) + '.js';
-
 
                     // client side initializer
                     const rel = path.relative('../', relativeToPath as string);

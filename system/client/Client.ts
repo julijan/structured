@@ -4,10 +4,6 @@ import { AsteriskAny, ClientComponentTransition, ClientComponentTransitions, Ini
 import { attributeValueFromString, attributeValueToString, isAsync, toCamelCase } from '../Util.js';
 
 export class App {
-
-    // TODO: use config value - currently cant import Conf.ts as it would have to be exposed to client
-    // which is a bad idea as it may contain sensitive data
-    componentRenderURI: string = '/component';
     root: ClientComponent;
     initializerContext: InitializerFunctionContext;
     store: DataStore = new DataStore();
@@ -20,16 +16,9 @@ export class App {
             net: new Net()
         }
     }
-
-    // // fetch a component from the server as HTML string
-    // public async fetch(componentName: string, primaryKey?: string|number): Promise<string> {
-    //     return this.net.get(`${this.componentRenderURI}/${componentName}/${primaryKey || ''}`);
-    // }
-
 }
 
 export class ClientComponent {
-
     name: string;
     children: Array<ClientComponent> = [];
     parent: ClientComponent;
@@ -204,8 +193,6 @@ export class ClientComponent {
         for (let i = 0; i < scope.childNodes.length; i++) {
             const childNode = scope.childNodes[i];
             if (childNode.nodeType == 1) {
-                // TODO: use config value - currently cant import Conf.ts as it would have to be exposed to client
-                // which is a bad idea as it may contain sensitive data
                 if ((childNode as HTMLElement).hasAttribute('data-component')) {
                     // found a child component, add to children
                     this.children.push(new ClientComponent(parent || null, (childNode as HTMLElement).getAttribute('data-component') || '', childNode as HTMLElement, this.storeGlobal));

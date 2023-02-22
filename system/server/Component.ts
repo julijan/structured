@@ -85,15 +85,7 @@ export class Component {
         }
 
         // register handlebars helpers
-
         if (! (this instanceof Document)) {
-            // this.document.application.on('handlebarsRegisterHelper', async (payload: {
-            //     name: string,
-            //     helper: HelperDelegate
-            // }) => {
-            //     Handlebars.registerHelper(payload.name, payload.helper);
-            // });
-    
             this.document.application.handlebarsHelpers.forEach((helperItem) => {
                 Handlebars.registerHelper(helperItem.name, helperItem.helper);
             });
@@ -165,8 +157,6 @@ export class Component {
         if (! this.attributes.if || force) {
             // load data
             if (data === undefined) {
-                // console.log('getData', this.name);
-                // this.data = await this.entry.module.getData(this.attributes, this.document.ctx);
                 if (this.entry && this.entry.module) {
                     // component has a server side part, fetch data using getData
                     this.data = await this.entry.module.getData.apply(this, [this.attributes, this.document.ctx, this.document.application]);
@@ -175,10 +165,6 @@ export class Component {
                     // then use attributes as data
                     this.data = Object.assign({}, this.attributes);
                 }
-    
-                // if (! this.attributes.key) {
-                //     console.warn(`Component ${this.name} has attached module but is initialized without data-key attribute.`);
-                // }
             }
     
             if (data !== undefined) {
@@ -193,9 +179,7 @@ export class Component {
             // await this.initChildren(data, force);
             await this.initChildren(undefined, force);
         }
-    
-        // this.html = this.dom.innerHTML;
-        
+
         // allocate an unique ID for this component
         // used client side to uniquely identify the component when it accesses it's storage
         if (! this.attributes.componentId) {
@@ -345,8 +329,6 @@ export class Component {
                 }
 
                 data[key] = val;
-
-                // console.log(key, val);
                 
                 // data-attr, convert to dataAttr and store value
                 const attrData = attributeValueToString(key, val);
@@ -391,7 +373,6 @@ export class Component {
     }
 
     protected fillData(data: LooseObject): void {
-        // console.log('filling with', data);
         const template = Handlebars.compile(this.entry ? this.entry.html : this.dom.innerHTML);
         this.dom.innerHTML = template(data);
     }
