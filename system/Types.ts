@@ -116,11 +116,8 @@ export interface ComponentScaffold  {
     // selectively export data
     exportFields? : Array<string>,
 
-    getData: (this: Component, attributeData: RequestBodyArguments|LooseObject, ctx: undefined|RequestContext, app: Application) => Promise<LooseObject>
-
-    // getData(this: Component, attributeData: RequestBodyArguments, ctx: undefined|RequestContext): Promise<LooseObject>,
-    create?(entry: LooseObject): Promise<any>,
-    delete?(id: string): Promise<any>
+    getData: (this: Component, data: RequestBodyArguments|LooseObject, ctx: undefined|RequestContext, app: Application) => Promise<LooseObject>
+    [key: string] : any
 }
 
 export type LooseObject = {
