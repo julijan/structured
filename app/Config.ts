@@ -1,5 +1,6 @@
 const conf = {
     autoInit: true,
+    removeTrailingSlashURL: true,
     routes: {
         path: '/app/routes'
     },
