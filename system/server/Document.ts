@@ -37,17 +37,6 @@ export class Document extends Component {
             Handlebars.registerHelper(helperItem.name, helperItem.helper);
         });
 
-        // include common CSS/JS
-        this.application.commonJS.forEach((res) => {
-            this.head.addJS(res.path, res.priority, res.attributes);
-        });
-        this.application.commonCSS.forEach((res) => {
-            this.head.addCSS(res.path, res.priority, res.attributes);
-        });
-        this.application.commonCustom.forEach((str) => {
-            this.head.add(str);
-        });
-
         // set favicon
         if (typeof this.application.favicon.image === 'string') {
             this.head.setFavicon(this.application.favicon);

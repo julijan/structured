@@ -6,7 +6,7 @@ import * as mime from 'mime-types';
 import * as multipartFormDataParser from 'parse-multipart-data';
 
 import conf from '../../app/Config.js';
-import { ApplicationCallbacks, ComponentEntry, DocumentResource, LooseObject, RequestBodyArguments, RequestBodyFiles, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from '../Types';
+import { ApplicationCallbacks, ComponentEntry, LooseObject, RequestBodyArguments, RequestBodyFiles, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from '../Types';
 import { Document } from './Document.js';
 import { Components } from './Components.js';
 import { Session } from './Session.js';
@@ -28,11 +28,6 @@ export class Application {
     session: Session;
 
     eventEmitter: EventEmitter = new EventEmitter();
-
-    // CSS/JS included with each page
-    commonCSS: Array<DocumentResource> = [];
-    commonJS: Array<DocumentResource> = [];
-    commonCustom: Array<string> = [];
 
     favicon: {
         image: string|null,
