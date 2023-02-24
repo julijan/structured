@@ -128,6 +128,73 @@ export class Application {
             return `<${componentName}${useString.length > 0 ? ` data-use="${useString}"` : ''} ${attributesString}></${componentName}>`;
         });
 
+        // handlebars helper that allows conditionally rendering a string/block
+        await this.handlebarsRegisterHelper('tern', function(...args: Array<any>) {
+            if (args.length < 2) {return '';}
+
+            const argArray = args.slice(0, args.length - 1);
+            const hash = args[args.length - 1];
+
+            const className = argArray[0];
+
+            if (argArray.length === 1) {
+                return className;
+            }
+
+            if (argArray.length === 2) {
+                if (argArray[1]) {
+                    return className;
+                }
+                return '';
+            }
+
+            if (argArray.length === 3) {
+                if (argArray[1] == argArray[2]) {
+                    return className;
+                }
+                return '';
+            }
+
+            console.log(`Template error in helper ${hash.name}. Too many arguments, expected 1 - 3 arguments, got ${argArray.length}`);
+            return '';
+        });
+
+
+        // handlebars helper that converts newline characters to <br>
+        await this.handlebarsRegisterHelper('nl2br', function(...args) {
+            if (args.length === 1 && 'fn' in args[0]) {
+                // block
+                return args[0].fn(this).replaceAll('\n', '<br>');
+            }
+            if (args.length === 2) {
+                return args[0].replaceAll('\n', '<br>');
+            }
+            return '';
+        });
+
+        // handlebars helper that will preserve indentation in given string by replacing space with &nbsp;
+        await this.handlebarsRegisterHelper('indent', function(...args) {
+            if (args.length === 1 && 'fn' in args[0]) {
+                // block
+                return args[0].fn(this).replaceAll(' ', '&nbsp;').replaceAll('\t', '&nbsp;'.repeat(4));
+            }
+            if (args.length === 2) {
+                return args[0].replaceAll(' ', '&nbsp;').replaceAll('\t', '&nbsp;'.repeat(4));
+            }
+            return '';
+        });
+
+        // handlebars helper that will JSON.stringify the given object
+        await this.handlebarsRegisterHelper('json', function(...args) {
+            if (args.length > 1) {
+                if (typeof args[0] === 'object' && args[0] !== null) {
+                    return JSON.stringify(args[0]);
+                }
+                return '';
+            }
+            return '';
+        });
+
         await this.emit('beforeComponentLoad');
         this.components.loadComponents();
         await this.emit('afterComponentLoad');
