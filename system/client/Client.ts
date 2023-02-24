@@ -169,7 +169,7 @@ export class ClientComponent {
         const val = attributeValueToString(key, value);
         this.domNode.setAttribute(dataKey, val);
         this.dataAttributes[dataKey] = val;
-        this.data[toCamelCase(dataKey.substring(5))] = value;
+        this.data[toCamelCase(key)] = value;
     }
 
     // first parent that can be redrawn (has no data-use)
@@ -230,7 +230,8 @@ export class ClientComponent {
 
         const html = await net.post('/componentRender', {
             component: this.name,
-            attributes: Object.assign(Object.assign({}, this.dataAttributes), dataSent)
+            // attributes: Object.assign(Object.assign({}, this.dataAttributes), dataSent)
+            attributes: dataSent
         });
         this.domNode.innerHTML = html;
 
