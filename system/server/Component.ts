@@ -152,7 +152,7 @@ export class Component {
             this.attributes = Object.assign(this.importedParentData(this.parent.data) || {}, this.attributes);
         }
 
-        // previously was setting this.html = html here
+        this.html = this.dom.firstChild.innerHTML;
 
         if (! this.attributes.if || force) {
             // load data
