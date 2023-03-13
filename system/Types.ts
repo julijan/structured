@@ -107,8 +107,6 @@ export type ComponentEntry = {
 }
 
 export interface ComponentScaffold  {
-    primaryKey?: string|number,
-
     // rendered tag name (default is "div")
     tagName?: string,
 
