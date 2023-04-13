@@ -32,13 +32,23 @@ export class ClientComponent {
     onDestroy?: Function;
     onRedraw?: Function;
 
+    // callbacks bound using bind method
+    private bound : Array<{
+        element: HTMLElement,
+        event: string,
+        callback: (e: Event) => void
+    }> = [];
+
     conditionals: Array<HTMLElement> = [];
-    refs: {
-        [key: string] : HTMLElement
+    private refs: {
+        [key: string] : HTMLElement | ClientComponent
+    } = {};
+    private refsArray: {
+        [key: string] : Array<HTMLElement | ClientComponent>
     } = {};
 
     // used for showing/hiding conditionals
-    transitions: ClientComponentTransitions = {
+    private transitions: ClientComponentTransitions = {
         show: {
             fade: false,
             slide: false
@@ -52,18 +62,18 @@ export class ClientComponent {
     // a place for user-defined "methods"
     // executed using run method
     // these should be arrow functions in order to keep the context
-    callbacks: {
+    private callbacks: {
         [key: string] : Function
     } = {}
 
-    loaded: boolean;
+    private loaded: boolean;
 
     // callback executed each time the component is redrawn
     // this is the ideal place for binding any event listeners within component
     initializer : InitializerFunction|null = null;
 
     // data-attr are parsed into an object
-    data: {
+    private data: {
         [key: string] : any
     } = {};
 
@@ -105,20 +115,30 @@ export class ClientComponent {
             this.updateConditionals(true);
         });
 
+        this.promoteRefs();
 
         // @ts-ignore
         if (initializers && initializers[this.name]) {
             // @ts-ignore
-            this.init(new Function('const init = ' + initializers[this.name] + '; init.apply(this, [...arguments]);'));
+            this.init(initializers[this.name]);
         }
     }
 
     // set initializer callback and execute it
-    init(initializer: InitializerFunction) {
-        this.initializer = initializer;
-        this.initializer.apply(this, [{
-            net: new Net()
-        }]);
+    private init(initializer: InitializerFunction | string) {
+        let initializerFunction: InitializerFunction | null = null;
+        if (typeof initializer === 'string') {
+            initializerFunction = new Function('const init = ' + initializer + '; init.apply(this, [...arguments]);')  as InitializerFunction;
+        } else {
+            initializerFunction = initializer;
+        }
+
+        if (initializerFunction) {
+            this.initializer = initializerFunction;
+            this.initializer.apply(this, [{
+                net: new Net()
+            }]);
+        }
     }
 
     // parse all data-attr attributes into this.data object converting the data-attr to camelCase
@@ -135,11 +155,13 @@ export class ClientComponent {
                 const attrData = attributeValueFromString(value);
 
                 if (typeof attrData === 'object') {
-                    this.data[attrData.key] = attrData.value;
+                    // this.data[attrData.key] = attrData.value;
+                    this.set(attrData.key, attrData.value);
                 } else {
                     // not a valid attribute data string, assign as is (string)
                     const key = toCamelCase(this.domNode.attributes[i].name.substring(5));
-                    this.data[key] = attrData;
+                    // this.data[key] = attrData;
+                    this.set(key, attrData);
                 }
             }
         }
@@ -163,7 +185,7 @@ export class ClientComponent {
     }
 
     // set a data value (data-attr)
-    set(key: string, value: any) {
+    public set(key: string, value: any) {
         const dataKey = 'data-' + key;
 
         const val = attributeValueToString(key, value);
@@ -228,12 +250,26 @@ export class ClientComponent {
             return prev;
         }, {} as LooseObject);
 
-        const html = await net.post('/componentRender', {
+        const res = await net.postJSON<{html: string, initializers: Record<string, string>}>('/componentRender', {
             component: this.name,
             // attributes: Object.assign(Object.assign({}, this.dataAttributes), dataSent)
             attributes: dataSent
         });
-        this.domNode.innerHTML = html;
+
+        // add any new initializers to global initializers list
+        for (let key in res.initializers) {
+            // @ts-ignore
+            if (! initializers[key]) {
+                console.log('registering initializer', key);
+                // @ts-ignore
+                initializers[key] = res.initializers[key];
+                if (this.name === key) {
+                    this.init(res.initializers[key] as string);
+                }
+            }
+        }
+        this.domNode.innerHTML = res.html;
+
 
         // re-init children because their associated domNode is no longer part of the DOM
         // component initializers will get lost
@@ -284,6 +320,14 @@ export class ClientComponent {
             this.refs[node.getAttribute('ref') || 'undefined'] = node;
         }
 
+        if (node.hasAttribute('array:ref')) {
+            const key = node.getAttribute('array:ref') || 'undefined';
+            if (! (key in this.refsArray)) {
+                this.refsArray[key] = [];
+            }
+            this.refsArray[key].push(node);
+        }
+
         node.childNodes.forEach((child) => {
             if (child.nodeType === 1 && (isSelf || ! node?.hasAttribute('data-component'))) {
                 this.initRefs(child as HTMLElement);
@@ -291,8 +335,22 @@ export class ClientComponent {
         });
     }
 
+    private promoteRefs() {
+        this.children.forEach((child) => {
+            const ref = child.domNode.getAttribute('ref');
+            if (ref) {
+                console.log('ref promoted');
+                this.refs[ref] = child;
+            }
+        });
+    }
+
     public ref<T>(refName: string): T {
         return this.refs[refName] as T;
+    }
+
+    public refArray<T>(refName: string): Array<T> {
+        return (this.refsArray[refName] || []) as Array<T>;
     }
 
     private updateConditionals(enableTransition: boolean) {
@@ -364,8 +422,9 @@ export class ClientComponent {
         if (! this.isRoot) {
 
             // remove children recursively
-            for (let i = 0; i < this.children.length; i++) {
-                await this.children[i].remove();
+            const children = Array.from(this.children);
+            for (let i = 0; i < children.length; i++) {
+                await children[i].remove();
             }
 
             // call user defined destructor
@@ -434,27 +493,37 @@ export class ClientComponent {
     }
 
     // append to is a selector within this component's dom
-    public async add(appendTo: string|HTMLElement|Element, componentName: string, data?: LooseObject, attributes?: {[key: string] : string}) {
-
-        // console.log('create', componentName);
-
+    public async add(appendTo: string|HTMLElement|Element, componentName: string, data?: LooseObject, attributes?: {[key: string] : string}): Promise<ClientComponent | null> {
         const container = typeof appendTo === 'string' ? this.domNode.querySelector(appendTo) : appendTo;
 
         if (container === null) {
             console.warn(`${this.name}.add() - appendTo selector not found within this component`);
-            return;
+            return null;
         }
         
         const net = new Net();
-        const html = await net.post('/componentRender', {
+        const res = await net.postJSON<{html: string, initializers: Record<string, string>}>('/componentRender', {
             component: componentName,
             data,
             attributes,
             unwrap: false
         });
 
+        // add any new initializers to global initializers list
+        for (let key in res.initializers) {
+            // @ts-ignore
+            if (! initializers[key]) {
+                console.log('registering initializer', key);
+                // @ts-ignore
+                initializers[key] = res.initializers[key];
+                if (this.name === key) {
+                    this.init(res.initializers[key] as string);
+                }
+            }
+        }
+
         const tmpContainer = document.createElement('div');
-        tmpContainer.innerHTML = html;
+        tmpContainer.innerHTML = res.html;
 
         const componentNode = tmpContainer.firstChild as HTMLElement;
 
@@ -462,14 +531,9 @@ export class ClientComponent {
         this.children.push(component);
 
         container.appendChild(componentNode);
-    }
 
-    // query(match: Array<string>, exact: boolean = false) {
-    //     this.children.reduce((prev, curr) => {
-    //         if (curr.name)
-    //         return prev.concat(curr)
-    //     }, []);
-    // }
+        return component;
+    }
 
     public componentData<T>(key?: string): T {
         if (! key) {
@@ -524,9 +588,6 @@ export class ClientComponent {
             // if specified use given transformOrigin
             const transformOrigin = domNode.getAttribute('data-transform-origin-show') || '50% 0';
 
-            // domNode.style.overflow = 'hidden';
-            // const height = domNode.clientHeight;
-            // domNode.style.height = '0px';
             domNode.style.transformOrigin = transformOrigin;
             const axis = this.transitionAxis(domNode, 'show');
             domNode.style.transform = `scale${axis}(0.01)`;
@@ -548,7 +609,6 @@ export class ClientComponent {
     }
 
     public hide(domNode: HTMLElement, enableTransition: boolean) {
-
         if (! enableTransition) {
             domNode.style.display = 'none';
             return;
@@ -676,10 +736,28 @@ export class ClientComponent {
     }
 
     private async destroy(): Promise<void> {
+        this.unbindAll();
         // if the user has defined a destroy callback, run it
         if (typeof this.onDestroy === 'function') {
             await this.run(this.onDestroy);
         }
+    }
+
+    public bind(element: HTMLElement | undefined | null, event: string, callback: (e: Event) => void) {
+        if (element instanceof HTMLElement) {
+            this.bound.push({
+                element,
+                event,
+                callback
+            });
+            element.addEventListener(event, callback);
+        }
+    }
+
+    private unbindAll() {
+        this.bound.forEach((bound) => {
+            bound.element.removeEventListener(bound.event, bound.callback);
+        });
     }
 
 }
@@ -748,6 +826,12 @@ export class Net {
     }
 
     public async put(url: string, data: any, headers: IncomingHttpHeaders = {}): Promise<string> {
+        if (typeof data === 'object' && ! headers['content-type']) {
+            // if data is object and no content/type header is specified default to application/json
+            headers['content-type'] = 'application/json';
+            // convert data to JSON
+            data = JSON.stringify(data);
+        }
         return this.request('PUT', url, headers, data);
     }
 
@@ -763,7 +847,7 @@ export class Net {
         return JSON.parse(await this.delete(url, headers));
     }
 
-    public async putJSON<T>(url: string, data: LooseObject, headers?: IncomingHttpHeaders) {
+    public async putJSON<T>(url: string, data: LooseObject, headers?: IncomingHttpHeaders): Promise<T> {
         return JSON.parse(await this.put(url, data, headers));
     }
 
@@ -784,8 +868,8 @@ export class DataStore {
     } = {}
 
     // return self to allow chained calls to set
-    set(component: ClientComponent, key: string, val: any): DataStore {
-        const componentId = component.data.componentId;
+    public set(component: ClientComponent, key: string, val: any): DataStore {
+        const componentId = component.componentData<string>('componentId');
 
         const oldValue = this.get(componentId, key);
 
@@ -805,7 +889,7 @@ export class DataStore {
         return this;
     }
 
-    get(componentId: string, key: string): any {
+    public get(componentId: string, key: string): any {
         if (! this.data[componentId]) {
             return undefined;
         }
@@ -814,7 +898,7 @@ export class DataStore {
 
     // add callback to be called when a given key's value is changed
     // if key === '*' then it will be called when any of the key's values is changed
-    onChange(componentId: string, key: string|AsteriskAny, callback: StoreChangeCallback): DataStore {
+    public onChange(componentId: string, key: string|AsteriskAny, callback: StoreChangeCallback): DataStore {
         if (! this.changeListeners[componentId]) {
             this.changeListeners[componentId] = {}
         }
@@ -840,23 +924,23 @@ export class DataStoreView {
         this.component = component;
     }
 
-    set(key: string, val: any): DataStoreView {
+    public set(key: string, val: any): DataStoreView {
         this.store.set(this.component, key, val);
         return this;
     }
 
-    get(key: string): any {
-        return this.store.get(this.component.data.componentId, key);
+    public get(key: string): any {
+        return this.store.get(this.component.componentData<string>('componentId'), key);
     }
 
-    toggle(key: string) {
+    public toggle(key: string) {
         this.set(key, ! this.get(key));
     }
 
     // add callback to be called when a given key's value is changed
     // if key === '*' then it will be called when any of the key's values is changed
-    onChange(key: string|AsteriskAny, callback: StoreChangeCallback): DataStoreView {
-        this.store.onChange(this.component.data.componentId, key, callback);
+    public onChange(key: string|AsteriskAny, callback: StoreChangeCallback): DataStoreView {
+        this.store.onChange(this.component.componentData<string>('componentId'), key, callback);
         return this;
     }
 }
