@@ -47,18 +47,19 @@ export class Components {
                     }
 
                     if (hasInitializer) {
-                        const initializer = await import(initializerPath);
+                        const initializer = await import('file:///' + initializerPath);
                         entry.initializer = initializer.init;
                     }
 
                     if (entry.hasJS && entry.pathJS) {
                         // load and instantiate component's module
-                        const componentConstructor = await import(entry.pathJS);
+                        const componentConstructor = await import('file:///' + entry.pathJS);
                         entry.module = new componentConstructor.default();
 
                         entry.renderTagName = entry.module?.tagName || 'div';
                         entry.exportData = entry.module?.exportData || false;
                         entry.exportFields = entry.module?.exportFields;
+                        entry.attributes = entry.module?.attributes;
                     }
 
                     this.components.push(entry);
