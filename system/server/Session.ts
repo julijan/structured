@@ -95,7 +95,7 @@ export class Session {
     }
     
     // value or null if session does not exist
-    public getValue(sessionId: string|undefined, key: string): any {
+    public getValue<T>(sessionId: string|undefined, key: string): T|null {
         if (sessionId === undefined) {return null;}
         if (this.sessions[sessionId]) {
             const session = this.sessions[sessionId];
