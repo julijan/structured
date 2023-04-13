@@ -159,7 +159,7 @@ export class Component {
             if (data === undefined) {
                 if (this.entry && this.entry.module) {
                     // component has a server side part, fetch data using getData
-                    this.data = await this.entry.module.getData.apply(this, [this.attributes, this.document.ctx, this.document.application]);
+                    this.data = (await this.entry.module.getData.apply(this, [this.attributes, this.document.ctx, this.document.application])) || {};
                 } else {
                     // if the component has no server side part
                     // then use attributes as data
@@ -190,15 +190,27 @@ export class Component {
         }
 
         if (this.entry === undefined || this.entry?.exportData) {
-            Object.keys(this.data).forEach((field) => {
-                this.dom.setAttribute('data-' + field, attributeValueToString(field, this.data[field]));
-            });
-        } else if (this.entry?.exportFields) {
-            this.entry.exportFields.forEach((field) => {
-                this.dom.setAttribute('data-' + field, attributeValueToString(field, this.data[field]));
-            });
+            // export all data if component has no server side part
+            this.setAttributes(this.data, 'data-');
         }
 
+        if (this.entry) {
+            // export specified fields if it has a server side part
+            if (this.entry.exportFields) {
+                this.entry.exportFields.reduce((prev, field) => {
+                    prev[field] = this.data[field];
+                    return prev;
+                    
+                }, {} as Record<string, string>);
+                this.setAttributes(this.data, 'data-');
+            }
+
+            // if attributes are present on component, add those to the node
+            if (this.entry.attributes) {
+                this.setAttributes(this.entry.attributes, '', false);
+            }
+        }
+        
         // add style display = none to all data-if's
         // this will prevent twitching client side
         // (otherwise elements that should be hidden might appear for a brief second)
@@ -212,6 +224,15 @@ export class Component {
         }
 
         return;
+    }
+
+    public setAttributes(attributes: Record<string, any>, prefix: string = '', encode: boolean = true): void {
+        if (typeof attributes === 'object' && attributes !== null) {
+            for (const attr in attributes) {
+                const value = encode ? attributeValueToString(attr, attributes[attr]) : attributes[attr];
+                this.dom.setAttribute(prefix + attr, value);
+            }
+        }
     }
 
     private async initChildren(passData?: LooseObject, force: boolean = false): Promise<void> {
@@ -315,7 +336,7 @@ export class Component {
                 } else if (attrDataType === 'number') {
                     val = parseFloat(valRaw);
                 } else if (attrDataType === 'boolean') {
-                    val = !!valRaw;
+                    val = typeof valRaw === 'string' ? valRaw === 'true' || valRaw === '1' : !!valRaw;
                 } else if (attrDataType === 'object') {
                     if (typeof valRaw === 'string') {
                         if (valRaw.trim().length > 1) {
