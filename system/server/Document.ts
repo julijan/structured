@@ -22,6 +22,8 @@ export class Document extends Component {
 
     ctx: undefined|RequestContext;
 
+    appendHTML: string = '';
+
     constructor(app: Application, title: string, ctx?: RequestContext) {
         super('root', '');
         this.application = app;
@@ -31,7 +33,7 @@ export class Document extends Component {
 
         // include client side JS, not an actual URL, Application.ts adds a request handler
         // for routes starting with /assets/client-js/
-        this.head.addJS('/assets/client-js/client/Client.js', 0, { type: 'module', defer: '' });
+        this.head.addJS('/assets/client-js/client/Client.js', 0, { type: 'module' });
 
         this.application.handlebarsHelpers.forEach((helperItem) => {
             Handlebars.registerHelper(helperItem.name, helperItem.helper);
@@ -59,24 +61,29 @@ export class Document extends Component {
     }
 
     body(): string {
-        return this.dom.innerHTML;
+        return this.dom.innerHTML + '\n' + this.appendHTML;
+    }
+
+    public initInitializers() {
+        const initializers: {
+            [key: string] : string
+        } = {};
+
+        for (const name in this.initializers) {
+            initializers[name] = this.initializers[name].toString();
+        }
+
+        const initializersString = '<script type="application/javascript">const initializers = ' + JSON.stringify(initializers) + '</script>';
+
+        this.head.add(initializersString);
+        this.initializersInitialized = true;
+        return initializers;
     }
 
     public toString(): string {
 
         if (! this.initializersInitialized) {
-            const initializers: {
-                [key: string] : string
-            } = {};
-    
-            for (const name in this.initializers) {
-                initializers[name] = this.initializers[name].toString();
-            }
-    
-            const initializersString = '<script type="application/javascript">const initializers = ' + JSON.stringify(initializers) + '</script>';
-    
-            this.head.add(initializersString);
-            this.initializersInitialized = true;
+            this.initInitializers();
         }
 
         return `<!DOCTYPE html>
