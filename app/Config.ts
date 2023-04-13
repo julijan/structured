@@ -1,4 +1,5 @@
 const conf = {
+    envPrefix: 'STRUCTURED',
     autoInit: true,
     removeTrailingSlashURL: true,
     routes: {
