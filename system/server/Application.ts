@@ -133,14 +133,27 @@ export class Application {
             const className = argArray[0];
 
             if (argArray.length === 1) {
-                return className;
+                if (typeof className === 'string') {
+                    return className;
+                }
+                if (argArray[0]) {
+                    return hash.fn();
+                }
+                return '';
             }
 
             if (argArray.length === 2) {
-                if (argArray[1]) {
-                    return className;
+                if (typeof argArray[0] === 'string') {
+                    if (argArray[1]) {
+                        return className;
+                    }
+                    return '';
+                } else {
+                    if (argArray[0] == argArray[1]) {
+                        return hash.fn();
+                    }
+                    return '';
                 }
-                return '';
             }
 
             if (argArray.length === 3) {
@@ -159,9 +172,10 @@ export class Application {
         await this.handlebarsRegisterHelper('nl2br', function(...args) {
             if (args.length === 1 && 'fn' in args[0]) {
                 // block
-                return args[0].fn(this).replaceAll('\n', '<br>');
+                return (args[0].fn(this) || '').replaceAll('\n', '<br>');
             }
             if (args.length === 2) {
+                if (typeof args[0] !== 'string') {return '';}
                 return args[0].replaceAll('\n', '<br>');
             }
             return '';
@@ -257,6 +271,7 @@ export class Application {
             response,
             handler,
             args: {},
+            // @ts-ignore
             data: {},
             cookies: this.parseCookies(request),
             isAjax : request.headers['x-requested-with'] == 'xmlhttprequest',
@@ -614,7 +629,7 @@ export class Application {
                                     let dataObject = dataFormatted;
 
                                     if (! dataObject[name]) {
-                                        const obj: Array<any> = [];
+                                        const obj: LooseObject = {};
                                         dataObject[name] = obj;
                                         dataObject = obj;
                                     } else {
@@ -640,7 +655,7 @@ export class Application {
                                         const parts = path.slice(0, path.length - 1);
                                         parts.forEach((part) => {
                                             if (! dataObject[part]) {
-                                                const obj: Array<any> = [];
+                                                const obj: LooseObject = {};
                                                 dataObject[part] = obj;
                                                 dataObject = obj;
                                             } else {
@@ -744,7 +759,7 @@ export class Application {
             if (isDirectory) {
                 await this.registerRoutes(filePath);
             } else {
-                const fn = (await import(filePath)).default;
+                const fn = (await import('file:///' + filePath)).default;
                 if (typeof fn === 'function') {
                     await fn(this);
                 }
@@ -760,18 +775,25 @@ export class Application {
             const document = new Document(this, '', ctx);
             const attributesArray: Array<string> = [];
             for (const attributeName in attributes) {
-                const attr = `${attributeName}="${attributes[attributeName]}"`;
+                const attr = `${toSnakeCase(attributeName, '-')}="${attributes[attributeName]}"`;
                 attributesArray.push(attr);
             }
             const attributesString = attributesArray.join(' ');
             const useString = data ? ' data-use="'+ Object.keys(data).join(',') +'"' : '';
             await document.init(`<${componentName} ${attributesString}${useString}></${componentName}>`, data, true);
 
+            let html = '';
+
             if (unwrap) {
-                ctx.response.write(document.children[0].dom.innerHTML);
+                html = document.children[0].dom.innerHTML;
             } else {
-                ctx.response.write(document.body());
+                html = document.body();
             }
+
+            ctx.respondWith({
+                html,
+                initializers: document.initInitializers()
+            })
 
             return true;
         }
