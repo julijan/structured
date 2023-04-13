@@ -11,7 +11,7 @@ export function toCamelCase(dataKey: string, separator: string = '-'): string {
 }
 
 // camelCase to snake_case
-export function toSnakeCase(str: string): string {
+export function toSnakeCase(str: string, joinWith: string = '_'): string {
     let start = 0;
     const parts = [];
     if (str.length < 2) {
@@ -35,7 +35,7 @@ export function toSnakeCase(str: string): string {
     // add last part
     parts.push(str.substring(start).toLowerCase());
 
-    return parts.join('_');
+    return parts.join(joinWith);
 }
 
 export function capitalize(str: string) {
