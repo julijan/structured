@@ -3,6 +3,7 @@ import { ClientComponent, Net } from "./client/Client";
 import { Application } from "./server/Application.js";
 import { Component } from "./server/Component.js";
 import { symbolArrays } from "./Symbols.js";
+import { RequestContextData } from "../app/Types.js";
 
 export type RequestMethod = 'GET'|'POST'|'PUT'|'PATCH'|'DELETE';
 
@@ -33,7 +34,7 @@ export type RequestContext = {
     files?: RequestBodyFiles,
 
     // user defined data
-    data: LooseObject,
+    data: RequestContextData,
 
     // if session is started and user has visited any page
     sessionId?: string,
@@ -101,6 +102,8 @@ export type ComponentEntry = {
 
     // selectively export data
     exportFields? : Array<string>,
+
+    attributes?: Record<string, string>,
     
     // client side component initializer
     initializer?: InitializerFunction
@@ -114,7 +117,9 @@ export interface ComponentScaffold  {
     // selectively export data
     exportFields? : Array<string>,
 
-    getData: (this: Component, data: RequestBodyArguments|LooseObject, ctx: undefined|RequestContext, app: Application) => Promise<LooseObject>
+    attributes?: Record<string, string>,
+
+    getData: (this: Component, data: RequestBodyArguments|LooseObject, ctx: undefined|RequestContext, app: Application) => Promise<LooseObject | null>
     [key: string] : any
 }
 
