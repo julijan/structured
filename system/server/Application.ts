@@ -12,6 +12,7 @@ import { Components } from './Components.js';
 import { Session } from './Session.js';
 import { HelperDelegate } from 'handlebars';
 import { toSnakeCase } from '../Util.js';
+import { parseBodyURLEncoded } from './Request.js';
 
 export class Application {
 
@@ -559,41 +560,7 @@ export class Application {
 
             if (ctx.request.headers['content-type'].indexOf('urlencoded') > -1) {
                 // application/x-www-form-urlencoded
-                const params = new URLSearchParams(ctx.bodyRaw.toString());
-                const args: LooseObject = {}
-                params.forEach((val, key) => {
-                    if (key.indexOf('[') > -1) {
-                        const keyDotSeparated = key.replaceAll(/\[([^\[]*)\]/g, (k, v) => {return `.${v}`});
-                        const keyPath = keyDotSeparated.split('.');
-                        let target = args;
-                        if (keyPath.length === 0) {
-                            args[keyPath[0]] = val;
-                        } else {
-                            for (let i = 0; i < keyPath.length; i++) {
-                                let curr: string|number = keyPath[i];
-                                const next = keyPath[i + 1];
-                                const isArray = next == undefined || next.length === 0 || /^\d+$/.test(next);
-                                if (isArray && /^\d+$/.test(curr)) {
-                                    curr = parseInt(curr);
-                                }
-                                if (typeof curr === 'string' && curr.length > 0 && typeof target[curr] === 'undefined') {
-                                    target[curr] = isArray ? [] : {}
-                                }
-                                if (next == undefined) {
-                                    if (isArray) {
-                                        target.push(decodeURIComponent(val));
-                                    } else {
-                                        target[curr] = decodeURIComponent(val);
-                                    }
-                                }
-                                target = target[curr];
-                            }
-                        }
-                    } else {
-                        args[key] = decodeURIComponent(val);
-                    }
-                });
-                ctx.body = args;
+                ctx.body = parseBodyURLEncoded(ctx.bodyRaw.toString());
             } else if (ctx.request.headers['content-type'].indexOf('multipart/form-data') > -1) {
                 let boundary: RegExpExecArray|null|string = /^multipart\/form-data; boundary=(.+)$/.exec(ctx.request.headers['content-type']);
                 if (boundary) {

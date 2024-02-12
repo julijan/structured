@@ -49,8 +49,10 @@ export type RequestContext = {
     show404: () => Promise<void>
 }
 
+export type RequestBodyRecordValue = string | Array<RequestBodyRecordValue> | { [key: string]: RequestBodyRecordValue };
+
 export interface RequestBodyArguments {
-    [key: string] : string,
+    [key: string] : RequestBodyRecordValue,
     [symbolArrays]? : {
         [key: string] : Array<string>
     }
