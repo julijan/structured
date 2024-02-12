@@ -11,7 +11,6 @@ import { Document } from './Document.js';
 import { Components } from './Components.js';
 import { Session } from './Session.js';
 import { HelperDelegate } from 'handlebars';
-import { symbolArrays } from '../Symbols.js';
 import { toSnakeCase } from '../Util.js';
 
 export class Application {
@@ -560,48 +559,38 @@ export class Application {
 
             if (ctx.request.headers['content-type'].indexOf('urlencoded') > -1) {
                 // application/x-www-form-urlencoded
-
-                // replace + with spaces
-                const queryString = ctx.bodyRaw.toString().replaceAll('+', ' ');
-
-                const argPairs = queryString.split('&');
-                const args: RequestBodyArguments = {}
-                argPairs.forEach((arg) => {
-                    const parts = arg.split('=');
-                    let key = decodeURIComponent(parts[0]);
-                    const isArray = key.endsWith('[]');
-                    if (isArray) {
-                        key = key.slice(0, key.length - 2);
-                    }
-                    if (isArray && ! args[symbolArrays]) {
-                        args[symbolArrays] = {};
-                    }
-                    if (parts.length > 2) {
-                        if (! isArray) {
-                            args[key] = decodeURIComponent(parts.slice(1).join('='));
+                const params = new URLSearchParams(ctx.bodyRaw.toString());
+                const args: LooseObject = {}
+                params.forEach((val, key) => {
+                    if (key.indexOf('[') > -1) {
+                        const keyDotSeparated = key.replaceAll(/\[([^\[]*)\]/g, (k, v) => {return `.${v}`});
+                        const keyPath = keyDotSeparated.split('.');
+                        let target = args;
+                        if (keyPath.length === 0) {
+                            args[keyPath[0]] = val;
                         } else {
-                            if (! args[symbolArrays]) {
-                                args[symbolArrays] = {};
+                            for (let i = 0; i < keyPath.length; i++) {
+                                let curr: string|number = keyPath[i];
+                                const next = keyPath[i + 1];
+                                const isArray = next == undefined || next.length === 0 || /^\d+$/.test(next);
+                                if (isArray && /^\d+$/.test(curr)) {
+                                    curr = parseInt(curr);
+                                }
+                                if (typeof curr === 'string' && curr.length > 0 && typeof target[curr] === 'undefined') {
+                                    target[curr] = isArray ? [] : {}
+                                }
+                                if (next == undefined) {
+                                    if (isArray) {
+                                        target.push(decodeURIComponent(val));
+                                    } else {
+                                        target[curr] = decodeURIComponent(val);
+                                    }
+                                }
+                                target = target[curr];
                             }
-
-                            if (! args[symbolArrays][key]) {
-                                args[symbolArrays][key] = [];
-                            }
-                            args[symbolArrays][key].push(parts.slice(1).join('='));
                         }
                     } else {
-                        if (! isArray) {
-                            args[key] = decodeURIComponent(parts[1]);
-                        } else {
-                            if (! args[symbolArrays]) {
-                                args[symbolArrays] = {};
-                            }
-
-                            if (! args[symbolArrays][key]) {
-                                args[symbolArrays][key] = [];
-                            }
-                            args[symbolArrays][key].push(decodeURIComponent(parts[1]));
-                        }
+                        args[key] = decodeURIComponent(val);
                     }
                 });
                 ctx.body = args;
@@ -790,9 +779,16 @@ export class Application {
                 html = document.body();
             }
 
+            const component = document.children[0];
+            const exportedData = component.entry?.exportData ? component.data : (component.entry?.exportFields ? component.entry.exportFields.reduce((prev, curr) => {
+                prev[curr] = component.data[curr];
+                return prev;
+            }, {} as LooseObject) : {});
+
             ctx.respondWith({
                 html,
-                initializers: document.initInitializers()
+                initializers: document.initInitializers(),
+                data: exportedData
             })
 
             return true;
