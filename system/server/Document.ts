@@ -1,7 +1,7 @@
 import { ServerResponse } from 'http';
 import { Md5 } from 'ts-md5';
 
-import { Initializers, RequestContext } from 'system/Types.js';
+import { Initializers, LooseObject, RequestContext } from 'system/Types.js';
 import conf from '../../app/Config.js';
 import { Application } from './Application.js';
 import { DocumentHead } from './DocumentHead.js';
@@ -128,6 +128,13 @@ export class Document extends Component {
         }
 
         return id;
+    }
+
+    public async loadComponent(componentName: string, data?: LooseObject) {
+        const componentEntry = this.document.application.component(componentName);
+        if (componentEntry) {
+            await this.loadView(componentEntry.path.relativeToViews, data);
+        }
     }
 
 }
