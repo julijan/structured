@@ -105,8 +105,8 @@ export class Session {
     }
 
     // return value and clear it from session
-    public getClear(sessionId: string|undefined, key: string): any {
-        const val = this.getValue(sessionId, key);
+    public getClear<T>(sessionId: string|undefined, key: string): T | null {
+        const val = this.getValue<T>(sessionId, key);
         this.removeValue(sessionId, key);
         return val;
     }
