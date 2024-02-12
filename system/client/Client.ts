@@ -250,11 +250,16 @@ export class ClientComponent {
             return prev;
         }, {} as LooseObject);
 
-        const res = await net.postJSON<{html: string, initializers: Record<string, string>}>('/componentRender', {
+        const res = await net.postJSON<{html: string, initializers: Record<string, string>, data: LooseObject}>('/componentRender', {
             component: this.name,
             // attributes: Object.assign(Object.assign({}, this.dataAttributes), dataSent)
             attributes: dataSent
         });
+
+        for (let key in res.data) {
+            this.set(key, res.data[key]);
+            this.store.set(key, res.data[key]);
+        }
 
         // add any new initializers to global initializers list
         for (let key in res.initializers) {
