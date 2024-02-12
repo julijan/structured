@@ -95,8 +95,19 @@ export function stripTags(contentWithHTML: string, keepTags: Array<string> = [])
     });
 }
 
+function base64ToBytes(base64: string) {
+    const binString = atob(base64);
+    // @ts-ignore
+    return Uint8Array.from(binString, (m) => m.codePointAt(0));
+  }
+  
+function bytesToBase64(bytes: Uint8Array) {
+    const binString = String.fromCodePoint(...bytes);
+    return btoa(binString);
+}
+
 export function attributeValueToString(key: string, value: any): string {
-    return 'base64:' + btoa(JSON.stringify({key, value}));
+    return 'base64:' + bytesToBase64(new TextEncoder().encode(JSON.stringify({key, value})));
 }
 
 export function attributeValueFromString(attributeValue: string): string|{
@@ -106,7 +117,7 @@ export function attributeValueFromString(attributeValue: string): string|{
 
     if (attributeValue.indexOf('base64:') === 0) {
         try {
-            const decoded = atob(attributeValue.substring(7));
+            const decoded = new TextDecoder().decode(base64ToBytes(attributeValue.substring(7)));
         
             if (decoded.indexOf('{') !== 0) {
                 // expected to start with "{", if not return as is
