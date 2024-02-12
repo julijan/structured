@@ -16,44 +16,58 @@ export class Components {
         
         components.forEach(async (component) => {
             // check if directory
-            const pathCurrent = relativeToPath + '/' + component;
-            const isDirectory = statSync(pathCurrent).isDirectory();
+            // absolute path to a directory, or the component's HTML file
+            const absolutePath = relativeToPath + '/' + component;
+            const isDirectory = statSync(absolutePath).isDirectory();
 
             if (isDirectory) {
-                this.loadComponents(pathCurrent);
+                this.loadComponents(absolutePath);
             } else {
                 // file, register component entry
                 if (component.endsWith('.html')) {
+                    // remove .html to get componentName
                     const componentName = component.substring(0, component.length - 5);
 
-                    // server side module
-                    const jsPathRelative = path.relative(path.resolve('../'), pathCurrent);
-                    let jsPath = path.resolve('../build/' + jsPathRelative);
-                    jsPath = jsPath.substring(0, jsPath.length - 5) + '.js';
+                    const pathAbsolute = relativeToPath || '';
+                    const pathRelative = path.relative('../', pathAbsolute);
+                    const pathBuild = path.resolve('../build/' + pathRelative);
+                    const pathRelativeToViews = path.relative(`./${conf.views.path}`, pathRelative);
 
-                    // client side initializer
-                    const rel = path.relative('../', relativeToPath as string);
-                    const p = path.resolve('../build', rel);
-                    const initializerPath = `${p}/${componentName}.client.js`;
-                    const hasInitializer = existsSync(initializerPath);
-                    
+                    const pathHTML = `${pathAbsolute}/${component}`;
+
+                    // server side js file path (may not exist)
+                    const jsServerPath = `${pathBuild}/${componentName}.js`;
+                    const hasServerJS = existsSync(jsServerPath);
+
+                    // client side js file path (may not exist)
+                    const jsClientPath = `${pathBuild}/${componentName}.client.js`;
+                    const hasClientJS = existsSync(jsClientPath);
+
                     const entry: ComponentEntry = {
                         name: componentName,
-                        path: pathCurrent,
-                        hasJS : existsSync(jsPath),
-                        pathJS: jsPath,
-                        html: this.loadHTML(pathCurrent),
+                        path: {
+                            absolute: pathAbsolute,
+                            relative: pathRelative,
+                            relativeToViews: `${pathRelativeToViews}/${component}`,
+                            build: pathBuild,
+                            html: pathHTML,
+                            jsClient: hasClientJS ? jsClientPath : undefined,
+                            jsServer: hasServerJS ? jsServerPath : undefined
+                        },
+                        hasJS : existsSync(jsServerPath),
+                        html: this.loadHTML(absolutePath),
                         exportData: false
                     }
 
-                    if (hasInitializer) {
-                        const initializer = await import('file:///' + initializerPath);
+                    // load client side initializer
+                    if (hasClientJS) {
+                        const initializer = await import('file:///' + jsClientPath);
                         entry.initializer = initializer.init;
                     }
 
-                    if (entry.hasJS && entry.pathJS) {
+                    if (hasServerJS) {
                         // load and instantiate component's module
-                        const componentConstructor = await import('file:///' + entry.pathJS);
+                        const componentConstructor = await import('file:///' + entry.path.jsServer);
                         entry.module = new componentConstructor.default();
 
                         entry.renderTagName = entry.module?.tagName || 'div';

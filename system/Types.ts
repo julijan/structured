@@ -86,9 +86,16 @@ export type DocumentResource = {
 
 export type ComponentEntry = {
     name: string,
-    path: string,
+    path: {
+        absolute: string,
+        relative: string,
+        relativeToViews: string,
+        build: string,
+        html: string,
+        jsServer?: string,
+        jsClient?: string
+    },
     hasJS: boolean,
-    pathJS?: string,
     html : string,
     
     // server side component module
