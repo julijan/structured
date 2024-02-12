@@ -28,8 +28,7 @@ export class Component {
     attributesRaw: RequestBodyArguments = {};
 
     // extracted from data-attribute on component tag
-    attributes: RequestBodyArguments = {};
-
+    attributes: Record<string, string> = {};
 
     dom: any; // jsdom
 
