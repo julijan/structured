@@ -16,48 +16,67 @@ export class FormValidation {
                 return false;
             }
 
+            const value = data[field];
+            if (typeof value !== 'string') {return false;}
+
             // field exists, but consider empty strings non valid
-            return data[field].trim().length > 0;
+            return value.trim().length > 0;
         },
         'number' : async (data, field) => {
             // does not need to be a number, but rather contain only numbers
             // eg. 14
-            return /^-?\d+$/.test(data[field]);
+            const value = data[field];
+            if (typeof value !== 'string') {return false;}
+            return /^-?\d+$/.test(value);
         },
         'float' : async (data, field) => {
             // 14.2
-            return /^-?\d+\.\d+$/.test(data[field]);
+            const value = data[field];
+            if (typeof value !== 'string') {return false;}
+            return /^-?\d+\.\d+$/.test(value);
         },
         'numeric' : async (data, field, arg, rules) => {
             // 14 or 14.2
             return await this.validators['number'](data, field, arg, rules) || await this.validators['float'](data, field, arg, rules);
         },
         'min' : async(data, field, arg, rules) => {
+            const value = data[field];
+            if (typeof value !== 'string') {return false;}
             if (await this.validators['numeric'](data, field, arg, rules)) {
-                return parseFloat(data[field]) >= arg;
+                return parseFloat(value) >= arg;
             }
             // non numeric value, can't be determined so consider invalid
             return false;
         },
         'max' : async(data, field, arg, rules) => {
+            const value = data[field];
+            if (typeof value !== 'string') {return false;}
             if (await this.validators['numeric'](data, field, arg, rules)) {
-                return parseFloat(data[field]) <= arg;
+                return parseFloat(value) <= arg;
             }
             // non numeric value, can't be determined so consider invalid
             return false;
         },
         'minLength' : async (data, field, arg) => {
-            return data[field].length >= arg;
+            const value = data[field];
+            if (typeof value !== 'string') {return false;}
+            return value.length >= arg;
         },
         'maxLength' : async (data, field, arg) => {
-            return data[field].length <= arg;
+            const value = data[field];
+            if (typeof value !== 'string') {return false;}
+            return value.length <= arg;
         },
         'alphanumeric' : async (data, field) => {
+            const value = data[field];
+            if (typeof value !== 'string') {return false;}
             // string must contain only letters and numbers
-            return /^[a-zA-Z0-9]+$/.test(data[field]);
+            return /^[a-zA-Z0-9]+$/.test(value);
         },
         'validEmail' : async (data, field) => {
-            return /^(?=.{1,254}$)(?=.{1,64}@)[-!#$%&'*+/0-9=?A-Z^_`a-z{|}~]+(\.[-!#$%&'*+/0-9=?A-Z^_`a-z{|}~]+)*@[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$/.test(data[field]);
+            const value = data[field];
+            if (typeof value !== 'string') {return false;}
+            return /^(?=.{1,254}$)(?=.{1,64}@)[-!#$%&'*+/0-9=?A-Z^_`a-z{|}~]+(\.[-!#$%&'*+/0-9=?A-Z^_`a-z{|}~]+)*@[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$/.test(value);
         }
     }
 
@@ -132,11 +151,14 @@ export class FormValidation {
 
             const isRequired = entry.rules.includes('required');
 
+            const value = data[entry.field[0]];
+            const possiblyValidDataExists = typeof value === 'string';
+
             // content - a non required field that is not passed or is blank
             // will pass all checks, for example rules ['numeric']
             // we expect the field to contain a numeric value, but we don't expect the field to exist in the first place
             // se all validators are skipped for content entries
-            const isContent = ! isRequired && (! data[entry.field[0]] || data[entry.field[0]].trim().length == 0);
+            const isContent = ! isRequired && (! possiblyValidDataExists  || value.trim().length === 0);
 
             if (! isContent) {
                 for (let j = 0; j < entry.rules.length; j++) {
