@@ -1,4 +1,4 @@
-import { RequestBodyRecordValue } from "../Types.js";
+import { RequestBodyFile, RequestBodyRecordValue } from "../Types.js";
 import { mergeDeep } from "../Util.js";
 
 export function parseBodyURLEncoded(bodyURLEncoded: string, initialValue?: Record<string, RequestBodyRecordValue> | RequestBodyRecordValue): Record<string, RequestBodyRecordValue> {
@@ -76,5 +76,72 @@ export function parseBodyURLEncoded(bodyURLEncoded: string, initialValue?: Recor
         return prev;
     }, (initialValue || {}) as Record<string, RequestBodyRecordValue>);
 
+    return data;
+}
+
+export function parseBodyMultipart(bodyRaw: string, boundary: string) {
+    const pairsRaw = bodyRaw.split(boundary);
+    const pairs = pairsRaw.map((pair) => {
+        const parts = /Content-Disposition: form-data; name="([^\r\n"]+)"\r\n\r\n(.*?)\r\n/.exec(pair);
+        if (parts) {
+            return {
+                key: parts[1],
+                value: parts[2]
+            }
+        }
+        return null;
+    })
+    
+    const urlEncoded = pairs.reduce((prev, curr) => {
+        if (curr !== null) {
+            prev.push(`${curr.key}=${encodeURIComponent(curr.value)}`);
+        }
+        return prev;
+    }, [] as Array<string>).join('&');
+
+    return parseBodyURLEncoded(urlEncoded);
+}
+
+export function multipartBodyFiles(bodyRaw: string, boundary: string) {
+    const files: Record<string, RequestBodyRecordValue> = {}
+    const pairsRaw = bodyRaw.split(boundary);
+    pairsRaw.map((pair) => {
+        const parts = /Content-Disposition: form-data; name="(.+?)"; filename="(.+?)"\r\nContent-Type: (.*)\r\n\r\n([\s\S]+)$/m.exec(pair);
+        if (parts) {
+            const file: RequestBodyFile = {
+                data: Buffer.from(parts[4].substring(0, parts[4].length - 2).trim(), 'binary'),
+                fileName: parts[2],
+                type: parts[3]
+            }
+            mergeDeep(files, multipartFillFile(parseBodyURLEncoded(`${parts[1]}=file`), file));
+        }
+        return null;
+    })
+    return files;
+}
+
+function multipartFillFile(data: RequestBodyRecordValue, file: RequestBodyFile) {
+    if (typeof data !== 'object') {return data;}
+    if (Array.isArray(data)) {
+        for (let i = 0; i < data.length; i++) {
+            if (data[i] === 'file') {
+                data[i] = file;
+                return data;
+            }
+            if (typeof data[i] === 'object') {
+                multipartFillFile(data[i] as RequestBodyRecordValue, file);
+            }
+        }
+        return data;
+    }
+    for (const key in data) {
+        if (data[key] === 'file') {
+            data[key] = file;
+            return data;
+        }
+        if (typeof data[key] === 'object') {
+            multipartFillFile(data[key] as Record<string, RequestBodyRecordValue>, file);
+        }
+    }
     return data;
 }

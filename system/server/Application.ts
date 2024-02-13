@@ -3,16 +3,14 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
 import * as path from 'path';
 import * as mime from 'mime-types';
-import * as multipartFormDataParser from 'parse-multipart-data';
-
 import conf from '../../app/Config.js';
-import { ApplicationCallbacks, ComponentEntry, LooseObject, RequestBodyArguments, RequestBodyFiles, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from '../Types';
+import { ApplicationCallbacks, ComponentEntry, LooseObject, RequestBodyArguments, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from '../Types';
 import { Document } from './Document.js';
 import { Components } from './Components.js';
 import { Session } from './Session.js';
 import { HelperDelegate } from 'handlebars';
 import { toSnakeCase } from '../Util.js';
-import { parseBodyURLEncoded } from './Request.js';
+import { multipartBodyFiles, parseBodyMultipart, parseBodyURLEncoded } from './Request.js';
 
 export class Application {
 
@@ -276,7 +274,7 @@ export class Application {
             cookies: this.parseCookies(request),
             isAjax : request.headers['x-requested-with'] == 'xmlhttprequest',
             respondWith: function (data: any) {
-                if (typeof data === 'string') {
+                if (typeof data === 'string' || Buffer.isBuffer(data)) {
                     response.write(data);
                 } else if (data instanceof Document) {
                     response.write(data.toString());
@@ -560,88 +558,13 @@ export class Application {
 
             if (ctx.request.headers['content-type'].indexOf('urlencoded') > -1) {
                 // application/x-www-form-urlencoded
-                ctx.body = parseBodyURLEncoded(ctx.bodyRaw.toString());
+                ctx.body = parseBodyURLEncoded(ctx.bodyRaw.toString('utf-8'));
             } else if (ctx.request.headers['content-type'].indexOf('multipart/form-data') > -1) {
                 let boundary: RegExpExecArray|null|string = /^multipart\/form-data; boundary=(.+)$/.exec(ctx.request.headers['content-type']);
                 if (boundary) {
                     boundary = boundary[1];
-                    const data = multipartFormDataParser.parse(ctx.bodyRaw, boundary);
-
-                    // format data as LooseObject
-                    const dataFormatted:LooseObject = {};
-                    const files: RequestBodyFiles = {};
-
-                    data.forEach((item) => {
-                        if (item.name) {
-                            if (! item.filename) {
-                                // not a file
-                                // fix arrays
-                                const isArray = /\[.*?\]/.test(item.name);
-                                if (! isArray) {
-                                    dataFormatted[item.name] = item.data.toString();
-                                } else {
-                                    // an array
-                                    const name = item.name.substring(0, item.name.indexOf('['));
-                                    let dataObject = dataFormatted;
-
-                                    if (! dataObject[name]) {
-                                        const obj: LooseObject = {};
-                                        dataObject[name] = obj;
-                                        dataObject = obj;
-                                    } else {
-                                        dataObject = dataObject[name];
-                                    }
-
-                                    let itemName = item.name;
-                                    const path = [];
-                                    while (/\[.*\]/.test(itemName) != null) {
-                                        const res = /\[(.*?)\]/.exec(itemName);
-                                        if (res) {
-                                            itemName = itemName.substring(res.index + res[1].length + 2);
-                                            path.push(/^\d+$/.test(res[1]) ? parseInt(res[1]) : res[1]);
-                                        } else {
-                                            break;
-                                        }
-
-                                    }
-
-                                    // create path
-                                    if (path.length > 1) {
-                                        // nested
-                                        const parts = path.slice(0, path.length - 1);
-                                        parts.forEach((part) => {
-                                            if (! dataObject[part]) {
-                                                const obj: LooseObject = {};
-                                                dataObject[part] = obj;
-                                                dataObject = obj;
-                                            } else {
-                                                dataObject = dataObject[part];
-                                            }
-                                        })
-                                    }
-
-                                    const key = path[path.length - 1];
-
-                                    if (key !== '') {
-                                        dataObject[key] = item.data.toString();
-                                    } else {
-                                        dataObject.push(item.data.toString());
-                                    }
-                                }
-                            } else {
-                                // file, keep entire item
-                                files[item.name] = {
-                                    fileName: item.filename,
-                                    data : item.data,
-                                    type : item.type
-                                };
-                            }
-                        }
-                    });
-
-                    ctx.body = dataFormatted;
-                    ctx.files = files;
-
+                    ctx.body = parseBodyMultipart(ctx.bodyRaw.toString('utf-8'), boundary);
+                    ctx.files = multipartBodyFiles(ctx.bodyRaw.toString('binary'), boundary);
                 }
             } else if (ctx.request.headers['content-type'].indexOf('application/json') > -1) {
                 // application/json
