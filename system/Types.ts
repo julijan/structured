@@ -31,7 +31,7 @@ export type RequestContext = {
 
     // files extracted from request body
     // currently only multipart/form-data
-    files?: RequestBodyFiles,
+    files?: Record<string, RequestBodyRecordValue>,
 
     // user defined data
     data: RequestContextData,
@@ -49,7 +49,7 @@ export type RequestContext = {
     show404: () => Promise<void>
 }
 
-export type RequestBodyRecordValue = string | Array<RequestBodyRecordValue> | { [key: string]: RequestBodyRecordValue };
+export type RequestBodyRecordValue = string | Array<RequestBodyRecordValue> | { [key: string]: RequestBodyRecordValue } | { [key: string]: RequestBodyFile } | Array<RequestBodyFile>;
 
 export interface RequestBodyArguments {
     [key: string] : RequestBodyRecordValue,
