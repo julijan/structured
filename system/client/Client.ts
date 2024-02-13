@@ -192,6 +192,7 @@ export class ClientComponent {
         this.domNode.setAttribute(dataKey, val);
         this.dataAttributes[dataKey] = val;
         this.data[toCamelCase(key)] = value;
+        this.store.set(key, val);
     }
 
     // first parent that can be redrawn (has no data-use)
