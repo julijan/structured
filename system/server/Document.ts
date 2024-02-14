@@ -133,7 +133,7 @@ export class Document extends Component {
     public async loadComponent(componentName: string, data?: LooseObject) {
         const componentEntry = this.document.application.component(componentName);
         if (componentEntry) {
-            await this.loadView(componentEntry.path.relativeToViews, data);
+            await this.init(`<${componentName} ${data ? `data-use="${Object.keys(data).join(',')}"` : ''}></${componentName}>`, data);
         }
     }
 
