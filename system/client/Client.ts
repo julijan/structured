@@ -94,11 +94,12 @@ export class ClientComponent {
             this.parent = parent;
         }
         
+        this.store = new DataStoreView(store, this);
+
         this.initRefs();
         this.initData();
 
         this.storeGlobal = store;
-        this.store = new DataStoreView(store, this);
 
         this.initConditionals();
         this.initChildren(this.domNode, this);
@@ -895,9 +896,12 @@ export class DataStore {
         return this;
     }
 
-    public get(componentId: string, key: string): any {
+    public get(componentId: string, key?: string): any {
         if (! this.data[componentId]) {
             return undefined;
+        }
+        if (typeof key !== 'string') {
+            return this.data[componentId];
         }
         return this.data[componentId][key];
     }
@@ -941,6 +945,10 @@ export class DataStoreView {
 
     public toggle(key: string) {
         this.set(key, ! this.get(key));
+    }
+
+    public keys(): Array<string> {
+        return Object.keys(this.store.get(this.component.componentData<string>('componentId')));
     }
 
     // add callback to be called when a given key's value is changed
