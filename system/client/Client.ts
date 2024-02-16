@@ -26,7 +26,9 @@ export class ClientComponent {
     isRoot: boolean;
     root: ClientComponent;
     store: DataStoreView;
-    storeGlobal: DataStore;
+    private storeGlobal: DataStore;
+
+    private redrawRequest: XMLHttpRequest | null = null;
 
     // optional user defined callbacks
     onDestroy?: Function;
@@ -39,7 +41,7 @@ export class ClientComponent {
         callback: (e: Event) => void
     }> = [];
 
-    conditionals: Array<HTMLElement> = [];
+    private conditionals: Array<HTMLElement> = [];
     private refs: {
         [key: string] : HTMLElement | ClientComponent
     } = {};
@@ -70,7 +72,7 @@ export class ClientComponent {
 
     // callback executed each time the component is redrawn
     // this is the ideal place for binding any event listeners within component
-    initializer : InitializerFunction|null = null;
+    private initializer : InitializerFunction|null = null;
 
     // data-attr are parsed into an object
     private data: {
@@ -238,6 +240,11 @@ export class ClientComponent {
             return;
         }
 
+        // abort existing redraw call, if in progress
+        if (this.redrawRequest !== null) {
+            this.redrawRequest.abort();
+        }
+
         if (typeof this.onRedraw === 'function') {
             this.run(this.onRedraw);
         }
@@ -245,37 +252,51 @@ export class ClientComponent {
         this.loaded = false;
 
         console.log('redraw', this.name);
-        const net = new Net();
 
         const dataSent = Object.keys(this.data).reduce((prev, key) => {
             prev[`data-${key}`] = attributeValueToString(key, this.data[key]);
             return prev;
         }, {} as LooseObject);
 
-        const res = await net.postJSON<{html: string, initializers: Record<string, string>, data: LooseObject}>('/componentRender', {
-            component: this.name,
-            // attributes: Object.assign(Object.assign({}, this.dataAttributes), dataSent)
-            attributes: dataSent
+        const redrawRequest = new NetRequest('POST', '/componentRender', {
+            'content-type' : 'application/json'
         });
+        this.redrawRequest = redrawRequest.xhr;
 
-        for (let key in res.data) {
-            this.set(key, res.data[key]);
-            this.store.set(key, res.data[key]);
+        const componentDataJSON = await redrawRequest.send(JSON.stringify({
+            component: this.name,
+            attributes: dataSent
+        }));
+
+        // should only happen if a previous redraw attempt was aborted
+        if (componentDataJSON.length === 0) {return;}
+
+        const componentData: {
+            html: string,
+            initializers: Record<string, string>,
+            data: LooseObject
+        } = JSON.parse(componentDataJSON);
+
+        this.redrawRequest = null;
+
+        for (const key in componentData.data) {
+            this.set(key, componentData.data[key]);
+            this.store.set(key, componentData.data[key]);
         }
 
         // add any new initializers to global initializers list
-        for (let key in res.initializers) {
+        for (const key in componentData.initializers) {
             // @ts-ignore
             if (! initializers[key]) {
                 console.log('registering initializer', key);
                 // @ts-ignore
-                initializers[key] = res.initializers[key];
+                initializers[key] = componentData.initializers[key];
                 if (this.name === key) {
-                    this.init(res.initializers[key] as string);
+                    this.init(componentData.initializers[key] as string);
                 }
             }
         }
-        this.domNode.innerHTML = res.html;
+        this.domNode.innerHTML = componentData.html;
 
 
         // re-init children because their associated domNode is no longer part of the DOM
@@ -769,49 +790,73 @@ export class ClientComponent {
 
 }
 
+export class NetRequest {
+    xhr: XMLHttpRequest = new XMLHttpRequest();
+    method: RequestMethod;
+    url: string;
+    headers: IncomingHttpHeaders;
+    responseType: XMLHttpRequestResponseType;
+    body: any;
+    requestSent: boolean = false;
+
+    constructor(method: RequestMethod, url: string, headers: IncomingHttpHeaders = {}, responseType: XMLHttpRequestResponseType = 'text', body?: any) {
+        this.method = method;
+        this.url = url;
+        this.headers = headers;
+        this.responseType = responseType;
+        this.body = body;
+
+        this.xhr.open(this.method, this.url);
+        this.xhr.responseType = this.responseType;
+
+
+        // set the X-Requested-With: xmlhttprequest header if not set by user
+        if (! ('x-requested-with' in headers)) {
+            headers['x-requested-with'] = 'xmlhttprequest';
+        }
+
+        // set request headers
+        for (const header in headers) {
+            const headerValue = headers[header];
+            if (typeof headerValue === 'string') {
+                this.xhr.setRequestHeader(header, headerValue);
+            } else {
+                console.warn('Only string header values are supported');
+            }
+        }
+    }
+
+    public async send(body?: any): Promise<string> {
+        if (this.requestSent) {return '';}
+        this.requestSent = true;
+        if (typeof body !== 'undefined') {
+            this.body = body;
+        }
+
+        return new Promise((resolve, reject) => {
+            // listen for state change
+            this.xhr.onreadystatechange = () => {
+                if (this.xhr.readyState == 4) {
+                    // got the response
+                    resolve(this.xhr.responseText);
+                }
+            }
+            // reject on error
+            this.xhr.onerror = (err) => {
+                reject(err);
+            }
+
+            this.xhr.send(body);
+        });
+    }
+}
+
 export class Net {
 
     // Make a HTTP request
     public async request(method: RequestMethod, url: string, headers: IncomingHttpHeaders = {}, body?: any, responseType: XMLHttpRequestResponseType = 'text'): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-    
-            // listen for state change
-            xhr.onreadystatechange = () => {
-                if (xhr.readyState == 4) {
-                    // got the response
-                    resolve(xhr.responseText);
-                }
-            }
-
-            // reject on error
-            xhr.onerror = (err) => {
-                reject(err);
-            }
-    
-            // init request
-            xhr.open(method, url);
-
-            xhr.responseType = responseType;
-            
-            // set the X-Requested-With: xmlhttprequest header if not set by user
-            if (! ('x-requested-with' in headers)) {
-                headers['x-requested-with'] = 'xmlhttprequest';
-            }
-
-            // set request headers
-            for (const header in headers) {
-                const headerValue = headers[header];
-                if (typeof headerValue === 'string') {
-                    xhr.setRequestHeader(header, headerValue);
-                } else {
-                    console.warn('Only string header values are supported');
-                }
-            }
-            
-            // send the request
-            xhr.send(body);
-        });
+        const request = new NetRequest(method, url, headers, responseType);
+        return request.send(body);
     }
 
     public async get(url: string, headers: IncomingHttpHeaders = {}): Promise<string> {
