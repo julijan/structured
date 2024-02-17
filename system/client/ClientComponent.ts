@@ -221,10 +221,17 @@ export class ClientComponent {
     }
 
     // fetch from server and replace with new HTML
-    public async redraw(): Promise<void> {
+    // optionally can provide data that the component will receive when rendering
+    public async redraw(data?: LooseObject): Promise<void> {
+
+        data = (data ? mergeDeep({}, data) : {}) as LooseObject;
+        // we delete componentId from data to allow passing entire componentData to child
+        // without overwriting it's id
+        delete data.componentId;
+
         // component can't be redrawn if it uses data of it's parent component (data-use)
         // if the current node uses data, get the first parent that can be redrawn
-        if (this.data.uses) {
+        if (this.data.use) {
             const redrawable = this.redrawableParent();
             await redrawable.redraw();
             return;
@@ -241,10 +248,10 @@ export class ClientComponent {
 
         this.loaded = false;
 
-        console.log('redraw', this.name);
+        data = mergeDeep(data, this.data) as LooseObject;
 
-        const dataSent = Object.keys(this.data).reduce((prev, key) => {
-            prev[`data-${key}`] = attributeValueToString(key, this.data[key]);
+        const dataSent = Object.keys(data).reduce((prev, key) => {
+            prev[`data-${key}`] = attributeValueToString(key, (data as LooseObject)[key]);
             return prev;
         }, {} as LooseObject);
 
