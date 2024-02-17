@@ -1,7 +1,8 @@
 
 import { IncomingHttpHeaders } from 'http';
 import { AsteriskAny, ClientComponentTransition, ClientComponentTransitions, InitializerFunction, InitializerFunctionContext, LooseObject, RequestMethod, StoreChangeCallback } from '../Types.js';
-import { attributeValueFromString, attributeValueToString, isAsync, toCamelCase } from '../Util.js';
+import { attributeValueFromString, attributeValueToString, isAsync, mergeDeep, toCamelCase } from '../Util.js';
+import { parseBodyURLEncoded } from '../server/Request.js';
 
 export class App {
     root: ClientComponent;
@@ -100,6 +101,7 @@ export class ClientComponent {
 
         this.initRefs();
         this.initData();
+        this.initModels();
 
         this.storeGlobal = store;
 
@@ -195,7 +197,7 @@ export class ClientComponent {
         this.domNode.setAttribute(dataKey, val);
         this.dataAttributes[dataKey] = val;
         this.data[toCamelCase(key)] = value;
-        this.store.set(key, val);
+        this.store.set(key, value);
     }
 
     // first parent that can be redrawn (has no data-use)
@@ -308,6 +310,7 @@ export class ClientComponent {
         this.refs = {};
         this.conditionals = [];
         this.initRefs();
+        this.initModels();
         this.initConditionals();
         this.updateConditionals(false);
 
@@ -359,6 +362,33 @@ export class ClientComponent {
         node.childNodes.forEach((child) => {
             if (child.nodeType === 1 && (isSelf || ! node?.hasAttribute('data-component'))) {
                 this.initRefs(child as HTMLElement);
+            }
+        });
+    }
+
+    // make inputs with data-model="field" work
+    // nested data works too, data-model="obj[nested][key]" or data-model="obj[nested][key][]"
+    private initModels(node?: HTMLElement) {
+        const isSelf = node === undefined;
+        if (node === undefined) {
+            node = this.domNode;
+        }
+
+        
+        if (node.hasAttribute('data-model') && (node.tagName === 'INPUT' || node.tagName === 'SELECT' || node.tagName === 'TEXTAREA')) {
+            const field = node.getAttribute('data-model');
+            if (field) {
+                node.addEventListener('input', () => {
+                    const value = parseBodyURLEncoded(`${field}=${(node as HTMLInputElement).value}`);
+                    const key = Object.keys(value)[0];
+                    this.set(key || 'undefined', mergeDeep(this.componentData(key) || {}, value[key]));
+                });
+            }
+        }
+
+        node.childNodes.forEach((child) => {
+            if (child.nodeType === 1 && (isSelf || ! node?.hasAttribute('data-component'))) {
+                this.initModels(child as HTMLElement);
             }
         });
     }
