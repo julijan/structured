@@ -1,9 +1,10 @@
 import { IncomingMessage, ServerResponse } from "http";
-import { ClientComponent, Net } from "./client/Client";
 import { Application } from "./server/Application.js";
 import { Component } from "./server/Component.js";
 import { symbolArrays } from "./Symbols.js";
 import { RequestContextData } from "../app/Types.js";
+import { Net } from './client/Net.js';
+import { ClientComponent } from './client/ClientComponent.js';
 
 export type RequestMethod = 'GET'|'POST'|'PUT'|'PATCH'|'DELETE';
 
