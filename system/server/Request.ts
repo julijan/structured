@@ -20,7 +20,7 @@ export function parseBodyURLEncoded(bodyURLEncoded: string, initialValue?: Recor
         const value = hasValue ? parts[1] : '';
         const arrayOrObject = keyRaw.indexOf('[') > -1;
         const pathStart = arrayOrObject ? keyRaw.substring(keyRaw.indexOf('['), keyRaw.indexOf(']') + 1) : null;
-        const isObject = pathStart !== null && /\[[a-zA-Z]+\]/.test(pathStart);
+        const isObject = pathStart !== null && /\[[^\[\]]+\]/.test(pathStart) && ! /\[\s+\]/.test(pathStart) && ! /\[\d+\]/.test(pathStart);
         const isArray = pathStart !== null && ! isObject && /\[(\d+)?\]/.test(pathStart);
         const key = isArray || isObject ? keyRaw.substring(0, keyRaw.indexOf('[')) : keyRaw;
 
