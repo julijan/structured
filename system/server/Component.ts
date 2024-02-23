@@ -196,12 +196,10 @@ export class Component {
         if (this.entry) {
             // export specified fields if it has a server side part
             if (this.entry.exportFields) {
-                this.entry.exportFields.reduce((prev, field) => {
+                this.setAttributes(this.entry.exportFields.reduce((prev, field) => {
                     prev[field] = this.data[field];
                     return prev;
-                    
-                }, {} as Record<string, string>);
-                this.setAttributes(this.data, 'data-');
+                }, {} as Record<string, any>), 'data-');
             }
 
             // if attributes are present on component, add those to the node
