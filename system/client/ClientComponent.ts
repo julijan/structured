@@ -220,6 +220,7 @@ export class ClientComponent {
         // abort existing redraw call, if in progress
         if (this.redrawRequest !== null) {
             this.redrawRequest.abort();
+            this.redrawRequest = null;
         }
 
         if (typeof this.onRedraw === 'function') {
