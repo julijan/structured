@@ -103,9 +103,8 @@ export class Document extends Component {
             this.componentIds = [];
         }
 
-        // ideally, ID will be the MD5 sum of the component's rendered HTML
-        // let id = Md5.hashStr(component.dom.outerHTML);
-        let id = Md5.hashStr(`${component.name}:${component.path}:${JSON.stringify(component.attributesRaw)}`);
+        // if component has data-id then md5(ComponentName:id), otherwise md5(ComponentName:DOM path:attributes JSON string)
+        let id = Md5.hashStr(`${component.name}:${'id' in component.attributes ? component.attributes.id : `${component.path.join('/')}:${JSON.stringify(component.attributesRaw)}`}`);
         
         // but multiple components might render the exact same thing
         // so in those cases travel up the tree and append the MD5 sum of the parent
