@@ -6,7 +6,7 @@ import conf from '../../app/Config.js';
 import { Application } from './Application.js';
 import { DocumentHead } from './DocumentHead.js';
 import { Component } from './Component.js';
-import { randomString } from '../Util.js';
+import { attributeValueToString, randomString } from '../Util.js';
 import { default as Handlebars } from 'handlebars';
 
 export class Document extends Component {
@@ -133,7 +133,11 @@ export class Document extends Component {
     public async loadComponent(componentName: string, data?: LooseObject) {
         const componentEntry = this.document.application.component(componentName);
         if (componentEntry) {
-            await this.init(`<${componentName} ${data ? `data-use="${Object.keys(data).join(',')}"` : ''}></${componentName}>`, data);
+            const dataString = data === undefined ? '' : Object.keys(data).reduce((prev, key) => {
+                prev.push(`data-${key}="${attributeValueToString(key, data[key])}"`)
+                return prev;
+            }, [] as Array<string>).join(' ');
+            await this.init(`<${componentName} ${dataString}></${componentName}>`, data);
         }
     }
 
