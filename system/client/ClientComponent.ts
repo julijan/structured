@@ -188,18 +188,6 @@ export class ClientComponent {
         this.store.set(key, value);
     }
 
-    // first parent that can be redrawn (has no data-use)
-    private redrawableParent(): ClientComponent {
-        let current: ClientComponent = this;
-        do {
-            if (current.isRoot || !current.data.use) {
-                break;
-            }
-            current = current.parent;
-        } while (true);
-        return current;
-    }
-
     private initChildren(scope?: HTMLElement, parent?: ClientComponent): void {
 
         if (scope === undefined) {
@@ -228,14 +216,6 @@ export class ClientComponent {
         // we delete componentId from data to allow passing entire componentData to child
         // without overwriting it's id
         delete data.componentId;
-
-        // component can't be redrawn if it uses data of it's parent component (data-use)
-        // if the current node uses data, get the first parent that can be redrawn
-        if (this.data.use) {
-            const redrawable = this.redrawableParent();
-            await redrawable.redraw();
-            return;
-        }
 
         // abort existing redraw call, if in progress
         if (this.redrawRequest !== null) {
