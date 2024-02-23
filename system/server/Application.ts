@@ -652,34 +652,19 @@ export class Application {
         const component = this.component(componentName);
         if (component) {
             const document = new Document(this, '', ctx);
-            const attributesArray: Array<string> = [];
-            for (const attributeName in attributes) {
-                const attr = `${toSnakeCase(attributeName, '-')}="${attributes[attributeName]}"`;
-                attributesArray.push(attr);
-            }
-            const attributesString = attributesArray.join(' ');
-            const useString = data ? ' data-use="'+ Object.keys(data).join(',') +'"' : '';
-            await document.init(`<${componentName} ${attributesString}${useString}></${componentName}>`, data, true);
+            const data: LooseObject = attributes;
+            await document.loadComponent(component.name, data);
 
-            let html = '';
-
-            if (unwrap) {
-                html = document.children[0].dom.innerHTML;
-            } else {
-                html = document.body();
-            }
-
-            const component = document.children[0];
-            const exportedData = component.entry?.exportData ? component.data : (component.entry?.exportFields ? component.entry.exportFields.reduce((prev, curr) => {
-                prev[curr] = component.data[curr];
+            const exportedData = component.exportData ? document.data : (component.exportFields ? component.exportFields.reduce((prev, curr) => {
+                prev[curr] = document.data[curr];
                 return prev;
             }, {} as LooseObject) : {});
 
             ctx.respondWith({
-                html,
+                html: document.children[0].dom.innerHTML,
                 initializers: document.initInitializers(),
                 data: exportedData
-            })
+            });
 
             return true;
         }
