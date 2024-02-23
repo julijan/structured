@@ -22,6 +22,10 @@ export class DataStore {
 
         const oldValue = this.get(componentId, key);
 
+        if (oldValue === val) {
+            return this;
+        }
+
         if (!this.data[componentId]) {
             this.data[componentId] = {};
         }
