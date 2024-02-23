@@ -55,14 +55,22 @@ export class DataStore {
     // add callback to be called when a given key's value is changed
     // if key === '*' then it will be called when any of the key's values is changed
     public onChange(componentId: string, key: string | AsteriskAny, callback: StoreChangeCallback): DataStore {
-        if (!this.changeListeners[componentId]) {
+        if (! (componentId in this.changeListeners)) {
             this.changeListeners[componentId] = {};
         }
-        if (!this.changeListeners[componentId][key]) {
+        if (! (key in this.changeListeners[componentId])) {
             this.changeListeners[componentId][key] = [];
         }
 
-        this.changeListeners[componentId][key].push(callback);
+        // don't add the same callback multiple times
+        const exists = this.changeListeners[componentId][key].some((cb) => {
+            return cb.toString() === callback.toString();
+        });
+        
+        if (! exists) {
+            this.changeListeners[componentId][key].push(callback);
+        }
+
         return this;
     }
 }
