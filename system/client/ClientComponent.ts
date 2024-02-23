@@ -179,6 +179,9 @@ export class ClientComponent {
 
     // set a data value (data-attr)
     public set(key: string, value: any) {
+
+        if (typeof key !== 'string') {return;}
+
         const dataKey = 'data-' + key;
 
         const val = attributeValueToString(key, value);
@@ -231,11 +234,6 @@ export class ClientComponent {
 
         data = mergeDeep(data, this.data) as LooseObject;
 
-        const dataSent = Object.keys(data).reduce((prev, key) => {
-            prev[`data-${key}`] = attributeValueToString(key, (data as LooseObject)[key]);
-            return prev;
-        }, {} as LooseObject);
-
         const redrawRequest = new NetRequest('POST', '/componentRender', {
             'content-type': 'application/json'
         });
@@ -243,7 +241,7 @@ export class ClientComponent {
 
         const componentDataJSON = await redrawRequest.send(JSON.stringify({
             component: this.name,
-            attributes: dataSent
+            attributes: data
         }));
 
         // should only happen if a previous redraw attempt was aborted
