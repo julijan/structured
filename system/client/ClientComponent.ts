@@ -535,13 +535,21 @@ export class ClientComponent {
             return null;
         }
 
-        const net = new Net();
-        const res = await net.postJSON<{ html: string; initializers: Record<string, string>; }>('/componentRender', {
-            component: componentName,
-            data,
-            attributes,
-            unwrap: false
+
+        const req = new NetRequest('POST', '/componentRender', {
+            'content-type': 'application/json'
         });
+
+        const componentDataJSON = await req.send(JSON.stringify({
+            component: componentName,
+            attributes: data
+        }));
+
+        const res: {
+            html: string;
+            initializers: Record<string, string>;
+            data: LooseObject;
+        } = JSON.parse(componentDataJSON);
 
         // add any new initializers to global initializers list
         for (let key in res.initializers) {
