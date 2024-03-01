@@ -254,13 +254,22 @@ export class Application {
     // if not then it tries to serve a static asset if path is allowd by Config.assets.allow
     // if it's not allowed or the asset does not exits, 404 callback is executed
     private async requestHandle(request: IncomingMessage, response: ServerResponse): Promise<void> {
-        let uri = request.url || '';
+        const requestMethod = request.method as RequestMethod;
 
-        if (conf.removeTrailingSlashURL && uri.endsWith('/')) {
+        let uri = request.url || '/';
+
+        if (uri.length > 1 && conf.removeTrailingSlashURL && uri.endsWith('/')) {
             uri = uri.substring(0, uri.length - 1);
         }
 
-        const handler = this.getRequestHandler(uri, request.method as RequestMethod);
+        let getArgs = {};
+        if (uri.indexOf('?') > -1) {
+            const uriParts = uri.split('?');
+            uri = uriParts[0];
+            getArgs = parseBodyURLEncoded(uriParts[1]);
+        }
+
+        const handler = this.getRequestHandler(uri, requestMethod);
 
         const app = this;
         
@@ -274,7 +283,7 @@ export class Application {
             cookies: this.parseCookies(request),
             isAjax : request.headers['x-requested-with'] == 'xmlhttprequest',
             respondWith: function (data: any) {
-                if (typeof data === 'string' || Buffer.isBuffer(data)) {
+                if (typeof data === 'string' || typeof data === 'number' || Buffer.isBuffer(data)) {
                     response.write(data);
                 } else if (data instanceof Document) {
                     response.write(data.toString());
@@ -299,6 +308,7 @@ export class Application {
         if (handler !== null) {
 
             try {
+                context.body = getArgs;
                 await this.parseRequestBody(context);
             } catch(e) {
                 console.log('Error parsing request body');
