@@ -222,7 +222,9 @@ export class FormValidation {
             (errors as ValidationErrors)[field[0]].push(errorMessage);
         } else {
             // single error mode
-            errors[field[0]] = errorMessage;
+            if (! errors[field[0]]) {
+                errors[field[0]] = errorMessage;
+            }
         }
     }
 
