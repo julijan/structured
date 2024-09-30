@@ -17,12 +17,12 @@ export class DataStore {
     } = {};
 
     // return self to allow chained calls to set
-    public set(component: ClientComponent, key: string, val: any): DataStore {
+    public set(component: ClientComponent, key: string, val: any, force: boolean = false): DataStore {
         const componentId = component.componentData<string>('componentId');
 
         const oldValue = this.get(componentId, key);
 
-        if (oldValue === val) {
+        if (! force && oldValue === val) {
             return this;
         }
 
