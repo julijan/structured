@@ -43,6 +43,8 @@ export type RequestContext = {
     // true if x-requested-with header is received and it equals 'xmlhttprequest'
     isAjax: boolean,
 
+    getArgs: LooseObject,
+
     respondWith: (data: any) => void,
 
     redirect: (to: string, statusCode?: number) => void,
@@ -50,7 +52,7 @@ export type RequestContext = {
     show404: () => Promise<void>
 }
 
-export type RequestBodyRecordValue = string | Array<RequestBodyRecordValue> | { [key: string]: RequestBodyRecordValue } | { [key: string]: RequestBodyFile } | Array<RequestBodyFile>;
+export type RequestBodyRecordValue = string | Array<RequestBodyRecordValue> | { [key: string]: RequestBodyRecordValue } | { [key: string]: RequestBodyFile } | Array<RequestBodyFile> | RequestBodyFile;
 
 export interface RequestBodyArguments {
     [key: string] : RequestBodyRecordValue,

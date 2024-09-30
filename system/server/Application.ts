@@ -278,6 +278,7 @@ export class Application {
             response,
             handler,
             args: {},
+            getArgs,
             // @ts-ignore
             data: {},
             cookies: this.parseCookies(request),
@@ -308,7 +309,6 @@ export class Application {
         if (handler !== null) {
 
             try {
-                context.body = getArgs;
                 await this.parseRequestBody(context);
             } catch(e) {
                 console.log('Error parsing request body');
