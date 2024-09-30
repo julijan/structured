@@ -47,7 +47,7 @@ export class Net {
         return JSON.parse(await this.post(url, data, headers));
     }
 
-    public async deleteJSON<T>(url: string, headers?: IncomingHttpHeaders) {
+    public async deleteJSON<T>(url: string, headers?: IncomingHttpHeaders): Promise<T> {
         return JSON.parse(await this.delete(url, headers));
     }
 
