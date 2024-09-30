@@ -82,7 +82,7 @@ export function parseBodyURLEncoded(bodyURLEncoded: string, initialValue?: Recor
 export function parseBodyMultipart(bodyRaw: string, boundary: string) {
     const pairsRaw = bodyRaw.split(boundary);
     const pairs = pairsRaw.map((pair) => {
-        const parts = /Content-Disposition: form-data; name="([^\r\n"]+)"\r\n\r\n(.*?)\r\n/.exec(pair);
+        const parts = /Content-Disposition: form-data; name="([^\r\n"]+)"\r?\n\r?\n([^$]+)/m.exec(pair);
         if (parts) {
             return {
                 key: parts[1],
@@ -94,7 +94,7 @@ export function parseBodyMultipart(bodyRaw: string, boundary: string) {
     
     const urlEncoded = pairs.reduce((prev, curr) => {
         if (curr !== null) {
-            prev.push(`${curr.key}=${encodeURIComponent(curr.value)}`);
+            prev.push(`${curr.key}=${encodeURIComponent(curr.value.replaceAll('&', '%26'))}`);
         }
         return prev;
     }, [] as Array<string>).join('&');

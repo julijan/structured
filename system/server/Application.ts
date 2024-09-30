@@ -572,7 +572,7 @@ export class Application {
             } else if (ctx.request.headers['content-type'].indexOf('multipart/form-data') > -1) {
                 let boundary: RegExpExecArray|null|string = /^multipart\/form-data; boundary=(.+)$/.exec(ctx.request.headers['content-type']);
                 if (boundary) {
-                    boundary = boundary[1];
+                    boundary = `--${boundary[1]}`;
                     ctx.body = parseBodyMultipart(ctx.bodyRaw.toString('utf-8'), boundary);
                     ctx.files = multipartBodyFiles(ctx.bodyRaw.toString('binary'), boundary);
                 }
