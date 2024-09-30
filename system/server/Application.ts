@@ -666,12 +666,12 @@ export class Application {
             await document.loadComponent(component.name, data);
 
             const exportedData = component.exportData ? document.data : (component.exportFields ? component.exportFields.reduce((prev, curr) => {
-                prev[curr] = document.data[curr];
+                prev[curr] = document.children[0].data[curr];
                 return prev;
             }, {} as LooseObject) : {});
 
             ctx.respondWith({
-                html: document.children[0].dom.innerHTML,
+                html: document.children[0].dom.outerHTML,
                 initializers: document.initInitializers(),
                 data: exportedData
             });
