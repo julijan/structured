@@ -16,8 +16,8 @@ export class DataStoreView {
         this.component = component;
     }
 
-    public set(key: string, val: any): DataStoreView {
-        this.store.set(this.component, key, val);
+    public set(key: string, val: any, force: boolean = false): DataStoreView {
+        this.store.set(this.component, key, val, force);
         return this;
     }
 
