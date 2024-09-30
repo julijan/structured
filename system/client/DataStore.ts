@@ -62,14 +62,7 @@ export class DataStore {
             this.changeListeners[componentId][key] = [];
         }
 
-        // don't add the same callback multiple times
-        const exists = this.changeListeners[componentId][key].some((cb) => {
-            return cb.toString() === callback.toString();
-        });
-        
-        if (! exists) {
-            this.changeListeners[componentId][key].push(callback);
-        }
+        this.changeListeners[componentId][key].push(callback);
 
         return this;
     }
