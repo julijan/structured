@@ -99,7 +99,7 @@ export class Session {
         if (sessionId === undefined) {return null;}
         if (this.sessions[sessionId]) {
             const session = this.sessions[sessionId];
-            return session.data[key];
+            return typeof session.data[key] !== 'undefined' ? session.data[key] : null;
         }
         return null;
     }
