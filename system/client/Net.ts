@@ -20,7 +20,7 @@ export class Net {
     }
 
     public async post(url: string, data: any, headers: IncomingHttpHeaders = {}): Promise<string> {
-        if (typeof data === 'object' && !headers['content-type']) {
+        if (typeof data === 'object' && !headers['content-type'] && !(data instanceof FormData)) {
             // if data is object and no content/type header is specified default to application/json
             headers['content-type'] = 'application/json';
             // convert data to JSON
