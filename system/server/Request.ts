@@ -2,7 +2,7 @@ import { RequestBodyFile, RequestBodyRecordValue } from "../Types.js";
 import { mergeDeep } from "../Util.js";
 
 export function parseBodyURLEncoded(bodyURLEncoded: string, initialValue?: Record<string, RequestBodyRecordValue> | RequestBodyRecordValue): Record<string, RequestBodyRecordValue> {
-    const pairsRaw = decodeURIComponent(bodyURLEncoded.replaceAll('+', ' ')).split('&');
+    const pairsRaw = bodyURLEncoded.replaceAll('+', ' ').split('&');
     const pairs: Array<{
         key: string,
         value: string,
@@ -16,8 +16,8 @@ export function parseBodyURLEncoded(bodyURLEncoded: string, initialValue?: Recor
             parts = [parts[0]].concat(parts.slice(1).join('='));
         }
         const hasValue = parts.length > 1;
-        const keyRaw = hasValue ? parts[0] : pair;
-        const value = hasValue ? parts[1] : '';
+        const keyRaw = hasValue ? decodeURIComponent(parts[0]) : pair;
+        const value = hasValue ? decodeURIComponent(parts[1]) : '';
         const arrayOrObject = keyRaw.indexOf('[') > -1;
         const pathStart = arrayOrObject ? keyRaw.substring(keyRaw.indexOf('['), keyRaw.indexOf(']') + 1) : null;
         const isObject = pathStart !== null && /\[[^\[\]]+\]/.test(pathStart) && ! /\[\s+\]/.test(pathStart) && ! /\[\d+\]/.test(pathStart);
@@ -134,13 +134,15 @@ function multipartFillFile(data: RequestBodyRecordValue, file: RequestBodyFile) 
         }
         return data;
     }
-    for (const key in data) {
-        if (data[key] === 'file') {
-            data[key] = file;
-            return data;
-        }
-        if (typeof data[key] === 'object') {
-            multipartFillFile(data[key] as Record<string, RequestBodyRecordValue>, file);
+    if (! ('fileName' in data && 'data' in data && 'type' in data)) {
+        for (const key in data) {
+            if (data[key] === 'file') {
+                data[key] = file;
+                return data;
+            }
+            if (typeof data[key] === 'object') {
+                multipartFillFile(data[key] as Record<string, RequestBodyRecordValue>, file);
+            }
         }
     }
     return data;
