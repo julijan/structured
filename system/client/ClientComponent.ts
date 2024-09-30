@@ -16,6 +16,9 @@ export class ClientComponent {
     root: ClientComponent;
     store: DataStoreView;
     private storeGlobal: DataStore;
+    initializerExecuted: boolean = false;
+
+    deleted: boolean = false;
 
     private redrawRequest: XMLHttpRequest | null = null;
 
@@ -119,19 +122,22 @@ export class ClientComponent {
 
     // set initializer callback and execute it
     private init(initializer: InitializerFunction | string) {
-        let initializerFunction: InitializerFunction | null = null;
-        if (typeof initializer === 'string') {
-            initializerFunction = new Function('const init = ' + initializer + '; init.apply(this, [...arguments]);') as InitializerFunction;
-        } else {
-            initializerFunction = initializer;
-        }
+        if (! this.initializerExecuted) {
+            let initializerFunction: InitializerFunction | null = null;
+            if (typeof initializer === 'string') {
+                initializerFunction = new Function('const init = ' + initializer + '; init.apply(this, [...arguments]);') as InitializerFunction;
+            } else {
+                initializerFunction = initializer;
+            }
 
-        if (initializerFunction) {
-            this.initializer = initializerFunction;
-            this.initializer.apply(this, [{
-                net: new Net()
-            }]);
+            if (initializerFunction) {
+                this.initializer = initializerFunction;
+                this.initializer.apply(this, [{
+                    net: new Net()
+                }]);
+            }
         }
+        this.initializerExecuted = true;
     }
 
     // parse all data-attr attributes into this.data object converting the data-attr to camelCase
@@ -282,6 +288,7 @@ export class ClientComponent {
 
         // re-init conditionals and refs
         this.refs = {};
+        this.refsArray = {};
         this.conditionals = [];
         this.initRefs();
         this.initModels();
@@ -289,7 +296,7 @@ export class ClientComponent {
         this.updateConditionals(false);
 
         // run the initializer
-        if (this.initializer) {
+        if (this.initializer && ! this.initializerExecuted) {
             this.initializer.apply(this, [{
                 net: new Net()
             }]);
@@ -452,6 +459,8 @@ export class ClientComponent {
     // it is async
     public async remove() {
         if (!this.isRoot) {
+
+            this.deleted = true;
 
             // remove children recursively
             const children = Array.from(this.children);
