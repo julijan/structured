@@ -145,6 +145,9 @@ export function attributeValueEscape(str: string): string {
 }
 
 export function isObject(item: any) {
+    if (typeof window === 'undefined') {
+        return (item && typeof item === 'object' && !Array.isArray(item)) && ! Buffer.isBuffer(item);
+    }
     return (item && typeof item === 'object' && !Array.isArray(item));
 }
 
