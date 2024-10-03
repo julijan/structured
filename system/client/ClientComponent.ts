@@ -71,7 +71,7 @@ export class ClientComponent {
         [key: string]: any;
     } = {};
 
-    dataAttributes: {
+    private dataAttributes: {
         [key: string]: string;
     } = {};
 
