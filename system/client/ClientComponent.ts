@@ -33,7 +33,12 @@ export class ClientComponent {
         callback: (e: Event) => void;
     }> = [];
 
+    // DOM elements within the component that have a data-if attribute
     private conditionals: Array<HTMLElement> = [];
+
+    // available for use in data-if
+    private conditionalCallbacks: Record<string, (args?: any) => boolean> = {};
+
     private refs: {
         [key: string]: HTMLElement | ClientComponent;
     } = {};
@@ -60,7 +65,7 @@ export class ClientComponent {
         [key: string]: Function;
     } = {};
 
-    private loaded: boolean;
+    loaded: boolean;
 
     // callback executed each time the component is redrawn
     // this is the ideal place for binding any event listeners within component
@@ -392,58 +397,100 @@ export class ClientComponent {
         return (this.refsArray[refName] || []) as Array<T>;
     }
 
-    private updateConditionals(enableTransition: boolean) {
-        this.conditionals.forEach((node) => {
-            let condition = node.getAttribute('data-if') as string;
-            let show: any = false;
+    // condition can be one of:
+    // 1) access to a boolean property in component store: [key]
+    // 2) comparison of a store property [key] ==|===|!=|<|>|<=|>= [comparison value or key]
+    // 3) method methodName() or methodName(arg)
+    private execCondition(conditionRaw: string): boolean {
+        const condition = conditionRaw.trim();
+        const isMethod = condition.endsWith(')');
 
-            const negated = condition?.indexOf('!') === 0;
-            if (negated) {
-                const conditionMatch = /^!\s*(.*?)$/.exec(condition);
-                if (conditionMatch) {
-                    condition = conditionMatch[1];
-                }
+        if (isMethod) {
+            // method (case 3)
+            // method has to be in format !?[a-zA-Z]+[a-zA-Z0-9_]+\([^)]+\)
+            // extract expression parts
+            const parts = /^(!?)\s*([a-zA-Z]+[a-zA-Z0-9_]*)\(([^)]*)\)$/.exec(condition);
+            if (parts === null) {
+                console.error(`Could not parse condition ${condition}`);
+                return false;
+            }
+            const negated = parts[1] === '!';
+            const functionName = parts[2];
+            const args = parts[3].trim();
+
+            // make sure there is a registered callback with this name
+            if (typeof this.conditionalCallbacks[functionName] !== 'function') {
+                console.warn(`No registered conditional callback '${functionName}'`);
+                return false;
             }
 
-            if (condition) {
-                if (condition.endsWith('()')) {
-                    // method
-                    // try calling this.[condition]()
-                    // it should return a boolean
-                    const prop = this[condition as keyof ClientComponent];
-                    const propType = typeof prop;
-                    if (propType !== 'undefined') {
-                        if (propType === 'function') {
-                            // @ts-ignore
-                            show = prop();
-                        } else {
-                            show = prop;
-                        }
-                    } else {
-                        console.warn(`${this.name}, data-if=${condition}, ${condition} does not exist as a property/method on this component`);
-                    }
-                } else {
-                    // prop from components state
-                    show = this.store.get(condition);
+            // run registered callback
+            const isTrue = this.conditionalCallbacks[functionName](args === '' ? undefined : eval(`(${args})`));
+            if (negated) {
+                return ! isTrue;
+            }
+            return isTrue;
+        } else {
+            // expression not a method
+            const parts = /^(!)?\s*([a-zA-Z]+[a-zA-Z0-9_]*)\s*((?:==)|(?:===)|(?:!=)|<|>|(?:<=)|(?:>=))?\s*([^=].+)?$/.exec(condition);
+            if (parts === null) {
+                console.error(`Could not parse condition ${condition}`);
+                return false;
+            }
+            
+            const property = parts[2];
+            const value = this.store.get(property);
+            const isComparison = parts[3] !== undefined;
+            if (isComparison) {
+                // comparison (case 2)
+                // left hand side is the property name, right hand side is an expression
+                const rightHandSide = eval(`${parts[4]}`);
+
+                const comparisonSymbol = parts[3];
+
+                if (comparisonSymbol === '==') {
+                    return value == rightHandSide;
+                } else if (comparisonSymbol === '===') {
+                    return value === rightHandSide;
+                } else if (comparisonSymbol === '>') {
+                    return value > rightHandSide;
+                } else if (comparisonSymbol === '>=') {
+                    return value >= rightHandSide;
+                } else if (comparisonSymbol === '<') {
+                    return value < rightHandSide;
+                } else if (comparisonSymbol === '<=') {
+                    return value <= rightHandSide;
+                } else if (comparisonSymbol === '!=') {
+                    return value != rightHandSide;
                 }
 
+                return false;
+
+            } else {
+                // not a comparison (case 1)
+                const negated = parts[1] === '!';
+                const isTrue = this.store.get(property);
                 if (negated) {
-                    show = !show;
+                    return !isTrue;
                 }
+                return isTrue;
+            }
+        }
+    }
+
+    public setConditionalCallback(name: string, callback: (args?: any) => boolean): void {
+        this.conditionalCallbacks[name] = callback;
+        this.updateConditionals(false);
+    }
+
+    private updateConditionals(enableTransition: boolean) {
+        this.conditionals.forEach((node) => {
+            const condition = node.getAttribute('data-if');
+        
+            if (typeof condition === 'string') {
+                const show = this.execCondition(condition);
 
                 if (show == true) {
-                    if (node.getAttribute('data-component')) {
-                        const conditionalChild = this.children.find((child) => {
-                            return child.domNode === node;
-                        });
-                        if (conditionalChild) {
-                            if (!conditionalChild.loaded) {
-                                // conditional child not yet loaded
-                                conditionalChild.redraw();
-                                conditionalChild.domNode.style.display = '';
-                            }
-                        }
-                    }
                     // node.style.display = '';
                     this.show(node, enableTransition);
                 } else {
