@@ -194,17 +194,15 @@ export class ClientComponent {
     }
 
     // set a data value (data-attr)
-    public set(key: string, value: any) {
-
-        if (typeof key !== 'string') {return;}
-
+    // also sets data[key] and store(key, val)
+    public set(key: string, value: any): ClientComponent {
         const dataKey = 'data-' + key;
-
         const val = attributeValueToString(key, value);
         this.domNode.setAttribute(dataKey, val);
         this.dataAttributes[dataKey] = val;
         this.data[toCamelCase(key)] = value;
         this.store.set(key, value);
+        return this;
     }
 
     private initChildren(scope?: HTMLElement, parent?: ClientComponent): void {
