@@ -16,7 +16,7 @@ export class ClientComponent {
     root: ClientComponent;
     store: DataStoreView;
     private storeGlobal: DataStore;
-    initializerExecuted: boolean = false;
+    private initializerExecuted: boolean = false;
 
     deleted: boolean = false;
 
