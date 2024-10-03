@@ -36,8 +36,13 @@ export class ClientComponent {
     // DOM elements within the component that have a data-if attribute
     private conditionals: Array<HTMLElement> = [];
 
-    // available for use in data-if
+    // available for use in data-if and data-classname-[className]
     private conditionalCallbacks: Record<string, (args?: any) => boolean> = {};
+
+    private conditionalClassNames: Array<{
+        element: HTMLElement,
+        className: string
+    }> = [];
 
     private refs: {
         [key: string]: HTMLElement | ClientComponent;
@@ -310,14 +315,29 @@ export class ClientComponent {
         this.loaded = true;
     }
 
+    // populates conditionals and conditionalClassNames
+    // these react to changes to store data
+    // to show/hide elements or apply/remove class names to/from them
     private initConditionals(node?: HTMLElement): void {
         const isSelf = node === undefined;
         if (node === undefined) {
             node = this.domNode;
         }
 
-        if (node.hasAttribute('data-if')) {
-            this.conditionals.push(node);
+        for (const attribute of node.attributes) {
+            // data-if
+            if (attribute.name === 'data-if') {
+                this.conditionals.push(node);
+            }
+
+            // data-classname-[className]
+            if (attribute.name.startsWith('data-classname')) {
+                const className = attribute.name.substring(15);
+                this.conditionalClassNames.push({
+                    element: node,
+                    className
+                });
+            }
         }
 
         node.childNodes.forEach((child) => {
@@ -484,18 +504,34 @@ export class ClientComponent {
     }
 
     private updateConditionals(enableTransition: boolean) {
+        // data-if conditions
         this.conditionals.forEach((node) => {
             const condition = node.getAttribute('data-if');
         
             if (typeof condition === 'string') {
                 const show = this.execCondition(condition);
 
-                if (show == true) {
+                if (show === true) {
                     // node.style.display = '';
                     this.show(node, enableTransition);
                 } else {
                     // node.style.display = 'none';
                     this.hide(node, enableTransition);
+                }
+            }
+        });
+
+        // data-classname conditions
+        this.conditionalClassNames.forEach((conditional) => {
+            const condition = conditional.element.getAttribute(`data-classname-${conditional.className}`);
+        
+            if (typeof condition === 'string') {
+                const enableClassName = this.execCondition(condition);
+
+                if (enableClassName === true) {
+                    conditional.element.classList.add(conditional.className);
+                } else {
+                    conditional.element.classList.remove(conditional.className);
                 }
             }
         });
