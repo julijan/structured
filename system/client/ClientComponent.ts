@@ -8,12 +8,12 @@ import { NetRequest } from './NetRequest.js';
 
 
 export class ClientComponent {
-    name: string;
+    readonly name: string;
     children: Array<ClientComponent> = [];
-    parent: ClientComponent;
-    domNode: HTMLElement;
-    isRoot: boolean;
-    root: ClientComponent;
+    readonly parent: ClientComponent;
+    readonly domNode: HTMLElement;
+    readonly isRoot: boolean;
+    readonly root: ClientComponent;
     store: DataStoreView;
     private storeGlobal: DataStore;
     private initializerExecuted: boolean = false;
