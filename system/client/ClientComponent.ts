@@ -81,10 +81,6 @@ export class ClientComponent {
         [key: string]: any;
     } = {};
 
-    private dataAttributes: {
-        [key: string]: string;
-    } = {};
-
     constructor(parent: ClientComponent | null, name: string, domNode: HTMLElement, store: DataStore) {
         this.name = name;
         this.domNode = domNode;
@@ -153,10 +149,6 @@ export class ClientComponent {
     // parse all data-attr attributes into this.data object converting the data-attr to camelCase
     private initData(): void {
         for (let i = 0; i < this.domNode.attributes.length; i++) {
-
-            // store original attributes
-            this.dataAttributes[this.domNode.attributes[i].name] = this.domNode.attributes[i].value;
-
             // data-attr, convert to dataAttr and store value
             // if (this.domNode.attributes[i].name.indexOf('data-') === 0) {
             if (/^((number|string|boolean|object|any):)?data-[^\s]+/.test(this.domNode.attributes[i].name)) {
@@ -199,7 +191,6 @@ export class ClientComponent {
         const dataKey = 'data-' + key;
         const val = attributeValueToString(key, value);
         this.domNode.setAttribute(dataKey, val);
-        this.dataAttributes[dataKey] = val;
         this.data[toCamelCase(key)] = value;
         this.store.set(key, value);
         return this;
