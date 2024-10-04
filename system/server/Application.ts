@@ -11,6 +11,7 @@ import { Session } from './Session.js';
 import { HelperDelegate } from 'handlebars';
 import { toSnakeCase } from '../Util.js';
 import { multipartBodyFiles, parseBodyMultipart, parseBodyURLEncoded } from './Request.js';
+import { Cookies } from './Cookies.js';
 
 export class Application {
 
@@ -24,6 +25,8 @@ export class Application {
 
     components: Components = new Components();
     session: Session;
+
+    cookies: Cookies = new Cookies();
 
     eventEmitter: EventEmitter = new EventEmitter();
 
@@ -281,7 +284,7 @@ export class Application {
             getArgs,
             // @ts-ignore
             data: {},
-            cookies: this.parseCookies(request),
+            cookies: this.cookies.parse(request),
             isAjax : request.headers['x-requested-with'] == 'xmlhttprequest',
             respondWith: function (data: any) {
                 if (typeof data === 'string' || typeof data === 'number' || Buffer.isBuffer(data)) {
@@ -552,13 +555,6 @@ export class Application {
         response.writeHead(statusCode);
     }
 
-    // set a cookie
-    // header is set, but is not sent, it will be sent with the output
-    public setCookie(response: ServerResponse, name: string, value: string|number, lifetimeSeconds: number, path: string = '/', sameSite: 'Strict' | 'Lax' | 'None' = 'Strict', domain?: string) {
-        const expiresAt = lifetimeSeconds > 0 ? new Date(new Date().getTime() + lifetimeSeconds * 1000).toUTCString() : 0;
-        response.setHeader('Set-Cookie', `${name}=${value}; Expires=${expiresAt}; Path=${path}; SameSite=${sameSite}${domain ? `; domain=${domain}` : ''}`);
-    }
-
     // parse raw request body
     // if there is a parser then ctx.body is populated with data: URIArgs
     private async parseRequestBody(ctx: RequestContext): Promise<void> {
@@ -587,21 +583,6 @@ export class Application {
             }
         }
         return;
-    }
-
-    private parseCookies(request: IncomingMessage): LooseObject {
-        if (! request.headers.cookie) {return {};}
-        const cookieString = request.headers.cookie;
-        const cookiePairs = cookieString.split(';');
-
-        const cookies: LooseObject = {}
-
-        cookiePairs.forEach((cookiePair) => {
-            const parts = cookiePair.trim().split('=');
-            cookies[parts.shift() || ''] = parts.join('=');
-        });
-
-        return cookies;
     }
 
     // returns the raw request data (eg. POST'ed data)
