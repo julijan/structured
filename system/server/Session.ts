@@ -29,7 +29,7 @@ export class Session {
                     ctx.sessionId = sessionCookie;
                     if (ctx.sessionId) {
                         // refresh cookie
-                        this.application.setCookie(ctx.response, conf.session.cookieName, ctx.sessionId, conf.session.durationSeconds);
+                        this.application.cookies.set(ctx.response, conf.session.cookieName, ctx.sessionId, conf.session.durationSeconds);
                         this.sessions[ctx.sessionId].lastRequest = new Date().getTime();
                     }
                 }
@@ -50,7 +50,7 @@ export class Session {
 
     private sessionInit(ctx: RequestContext): void {
         ctx.sessionId = this.generateId();
-        this.application.setCookie(ctx.response, conf.session.cookieName, ctx.sessionId, conf.session.durationSeconds);
+        this.application.cookies.set(ctx.response, conf.session.cookieName, ctx.sessionId, conf.session.durationSeconds);
 
         // create and store session entry
         const sessionEntry: SessionEntry = {
