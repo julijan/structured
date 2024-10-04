@@ -38,7 +38,7 @@ export class Application {
         type: 'image/png'
     };
 
-    pagneNotFoundCallback: RequestCallback;
+    pageNotFoundCallback: RequestCallback;
 
     handlebarsHelpers: Array<{
         name: string,
@@ -58,7 +58,7 @@ export class Application {
         // enable sessions
         this.session.start();
 
-        this.pagneNotFoundCallback = async ({ response }) => {
+        this.pageNotFoundCallback = async ({ response }) => {
             response.statusCode = 404;
             response.write('Page not found');
         }
@@ -304,7 +304,7 @@ export class Application {
         }
 
         context.show404 = async function() {
-            await app.pagneNotFoundCallback.apply(this, [context]);
+            await app.pageNotFoundCallback.apply(this, [context]);
         }
 
         await this.emit('beforeRequestHandler', context);
@@ -352,7 +352,7 @@ export class Application {
 
             if (! staticAsset) {
                 // no request handler found nor a static asset - 404
-                await this.pagneNotFoundCallback.apply(this, [context]);
+                await this.pageNotFoundCallback.apply(this, [context]);
             }
 
         }
