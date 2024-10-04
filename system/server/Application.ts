@@ -21,14 +21,14 @@ export class Application {
     server: null|Server = null;
     listening: boolean = false;
 
-    requestHandlers: Array<RequestHandler> = [];
+    readonly requestHandlers: Array<RequestHandler> = [];
 
-    components: Components = new Components();
-    session: Session;
+    readonly components: Components = new Components();
+    readonly session: Session;
 
-    cookies: Cookies = new Cookies();
+    readonly cookies: Cookies = new Cookies();
 
-    eventEmitter: EventEmitter = new EventEmitter();
+    private readonly eventEmitter: EventEmitter = new EventEmitter();
 
     favicon: {
         image: string|null,
@@ -40,7 +40,7 @@ export class Application {
 
     pageNotFoundCallback: RequestCallback;
 
-    handlebarsHelpers: Array<{
+    readonly handlebarsHelpers: Array<{
         name: string,
         helper: HelperDelegate
     }> = [];
