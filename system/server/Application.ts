@@ -667,11 +667,11 @@ export class Application {
         this.handlebarsHelpers.push(helperItem);
     }
 
-    memoryUsage(): NodeJS.MemoryUsage {
+    public memoryUsage(): NodeJS.MemoryUsage {
         return process.memoryUsage();
     }
 
-    printMemoryUsage(): void {
+    public printMemoryUsage(): void {
         const usage = this.memoryUsage();
         let total = 0;
         const totals = Object.keys(usage).reduce((prev, key: keyof NodeJS.MemoryUsage) => {
