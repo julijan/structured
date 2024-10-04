@@ -662,7 +662,7 @@ export class Application {
         return false;
     }
 
-    public async handlebarsRegisterHelper(name: string, helper: HelperDelegate): Promise<void> {
+    public handlebarsRegisterHelper(name: string, helper: HelperDelegate): void {
         const helperItem = {name, helper};
         this.handlebarsHelpers.push(helperItem);
     }
