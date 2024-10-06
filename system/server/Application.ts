@@ -282,7 +282,6 @@ export class Application {
             handler,
             args: {},
             getArgs,
-            // @ts-ignore
             data: {},
             cookies: this.cookies.parse(request),
             isAjax : request.headers['x-requested-with'] == 'xmlhttprequest',
@@ -290,10 +289,12 @@ export class Application {
                 if (typeof data === 'string' || typeof data === 'number' || Buffer.isBuffer(data)) {
                     response.write(data);
                 } else if (data instanceof Document) {
+                    response.setHeader('Content-Type', 'text/html');
                     response.write(data.toString());
                 } else if (data === undefined || data === null) {
                     response.write('');
                 } else {
+                    response.setHeader('Content-Type', 'application/json');
                     response.write(JSON.stringify(data, null, 4));
                 }
             },
