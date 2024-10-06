@@ -1,4 +1,4 @@
-import { FormValidationEntry, RequestBodyArguments, ValidationErrors, ValidationErrorsSingle, ValidationResult, ValidationRuleWithArguments, ValidatorErrorDecorator, ValidatorFunction } from '../Types';
+import { FormValidationEntry, PostedDataDecoded, ValidationErrors, ValidationErrorsSingle, ValidationResult, ValidationRuleWithArguments, ValidatorErrorDecorator, ValidatorFunction } from '../Types';
 
 export class FormValidation {
 
@@ -138,7 +138,7 @@ export class FormValidation {
         this.decorators[name] = decorator;
     }
 
-    public async validate(data: RequestBodyArguments): Promise<ValidationResult> {
+    public async validate(data: PostedDataDecoded): Promise<ValidationResult> {
 
         const result: ValidationResult = {
             valid: true,
@@ -204,7 +204,7 @@ export class FormValidation {
         return result;
     }
 
-    private addError(errors: ValidationErrors|ValidationErrorsSingle, data: RequestBodyArguments, field: [string, string], rule: string, arg?: any): void {
+    private addError(errors: ValidationErrors|ValidationErrorsSingle, data: PostedDataDecoded, field: [string, string], rule: string, arg?: any): void {
         // error will be a human readable error returned by decorator
         // if no decorator is found for the rule, rule itself becomes the error
         let errorMessage = '';
