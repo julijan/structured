@@ -10,7 +10,7 @@ import { Components } from './Components.js';
 import { Session } from './Session.js';
 import { HelperDelegate } from 'handlebars';
 import { toSnakeCase } from '../Util.js';
-import { multipartBodyFiles, parseBodyMultipart, parseBodyURLEncoded } from './Request.js';
+import { Request } from './Request.js';
 import { Cookies } from './Cookies.js';
 
 export class Application {
@@ -269,7 +269,7 @@ export class Application {
         if (uri.indexOf('?') > -1) {
             const uriParts = uri.split('?');
             uri = uriParts[0];
-            getArgs = parseBodyURLEncoded(uriParts[1]);
+            getArgs = Request.queryStringDecode(uriParts[1]);
         }
 
         const handler = this.getRequestHandler(uri, requestMethod);
@@ -556,7 +556,8 @@ export class Application {
     }
 
     // parse raw request body
-    // if there is a parser then ctx.body is populated with data: URIArgs
+    // if there is a parser for received Content-Type
+    // then ctx.body is populated with data: URIArgs
     private async parseRequestBody(ctx: RequestContext): Promise<void> {
         if (ctx.request.headers['content-type']) {
 
@@ -564,13 +565,14 @@ export class Application {
 
             if (ctx.request.headers['content-type'].indexOf('urlencoded') > -1) {
                 // application/x-www-form-urlencoded
-                ctx.body = parseBodyURLEncoded(ctx.bodyRaw.toString('utf-8'));
+                ctx.body = Request.queryStringDecode(ctx.bodyRaw.toString('utf-8'));
             } else if (ctx.request.headers['content-type'].indexOf('multipart/form-data') > -1) {
+                // multipart/form-data
                 let boundary: RegExpExecArray|null|string = /^multipart\/form-data; boundary=(.+)$/.exec(ctx.request.headers['content-type']);
                 if (boundary) {
                     boundary = `--${boundary[1]}`;
-                    ctx.body = parseBodyMultipart(ctx.bodyRaw.toString('utf-8'), boundary);
-                    ctx.files = multipartBodyFiles(ctx.bodyRaw.toString('binary'), boundary);
+                    ctx.body = Request.parseBodyMultipart(ctx.bodyRaw.toString('utf-8'), boundary);
+                    ctx.files = Request.multipartBodyFiles(ctx.bodyRaw.toString('binary'), boundary);
                 }
             } else if (ctx.request.headers['content-type'].indexOf('application/json') > -1) {
                 // application/json

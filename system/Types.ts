@@ -26,7 +26,7 @@ export type RequestContext = {
     cookies: LooseObject,
 
     // POSTed data, parsed to object
-    body?: RequestBodyArguments,
+    body?: PostedDataDecoded,
 
     bodyRaw?: Buffer,
 
@@ -51,6 +51,8 @@ export type RequestContext = {
 
     show404: () => Promise<void>
 }
+
+export type PostedDataDecoded = Record<string, string | boolean | Array<string | boolean | PostedDataDecoded> | Record<string, string | boolean | Array<string | boolean | PostedDataDecoded>> | Record<string, string | boolean | Array<string | boolean>>>
 
 export type RequestBodyRecordValue = string | Array<RequestBodyRecordValue> | { [key: string]: RequestBodyRecordValue } | { [key: string]: RequestBodyFile } | Array<RequestBodyFile> | RequestBodyFile;
 

@@ -1,6 +1,6 @@
 import { ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject } from '../Types.js';
 import { attributeValueFromString, attributeValueToString, isAsync, mergeDeep, toCamelCase } from '../Util.js';
-import { parseBodyURLEncoded } from '../server/Request.js';
+import { Request } from '../server/Request.js';
 import { DataStoreView } from './DataStoreView.js';
 import { DataStore } from './DataStore.js';
 import { Net } from './Net.js';
@@ -374,7 +374,7 @@ export class ClientComponent {
             const field = node.getAttribute('data-model');
             if (field) {
                 node.addEventListener('input', () => {
-                    const value = parseBodyURLEncoded(`${field}=${(node as HTMLInputElement).value}`);
+                    const value = Request.queryStringDecode(`${field}=${(node as HTMLInputElement).value}`);
                     const key = Object.keys(value)[0];
                     this.set(key || 'undefined', mergeDeep(this.componentData(key) || {}, value[key]));
                 });
