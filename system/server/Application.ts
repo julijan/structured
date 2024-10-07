@@ -341,8 +341,9 @@ export class Application {
             // no attached handlers, check if static asset
             if (conf.assets.allow(context.request.url || '')) {
                 // static asset
-                // directory up to get out of build
-                const assetPath = path.resolve('../' + context.request.url);
+                // unless accessing /assets/ts/* go directory up to get out of build
+                const basePath = context.request.url?.startsWith('/assets/ts/') ? './' : '../';
+                const assetPath = path.resolve(basePath + context.request.url);
                 if (existsSync(assetPath)) {
                     const extension = (context.request.url || '').split('.').pop();
                     if (extension) {
