@@ -4,7 +4,7 @@ export class Request {
 
     // process given query string into an object
     // optionally accepts initialValue
-    public static queryStringDecode(queryString: string, initialValue: PostedDataDecoded = {}): PostedDataDecoded {
+    public static queryStringDecode(queryString: string, initialValue: PostedDataDecoded = {}, trimValues: boolean = true): PostedDataDecoded {
         // replace + with space and split string at & to produce key=value pairs
         const pairsRaw = queryString.replaceAll('+', ' ').split('&');
 
@@ -29,7 +29,7 @@ export class Request {
             const keyRaw = decodeURIComponent(parts[0]);
 
             // if key has a value, decode it, otherwise value is true (as in, key is set)
-            const value = hasValue ? decodeURIComponent(parts[1]) : true;
+            const value = hasValue ? (trimValues ? decodeURIComponent(parts[1]).trim() : decodeURIComponent(parts[1])) : true;
 
             // if key includes "[.*]" then it is an array or object
             const arrayOrObject = /\[[^\[\]]*\]/.test(keyRaw);
