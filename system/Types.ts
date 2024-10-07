@@ -43,7 +43,7 @@ export type RequestContext = {
     // true if x-requested-with header is received and it equals 'xmlhttprequest'
     isAjax: boolean,
 
-    getArgs: LooseObject,
+    getArgs: PostedDataDecoded,
 
     respondWith: (data: any) => void,
 
