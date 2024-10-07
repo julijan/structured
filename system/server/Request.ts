@@ -1,4 +1,5 @@
-import { PostedDataDecoded, RequestBodyFile } from "../Types.js";
+import { LooseObject, PostedDataDecoded, RequestBodyFile } from "../Types.js";
+import { mergeDeep } from "../Util.js";
 
 export class Request {
 
@@ -196,7 +197,7 @@ export class Request {
     }
 
     public static multipartBodyFiles(bodyRaw: string, boundary: string) {
-        const files: Record<string, RequestBodyFile> = {}
+        let files: Record<string, RequestBodyFile> = {}
         const pairsRaw = bodyRaw.split(boundary);
         pairsRaw.map((pair) => {
             const parts = /Content-Disposition: form-data; name="(.+?)"; filename="(.+?)"\r\nContent-Type: (.*)\r\n\r\n([\s\S]+)$/m.exec(pair);
@@ -206,10 +207,37 @@ export class Request {
                     fileName: parts[2],
                     type: parts[3]
                 }
-                files[parts[1]] = file;
+                // we can't just set the file as files[parts[1]] = file
+                // that would work if parts[1] is a simple key without "[.*]" in it
+                // but in reality key will often be an object or an array
+                // so we need to recursively create the object and fill it with file
+                // then merge that result with resulting files object
+                files = mergeDeep(files, this.multipartSetFile(parts[1], file));
             }
             return null;
         })
         return files;
+    }
+
+    private static multipartSetFile(name: string, file: RequestBodyFile): LooseObject {
+        // convert the name to PostedDataDecoded
+        // it will either be { key: true } or a nested object eventually ending with a value = true
+        const fileItem = this.queryStringDecode(name);
+
+        // recursively search the object returned above and find value = true, replace it with given file
+        const setFile = (obj: LooseObject) => {
+            for (const key in obj) {
+                if (typeof obj[key] === 'object' && obj[key] !== null) {
+                    // not here, resume recursively
+                    setFile(obj[key]);
+                } else if (obj[key] === true) {
+                    // found the place for the file, populate it
+                    obj[key] = file;
+                }
+            }
+        }
+
+        setFile(fileItem);
+        return fileItem;
     }
 }
