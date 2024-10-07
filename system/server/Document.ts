@@ -35,9 +35,7 @@ export class Document extends Component {
         // for routes starting with /assets/client-js/
         this.head.addJS('/assets/client-js/client/Client.js', 0, { type: 'module' });
 
-        this.application.handlebarsHelpers.forEach((helperItem) => {
-            Handlebars.registerHelper(helperItem.name, helperItem.helper);
-        });
+        this.application.helpers.applyTo(Handlebars);
 
         // set favicon
         if (typeof this.application.favicon.image === 'string') {

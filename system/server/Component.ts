@@ -85,9 +85,7 @@ export class Component {
 
         // register handlebars helpers
         if (! (this instanceof Document)) {
-            this.document.application.handlebarsHelpers.forEach((helperItem) => {
-                Handlebars.registerHelper(helperItem.name, helperItem.helper);
-            });
+            this.document.application.helpers.applyTo(Handlebars);
         }
 
     }
