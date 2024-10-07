@@ -12,6 +12,7 @@ import { HelperDelegate } from 'handlebars';
 import { toSnakeCase } from '../Util.js';
 import { Request } from './Request.js';
 import { Cookies } from './Cookies.js';
+import { RequestContextData } from '../../app/Types.js';
 
 export class Application {
 
@@ -286,8 +287,12 @@ export class Application {
             response,
             handler,
             args: {},
+            // RequestContext.data is place for user defined data
+            // it is initialized as an empty object here and
+            // potentially falsely declared as RequestContextData
+            // user will fill this out, usually on beforeRequestHandler
+            data: {} as RequestContextData,
             getArgs,
-            data: {},
             cookies: this.cookies.parse(request),
             isAjax : request.headers['x-requested-with'] == 'xmlhttprequest',
             respondWith: function (data: any) {
@@ -565,7 +570,7 @@ export class Application {
     // parse raw request body
     // if there is a parser for received Content-Type
     // then ctx.body is populated with data: URIArgs
-    private async parseRequestBody(ctx: RequestContext): Promise<void> {
+    private async parseRequestBody(ctx: Omit<RequestContext, 'data'>): Promise<void> {
         if (ctx.request.headers['content-type']) {
 
             ctx.bodyRaw = await this.requestDataRaw(ctx.request);
