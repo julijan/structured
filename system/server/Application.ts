@@ -225,12 +225,17 @@ export class Application {
             await this.respondWithComponent(ctx, input.component, input.attributes || undefined, input.data || undefined, input.unwrap === undefined ? true : input.unwrap);
         });
 
+        // special request handler, serve the client side JS
         this.addRequestHandler('GET', /^\/assets\/client-js/, async ({ request, response }) => {
-            // special request handler, serve the client side JS
-            const filePath = request.url?.substring(18) as string;
-            response.setHeader('Content-Type', 'application/javascript');
-            response.write(readFileSync(path.resolve('./system/', filePath)));
-            response.end();
+            const uri = request.url?.substring(18) as string;
+            const filePath = path.resolve('./system/', uri);
+            if (existsSync(filePath)) {
+                response.setHeader('Content-Type', 'application/javascript');
+                response.write(readFileSync(filePath));
+                response.end();
+            } else {
+                response.statusCode = 404;
+            }
             return;
         });
 
