@@ -104,7 +104,7 @@ export class Request {
 
                         obj[property.path] = this.queryStringDecode(objectProperties.map((prop) => {
                             const pathRemaining = prop.keyRaw.substring(prop.key.length + (prop.path?.length || 0) + 3);
-                            return `value[${pathRemaining.substring(0, pathRemaining.indexOf(']'))}]=${encodeURIComponent(prop.value)}`;
+                            return `value[${pathRemaining.substring(0, pathRemaining.length - 1)}]=${encodeURIComponent(prop.value)}`;
                         }).join('&')).value as any;
                     }
 
