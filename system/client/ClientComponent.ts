@@ -1,11 +1,9 @@
 import { ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject } from '../Types.js';
-import { attributeValueFromString, attributeValueToString, isAsync, mergeDeep, toCamelCase } from '../Util.js';
-import { Request } from '../server/Request.js';
+import { attributeValueFromString, attributeValueToString, isAsync, mergeDeep, queryStringDecode, toCamelCase } from '../Util.js';
 import { DataStoreView } from './DataStoreView.js';
 import { DataStore } from './DataStore.js';
 import { Net } from './Net.js';
 import { NetRequest } from './NetRequest.js';
-
 
 export class ClientComponent {
     readonly name: string;
@@ -369,12 +367,11 @@ export class ClientComponent {
             node = this.domNode;
         }
 
-
         if (node.hasAttribute('data-model') && (node.tagName === 'INPUT' || node.tagName === 'SELECT' || node.tagName === 'TEXTAREA')) {
             const field = node.getAttribute('data-model');
             if (field) {
                 node.addEventListener('input', () => {
-                    const value = Request.queryStringDecode(`${field}=${(node as HTMLInputElement).value}`);
+                    const value = queryStringDecode(`${field}=${(node as HTMLInputElement).value}`);
                     const key = Object.keys(value)[0];
                     this.set(key || 'undefined', mergeDeep(this.componentData(key) || {}, value[key]));
                 });
