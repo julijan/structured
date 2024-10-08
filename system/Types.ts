@@ -141,7 +141,7 @@ export type LooseObject = {
     [key: string] : any
 }
 
-export type ApplicationCallbacks = 'serverStarted'|'beforeRequestHandler'|'afterRequestHandler'|'beforeRoutes'|'beforeComponentLoad';
+export type ApplicationEvents = 'serverStarted'|'beforeRequestHandler'|'afterRequestHandler'|'beforeRoutes'|'afterRoutes'|'beforeComponentLoad'|'afterComponentLoad'|'documentCreated';
 
 export type SessionEntry = {
     sessionId : string,

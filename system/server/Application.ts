@@ -4,7 +4,7 @@ import { createServer, Server } from 'http';
 import * as path from 'path';
 import * as mime from 'mime-types';
 import conf from '../../app/Config.js';
-import { ApplicationCallbacks, LooseObject, RequestBodyArguments, RequestCallback, RequestContext } from '../Types';
+import { ApplicationEvents, LooseObject, RequestBodyArguments, RequestCallback, RequestContext } from '../Types';
 import { Document } from './Document.js';
 import { Components } from './Components.js';
 import { Session } from './Session.js';
@@ -116,13 +116,13 @@ export class Application {
     }
 
     // add event listener
-    public on(evt: ApplicationCallbacks|string, callback: RequestCallback|((payload?: any) => void)) {
+    public on(evt: ApplicationEvents, callback: RequestCallback|((payload?: any) => void)) {
         this.eventEmitter.on(evt, callback);
     }
 
     // we want to be able to await it so we won't call EventEmitter.emit
     // instead we'll manually execute the listeners awaiting each in the process
-    public async emit(evt: ApplicationCallbacks|string, payload?: any): Promise<void> {
+    public async emit(evt: ApplicationEvents, payload?: any): Promise<void> {
         const listeners = this.eventEmitter.rawListeners(evt);
         for (let i = 0; i < listeners.length; i++) {
             await listeners[i](payload);
