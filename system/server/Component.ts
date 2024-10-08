@@ -22,15 +22,13 @@ export class Component {
 
     path: Array<string> = [];
 
-    html: string = ''; // innerHTML
-
     // all attributes found on component's tag
     attributesRaw: RequestBodyArguments = {};
 
     // extracted from data-attribute on component tag
     attributes: Record<string, string> = {};
 
-    dom: any; // jsdom
+    dom: HTMLElement; // jsdom
 
     data: LooseObject = {};
 
@@ -119,13 +117,15 @@ export class Component {
             // replace the original tag name with a div
             const div = this.dom.ownerDocument.createElement(this.entry?.renderTagName || 'div');
             div.innerHTML = html;
-            this.dom.parentNode.insertBefore(div, this.dom);
-            this.dom.parentNode.removeChild(this.dom);
+            if (this.dom.parentNode) {
+                this.dom.parentNode.insertBefore(div, this.dom);
+                this.dom.parentNode.removeChild(this.dom);
+            }
             this.dom = div;
 
             // re-apply attributes the orignal tag had
             for (const attributeName in this.attributesRaw) {
-                this.dom.setAttribute(attributeName, this.attributesRaw[attributeName]);
+                this.dom.setAttribute(attributeName, this.attributesRaw[attributeName].toString());
             }
         }
         
@@ -148,8 +148,6 @@ export class Component {
             // componentInstances[j].setAttribute('data-component-parent', parentName);
             this.attributes = Object.assign(this.importedParentData(this.parent.data) || {}, this.attributes);
         }
-
-        this.html = this.dom.firstChild.innerHTML;
 
         if (! this.attributes.if || force) {
             // load data
@@ -210,7 +208,7 @@ export class Component {
         // this will prevent twitching client side
         // (otherwise elements that should be hidden might appear for a brief second)
         if (this.isRoot) {
-            const dataIf = this.dom.querySelectorAll('[data-if]');
+            const dataIf = this.dom.querySelectorAll<HTMLElement>('[data-if]');
 
             for (let i = 0; i < dataIf.length; i++) {
                 dataIf[i].style.display = 'none';
