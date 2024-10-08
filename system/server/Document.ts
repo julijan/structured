@@ -37,11 +37,6 @@ export class Document extends Component {
 
         this.application.helpers.applyTo(Handlebars);
 
-        // set favicon
-        if (typeof this.application.favicon.image === 'string') {
-            this.head.setFavicon(this.application.favicon);
-        }
-
         this.application.emit('documentCreated', this);
     }
 

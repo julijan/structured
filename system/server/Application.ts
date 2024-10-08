@@ -30,14 +30,6 @@ export class Application {
     // handlebars helpers manager
     readonly helpers: Helpers = new Helpers();
 
-    favicon: {
-        image: string|null,
-        type: string
-    } = {
-        image: null,
-        type: 'image/png'
-    };
-
     constructor(port: number, host?: string) {
         this.host = host;
         this.port = port;
