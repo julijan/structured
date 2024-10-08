@@ -1,7 +1,7 @@
 Routes:
 
-You can add routes directly in index.ts using app.addRequestHandler
-but in order to avoid clutter and keep the code readable, you should add the routes here (/app/routes)
+You can add routes directly in index.ts using app.request.on
+but in order to avoid clutter and keep the code structured, you should add the routes here (/app/routes)
 
 All files in this directory will be loaded once the server is started,
 so feel free to separate your routes in as many files as you feel makes sense, eg. it would make sense
@@ -11,14 +11,9 @@ Example:
 
 export default async function(app: Application) {
 
-    app.addRequestHandler('GET', '/login', async (ctx) => {
+    app.request.on('GET', '/login', async (ctx) => {
         // ctx is a RequestContext
         ctx.response.write('Login page');
     });
-
-    app.addRequestHandler('GET', '/login', async (ctx) => {
-        // ctx is a RequestContext
-        ctx.response.write('Login page');
-    });
-
+    
 }
