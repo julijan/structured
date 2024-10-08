@@ -128,7 +128,7 @@ export class Document extends Component {
     }
 
     public async loadComponent(componentName: string, data?: LooseObject) {
-        const componentEntry = this.document.application.component(componentName);
+        const componentEntry = this.document.application.components.getByName(componentName);
         if (componentEntry) {
             const dataString = data === undefined ? '' : Object.keys(data).reduce((prev, key) => {
                 prev.push(`data-${key}="${attributeValueToString(key, data[key])}"`)

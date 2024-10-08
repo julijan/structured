@@ -69,7 +69,7 @@ export class Component {
 
         this.id = '';
 
-        const component = parent === undefined ? false : this.document.application.component(this.name);
+        const component = parent === undefined ? false : this.document.application.components.getByName(this.name);
         if (component) {
 
             // store ComponentEntry

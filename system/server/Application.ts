@@ -4,7 +4,7 @@ import { createServer, Server } from 'http';
 import * as path from 'path';
 import * as mime from 'mime-types';
 import conf from '../../app/Config.js';
-import { ApplicationCallbacks, ComponentEntry, LooseObject, RequestBodyArguments, RequestCallback, RequestContext } from '../Types';
+import { ApplicationCallbacks, LooseObject, RequestBodyArguments, RequestCallback, RequestContext } from '../Types';
 import { Document } from './Document.js';
 import { Components } from './Components.js';
 import { Session } from './Session.js';
@@ -115,11 +115,6 @@ export class Application {
         });
     }
 
-    // get ComponentEntry by name, shortcut to Components.getByName
-    public component(name: string): ComponentEntry|null {
-        return this.components.getByName(name);
-    }
-
     // add event listener
     public on(evt: ApplicationCallbacks|string, callback: RequestCallback|((payload?: any) => void)) {
         this.eventEmitter.on(evt, callback);
@@ -142,7 +137,7 @@ export class Application {
 
     // renders a component with give data and sends it as a response
     private async respondWithComponent(ctx: RequestContext, componentName: string, attributes: RequestBodyArguments, data?: LooseObject, unwrap: boolean = true): Promise<boolean> {
-        const component = this.component(componentName);
+        const component = this.components.getByName(componentName);
         if (component) {
             const document = new Document(this, '', ctx);
             const data: LooseObject = attributes;
