@@ -10,11 +10,8 @@ import * as jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
 export class Component {
-
     id: string;
-
     name: string;
-
     document: Document;
     
     parent: null|Document|Component;
@@ -32,7 +29,7 @@ export class Component {
 
     data: LooseObject = {};
 
-    entry: null|ComponentEntry;
+    entry: null|ComponentEntry; // null for root
 
     isRoot: boolean;
 
@@ -69,7 +66,6 @@ export class Component {
 
         const component = parent === undefined ? false : this.document.application.components.getByName(this.name);
         if (component) {
-
             // store ComponentEntry
             this.entry = component;
 
@@ -85,12 +81,10 @@ export class Component {
         if (! (this instanceof Document)) {
             this.document.application.helpers.applyTo(Handlebars);
         }
-
     }
 
     // load the view from file system
     public async loadView(pathRelative: string, data?: LooseObject): Promise<boolean> {
-
         const viewPath = path.resolve('../' + conf.views.path + '/' + pathRelative + (pathRelative.endsWith('.html') ? '' : '.html'));
 
         if (! existsSync(viewPath)) {
@@ -137,9 +131,6 @@ export class Component {
         // set data-component="this.name" attribute on tag
         this.dom.setAttribute(conf.views.componentAttribute, this.name);
 
-        // this.dom.setAttribute('data-component-path', this.path.join('/'));
-
-
         if (this.attributes.use && this.parent) {
             // data-use was found on component tag
             // if parent Component.data contains it, include it with data
@@ -160,9 +151,7 @@ export class Component {
                     // then use attributes as data
                     this.data = Object.assign({}, this.attributes);
                 }
-            }
-    
-            if (data !== undefined) {
+            } else {
                 this.data = Object.assign(data, this.attributes);
             }
 
@@ -171,7 +160,6 @@ export class Component {
             // we want those to be found as children
             this.fillData(data === undefined ? this.data : data);
 
-            // await this.initChildren(data, force);
             await this.initChildren(undefined, force);
         }
 
@@ -213,7 +201,6 @@ export class Component {
             for (let i = 0; i < dataIf.length; i++) {
                 dataIf[i].style.display = 'none';
             }
-
         }
 
         return;
@@ -247,7 +234,6 @@ export class Component {
                 }
     
             }
-
         }
         
         return;
@@ -258,7 +244,6 @@ export class Component {
     // each entry can be a simple string which is the key in parent data
     // but it can also use array item access key[index] and dot notation key.subkey or a combination key[index].subkey
     protected importedParentData(parentData: LooseObject): LooseObject {
-
         if (! this.parent) {
             return {};
         }
@@ -390,5 +375,4 @@ export class Component {
         const template = Handlebars.compile(this.entry ? this.entry.html : this.dom.innerHTML);
         this.dom.innerHTML = template(data);
     }
-
 }
