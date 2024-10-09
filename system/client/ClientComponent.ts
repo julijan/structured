@@ -5,6 +5,15 @@ import { DataStore } from './DataStore.js';
 import { Net } from './Net.js';
 import { NetRequest } from './NetRequest.js';
 
+// window.initializers will always be present
+// each Document has a list of initializers used in components within it
+// and they will be output as initializers = { componentName : initializer }
+declare global {
+    interface Window {
+        initializers: Record<string, InitializerFunction | string>;
+    }
+}
+
 export class ClientComponent {
     readonly name: string;
     children: Array<ClientComponent> = [];
@@ -117,10 +126,8 @@ export class ClientComponent {
 
         this.promoteRefs();
 
-        // @ts-ignore
-        if (initializers && initializers[this.name]) {
-            // @ts-ignore
-            this.init(initializers[this.name]);
+        if (window.initializers && window.initializers[this.name]) {
+            this.init(window.initializers[this.name]);
         }
     }
 
@@ -265,11 +272,9 @@ export class ClientComponent {
 
         // add any new initializers to global initializers list
         for (const key in componentData.initializers) {
-            // @ts-ignore
-            if (!initializers[key]) {
+            if (!window.initializers[key]) {
                 console.log('registering initializer', key);
-                // @ts-ignore
-                initializers[key] = componentData.initializers[key];
+                window.initializers[key] = componentData.initializers[key];
                 if (this.name === key) {
                     this.init(componentData.initializers[key] as string);
                 }
@@ -629,11 +634,9 @@ export class ClientComponent {
 
         // add any new initializers to global initializers list
         for (let key in res.initializers) {
-            // @ts-ignore
-            if (!initializers[key]) {
+            if (!window.initializers[key]) {
                 console.log('registering initializer', key);
-                // @ts-ignore
-                initializers[key] = res.initializers[key];
+                window.initializers[key] = res.initializers[key];
                 if (this.name === key) {
                     this.init(res.initializers[key] as string);
                 }
@@ -880,5 +883,4 @@ export class ClientComponent {
             bound.element.removeEventListener(bound.event, bound.callback);
         });
     }
-
 }
