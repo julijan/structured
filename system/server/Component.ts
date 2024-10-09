@@ -154,7 +154,7 @@ export class Component {
             if (data === undefined) {
                 if (this.entry && this.entry.module) {
                     // component has a server side part, fetch data using getData
-                    this.data = (await this.entry.module.getData.apply(this, [this.attributes, this.document.ctx, this.document.application])) || {};
+                    this.data = (await this.entry.module.getData(this.attributes, this.document.ctx, this.document.application)) || {};
                 } else {
                     // if the component has no server side part
                     // then use attributes as data

@@ -1,6 +1,5 @@
 import { IncomingMessage, ServerResponse } from "http";
 import { Application } from "./server/Application.js";
-import { Component } from "./server/Component.js";
 import { symbolArrays } from "./Symbols.js";
 import { RequestContextData } from "../app/Types.js";
 import { Net } from './client/Net.js';
@@ -133,7 +132,7 @@ export interface ComponentScaffold  {
 
     attributes?: Record<string, string>,
 
-    getData: (this: Component, data: RequestBodyArguments|LooseObject, ctx: undefined|RequestContext, app: Application) => Promise<LooseObject | null>
+    getData: (this: ComponentScaffold, data: RequestBodyArguments|LooseObject, ctx: undefined|RequestContext, app: Application) => Promise<LooseObject | null>
     [key: string] : any
 }
 
