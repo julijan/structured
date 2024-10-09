@@ -189,11 +189,11 @@ export class Request {
             }
         }
 
-        await this.app.emit('beforeRequestHandler', context);
-
+        
         if (handler !== null) {
             // handler is found
-
+            await this.app.emit('beforeRequestHandler', context);
+            
             try {
                 // parse request body, this will populate ctx.bodyRaw and if possible ctx.body
                 await this.parseBody(context);
@@ -215,7 +215,6 @@ export class Request {
 
             await this.app.emit('afterRequestHandler', context);
         } else {
-
             // handler not found, check if a static asset is requested
             let staticAsset = false;
 
@@ -225,6 +224,7 @@ export class Request {
                 const basePath = context.request.url?.startsWith('/assets/ts/') ? './' : '../';
                 const assetPath = path.resolve(basePath + context.request.url);
                 if (existsSync(assetPath)) {
+                    await this.app.emit('beforeAssetAccess', context);
                     const extension = (context.request.url || '').split('.').pop();
                     if (extension) {
                         const contentType = this.app.contentType(extension);
@@ -234,6 +234,7 @@ export class Request {
                     }
                     response.write(readFileSync(assetPath));
                     staticAsset = true;
+                    await this.app.emit('afterAssetAccess', context);
                 }
             }
 
