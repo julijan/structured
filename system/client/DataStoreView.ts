@@ -36,7 +36,12 @@ export class DataStoreView {
     // add callback to be called when a given key's value is changed
     // if key === '*' then it will be called when any of the key's values is changed
     public onChange(key: string | AsteriskAny, callback: StoreChangeCallback): DataStoreView {
-        this.store.onChange(this.component.componentData<string>('componentId'), key, callback);
+        this.store.onChange(this.component.componentData<string>('componentId'), key, (key, value, oldValue, componentId) => {
+            if (! this.component.destroyed) {
+                // only run callback if the component is not destroyed
+                callback.apply(this.component, [key, value, oldValue, componentId]);
+            }
+        });
         return this;
     }
 }
