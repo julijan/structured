@@ -308,7 +308,7 @@ export class Component {
     }
 
     // parse all data-attr attributes into data object converting the data-attr to camelCase
-    protected getAttributesData(domNode?: any): LooseObject {
+    protected getAttributesData(domNode?: HTMLElement): LooseObject {
         if (domNode === undefined) {
             domNode = this.dom;
         }
