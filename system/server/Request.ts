@@ -19,6 +19,7 @@ export class Request {
     pageNotFoundCallback: RequestCallback =  async ({ response }) => {
         response.statusCode = 404;
         response.write('Page not found');
+        response.end();
     };
 
     // registered request handlers
@@ -186,6 +187,7 @@ export class Request {
             },
             show404: async() => {
                 await this.pageNotFoundCallback.apply(this.app, [context]);
+                this.app.emit('pageNotFound', context);
             }
         }
 
@@ -240,7 +242,7 @@ export class Request {
 
             if (! staticAsset) {
                 // no request handler found nor a static asset - 404
-                await this.pageNotFoundCallback.apply(this, [context]);
+                await context.show404();
             }
 
         }
