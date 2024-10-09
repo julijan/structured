@@ -25,7 +25,7 @@ export class ClientComponent {
     private storeGlobal: DataStore;
     private initializerExecuted: boolean = false;
 
-    deleted: boolean = false;
+    destroyed: boolean = false;
 
     private redrawRequest: XMLHttpRequest | null = null;
 
@@ -133,7 +133,7 @@ export class ClientComponent {
 
     // set initializer callback and execute it
     private init(initializer: InitializerFunction | string) {
-        if (! this.initializerExecuted) {
+        if (! this.initializerExecuted && ! this.destroyed) {
             let initializerFunction: InitializerFunction | null = null;
             if (typeof initializer === 'string') {
                 initializerFunction = new Function('const init = ' + initializer + '; init.apply(this, [...arguments]);') as InitializerFunction;
@@ -224,6 +224,7 @@ export class ClientComponent {
     // fetch from server and replace with new HTML
     // optionally can provide data that the component will receive when rendering
     public async redraw(data?: LooseObject): Promise<void> {
+        if (this.destroyed) {return;}
 
         data = (data ? mergeDeep({}, data) : {}) as LooseObject;
         // we delete componentId from data to allow passing entire componentData to child
@@ -495,6 +496,8 @@ export class ClientComponent {
     }
 
     private updateConditionals(enableTransition: boolean) {
+        if (this.destroyed) {return;}
+
         // data-if conditions
         this.conditionals.forEach((node) => {
             const condition = node.getAttribute('data-if');
@@ -533,25 +536,21 @@ export class ClientComponent {
     // it is async
     public async remove() {
         if (!this.isRoot) {
-
-            this.deleted = true;
-
             // remove children recursively
             const children = Array.from(this.children);
             for (let i = 0; i < children.length; i++) {
                 await children[i].remove();
             }
 
-            // call user defined destructor
-            await this.destroy();
-
-            // remove node
-            this.domNode.parentElement?.removeChild(this.domNode);
-
             // remove from parent's children array
             if (this.parent) {
                 this.parent.children.splice(this.parent.children.indexOf(this), 1);
             }
+
+            // remove DOM node
+            this.domNode.parentElement?.removeChild(this.domNode);
+            await this.destroy();
+
         }
     }
 
@@ -860,11 +859,25 @@ export class ClientComponent {
     }
 
     private async destroy(): Promise<void> {
-        this.unbindAll();
         // if the user has defined a destroy callback, run it
         if (typeof this.onDestroy === 'function') {
             await this.run(this.onDestroy);
         }
+
+        // remove all event listeners attached to DOM elements
+        this.unbindAll();
+
+        // clean up and free memory
+        this.conditionals = [];
+        this.conditionalClassNames = [];
+        this.conditionalCallbacks = {};
+        this.refs = {};
+        this.refsArray = {};
+        this.initializer = null;
+        this.data = {};
+
+        // mark destroyed
+        this.destroyed = true;
     }
 
     public bind(element: HTMLElement | undefined | null, event: string, callback: (e: Event) => void) {
@@ -882,5 +895,6 @@ export class ClientComponent {
         this.bound.forEach((bound) => {
             bound.element.removeEventListener(bound.event, bound.callback);
         });
+        this.bound = [];
     }
 }
