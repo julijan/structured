@@ -22,7 +22,7 @@ export type RequestContext = {
     args: URIArguments,
     handler: null|RequestHandler,
 
-    cookies: LooseObject,
+    cookies: Record<string, string>,
 
     // POSTed data, parsed to object
     body?: PostedDataDecoded,
@@ -45,9 +45,7 @@ export type RequestContext = {
     getArgs: PostedDataDecoded,
 
     respondWith: (data: any) => void,
-
     redirect: (to: string, statusCode?: number) => void,
-
     show404: () => Promise<void>
 }
 
@@ -84,9 +82,7 @@ export type URIArguments = {
 
 export type DocumentResource = {
     path: string,
-    attributes: {
-        [propertyName: string] : string|null
-    }
+    attributes: Record<string, string | null>,
     priority: number
 }
 
@@ -136,9 +132,7 @@ export interface ComponentScaffold  {
     [key: string] : any
 }
 
-export type LooseObject = {
-    [key: string] : any
-}
+export type LooseObject = Record<string, any>
 
 export type ApplicationEvents = 'serverStarted'|'beforeRequestHandler'|'afterRequestHandler'|'beforeRoutes'|'afterRoutes'|'beforeComponentLoad'|'afterComponentLoad'|'documentCreated';
 
