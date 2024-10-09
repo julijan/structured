@@ -66,7 +66,7 @@ export class Document extends Component {
             initializers[name] = this.initializers[name].toString();
         }
 
-        const initializersString = '<script type="application/javascript">const initializers = ' + JSON.stringify(initializers) + '</script>';
+        const initializersString = '<script type="application/javascript">window.initializers = ' + JSON.stringify(initializers) + '</script>';
 
         this.head.add(initializersString);
         this.initializersInitialized = true;
