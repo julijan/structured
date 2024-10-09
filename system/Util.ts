@@ -101,7 +101,7 @@ export function queryStringDecode(queryString: string, initialValue: PostedDataD
                     // mark as solved
                     complexPropertyPathsResolved.push(property.path as string);
 
-                    obj[property.path] = this.queryStringDecode(objectProperties.map((prop) => {
+                    obj[property.path] = queryStringDecode(objectProperties.map((prop) => {
                         const pathRemaining = prop.keyRaw.substring(prop.key.length + (prop.path?.length || 0) + 3);
                         return `value[${pathRemaining.substring(0, pathRemaining.length - 1)}]=${encodeURIComponent(prop.value)}`;
                     }).join('&')).value as any;
@@ -150,7 +150,7 @@ export function queryStringDecode(queryString: string, initialValue: PostedDataD
                     // mark as solved
                     complexPropertyPathsResolved.push(value.path as string);
 
-                    return this.queryStringDecode(objectProperties.map((prop) => {
+                    return queryStringDecode(objectProperties.map((prop) => {
                         const pathRemaining = prop.keyRaw.substring(prop.key.length + (prop.path?.length || 0) + 3);
                         return `value${pathRemaining.length > 0 ? `[${pathRemaining.substring(0, pathRemaining.length - 1)}]` : ''}=${encodeURIComponent(prop.value)}`;
                     }).join('&')).value as PostedDataDecoded;
