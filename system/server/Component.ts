@@ -36,7 +36,7 @@ export class Component {
 
     isRoot: boolean;
 
-    constructor(name: string, node?: any, parent?: Document|Component, autoInit: boolean = true) {
+    constructor(name: string, node?: HTMLElement, parent?: Document|Component, autoInit: boolean = true) {
         this.name = name;
 
         if (name === 'root') {
@@ -44,7 +44,7 @@ export class Component {
             this.path.push('');
             this.isRoot = true;
         } else {
-            this.dom = node;
+            this.dom = node || new JSDOM().window.document.body;
             if (parent) {
                 this.path = parent.path.concat(this.name);
             }
@@ -238,7 +238,7 @@ export class Component {
             });
     
             if (component) {
-                const componentInstances = this.dom.querySelectorAll(tag);
+                const componentInstances = this.dom.querySelectorAll<HTMLElement>(tag);
     
                 for (let j = 0; j < componentInstances.length; j++) {
                     const child = new Component(component.name, componentInstances[j], this, false);

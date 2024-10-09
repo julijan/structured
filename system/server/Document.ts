@@ -25,7 +25,7 @@ export class Document extends Component {
     appendHTML: string = '';
 
     constructor(app: Application, title: string, ctx?: RequestContext) {
-        super('root', '');
+        super('root');
         this.application = app;
         this.ctx = ctx;
         this.document = this;
