@@ -324,6 +324,17 @@ export class ClientComponent {
         });
     }
 
+    // initialize refs and refsArray within this component
+    // ref="refName"
+    // any DOM nodes with attribute ref="refName" will be stored under refs as { refName: HTMLElement }
+    // and can be returned using the ref method, refName should be unique,
+    // if multiple DOM nodes have the same refName, only the last one will be kept
+    // if ref is on a component tag, that ref will get promoted to ClientComponent
+    // array:ref="refName"
+    // any DOM nodes with attribute array:ref="refName" will be grouped
+    // under refsArray as { refName: Array<HTMLElement> } and can be returned using refArray method
+    // in contrast to ref, array:ref's refName does not need to be unique, in fact, since it's used
+    // to group as set of DOM nodes, it only makes sense if multiple DOM nodes share the same refName
     private initRefs(node?: HTMLElement): void {
         const isSelf = node === undefined;
         if (node === undefined) {
