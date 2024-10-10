@@ -18,7 +18,7 @@ export class DataStore {
 
     // return self to allow chained calls to set
     public set(component: ClientComponent, key: string, val: any, force: boolean = false): DataStore {
-        const componentId = component.componentData<string>('componentId');
+        const componentId = component.getData<string>('componentId');
 
         const oldValue = this.get(componentId, key);
 

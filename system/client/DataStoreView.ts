@@ -22,7 +22,7 @@ export class DataStoreView {
     }
 
     public get(key: string): any {
-        return this.store.get(this.component.componentData<string>('componentId'), key);
+        return this.store.get(this.component.getData<string>('componentId'), key);
     }
 
     public toggle(key: string) {
@@ -30,13 +30,13 @@ export class DataStoreView {
     }
 
     public keys(): Array<string> {
-        return Object.keys(this.store.get(this.component.componentData<string>('componentId')));
+        return Object.keys(this.store.get(this.component.getData<string>('componentId')));
     }
 
     // add callback to be called when a given key's value is changed
     // if key === '*' then it will be called when any of the key's values is changed
     public onChange(key: string | AsteriskAny, callback: StoreChangeCallback): DataStoreView {
-        this.store.onChange(this.component.componentData<string>('componentId'), key, (key, value, oldValue, componentId) => {
+        this.store.onChange(this.component.getData<string>('componentId'), key, (key, value, oldValue, componentId) => {
             if (! this.component.destroyed) {
                 // only run callback if the component is not destroyed
                 callback.apply(this.component, [key, value, oldValue, componentId]);

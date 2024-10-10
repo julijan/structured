@@ -362,7 +362,7 @@ export class ClientComponent {
                 node.addEventListener('input', () => {
                     const value = queryStringDecode(`${field}=${(node as HTMLInputElement).value}`);
                     const key = Object.keys(value)[0];
-                    this.set(key || 'undefined', mergeDeep(this.componentData(key) || {}, value[key]));
+                    this.set(key || 'undefined', mergeDeep(this.getData(key) || {}, value[key]));
                 });
             }
         }
@@ -638,7 +638,7 @@ export class ClientComponent {
         return component;
     }
 
-    public componentData<T>(key?: string): T {
+    public getData<T>(key?: string): T {
         if (!key) {
             return this.data as T;
         }
