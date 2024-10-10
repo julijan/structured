@@ -557,34 +557,42 @@ export class ClientComponent {
         return null;
     }
 
-    // find another component within this component recursively, returns the first found component with given name
-    public find(componentName: string): null | ClientComponent {
+    // find a component with given name within this component
+    // if recursive = true, it searches recursively
+    // returns the first found component or null if no components were found
+    public find(componentName: string, recursive: boolean = true): null | ClientComponent {
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children[i];
             if (child.name == componentName) {
                 // found it
                 return child;
             } else {
-                // search recursively, if found return
-                const inChild = child.find(componentName);
-                if (inChild) {
-                    return inChild;
+                if (recursive) {
+                    // search recursively, if found return
+                    const inChild = child.find(componentName, recursive);
+                    if (inChild) {
+                        return inChild;
+                    }
                 }
             }
         }
         return null;
     }
 
-    // find another component within this component recursively, returns all found components with given name
-    public query(componentName: string, results: Array<ClientComponent> = []): Array<ClientComponent> {
+    // find all components with given name within this component
+    // if recursive = true, it searches recursively
+    // returns an array of found components
+    public query(componentName: string, results: Array<ClientComponent> = [], recursive: boolean = true): Array<ClientComponent> {
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children[i];
             if (child.name == componentName) {
-                // found it
+                // found a component with name = componentName, add to results
                 results.push(child);
             } else {
-                // search recursively, if found return
-                child.query(componentName, results);
+                if (recursive) {
+                    // search recursively, if found return
+                    child.query(componentName, results, recursive);
+                }
             }
         }
         return results;
