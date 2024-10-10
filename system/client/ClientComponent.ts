@@ -589,20 +589,24 @@ export class ClientComponent {
         return results;
     }
 
-    // append to is a selector within this component's dom
-    public async add(appendTo: string | HTMLElement | Element, componentName: string, data?: LooseObject, attributes?: { [key: string]: string; }): Promise<ClientComponent | null> {
+    // adds a new component to DOM/component tree
+    // appendTo is a selector within this component's DOM or a HTMLElement (which can be outside this component)
+    // data can be an object which is passed to added component
+    // regardless whether appendTo is within this component or not,
+    // added component will always be a child of this component
+    // returns a promise that resolves with the added component
+    public async add(appendTo: string | HTMLElement, componentName: string, data?: LooseObject): Promise<ClientComponent | null> {
         const container = typeof appendTo === 'string' ? this.domNode.querySelector(appendTo) : appendTo;
 
-        if (container === null) {
-            console.warn(`${this.name}.add() - appendTo selector not found within this component`);
-            return null;
+        if (! (container instanceof HTMLElement)) {
+            throw new Error(`${this.name}.add() - appendTo selector not found within this component`);
         }
 
-
+        // request rendered component from the server
+        // expected result is JSON, containing { html, initializers, data }
         const req = new NetRequest('POST', '/componentRender', {
             'content-type': 'application/json'
         });
-
         const componentDataJSON = await req.send(JSON.stringify({
             component: componentName,
             attributes: data
@@ -614,7 +618,9 @@ export class ClientComponent {
             data: LooseObject;
         } = JSON.parse(componentDataJSON);
 
-        // add any new initializers to global initializers list
+        // if the current document did not include the added component (or components loaded within it)
+        // it's initializer will not be present in window.initializers
+        // add any missing initializers to global initializers list
         for (let key in res.initializers) {
             if (!window.initializers[key]) {
                 console.log('registering initializer', key);
@@ -625,14 +631,18 @@ export class ClientComponent {
             }
         }
 
+        // create a temporary container to load the returned HTML into
         const tmpContainer = document.createElement('div');
         tmpContainer.innerHTML = res.html;
 
+        // get the first child, which is always the component wrapper <div data-component="..."></div>
         const componentNode = tmpContainer.firstChild as HTMLElement;
 
+        // create an instance of ClientComponent for the added component and add it to this.children
         const component = new ClientComponent(this, componentName, componentNode, this.storeGlobal);
         this.children.push(component);
 
+        // add the component's DOM node to container
         container.appendChild(componentNode);
 
         return component;
