@@ -183,8 +183,9 @@ export class ClientComponent {
         return this;
     }
 
+    // find all DOM nodes with data-component attribute within this component,
+    // instantiate a ClientComponent with them and add them to this.children
     private initChildren(scope?: HTMLElement, parent?: ClientComponent): void {
-
         if (scope === undefined) {
             scope = this.domNode;
         }
@@ -197,7 +198,7 @@ export class ClientComponent {
                     this.children.push(new ClientComponent(parent || null, (childNode as HTMLElement).getAttribute('data-component') || '', childNode as HTMLElement, this.storeGlobal));
                 } else {
                     // not a component, resume from here recursively
-                    this.initChildren((childNode as HTMLElement), this);
+                    this.initChildren((childNode as HTMLElement), parent);
                 }
             }
         }
