@@ -23,6 +23,7 @@ export class ClientComponent {
     readonly root: ClientComponent;
     store: DataStoreView;
     private storeGlobal: DataStore;
+    readonly net: Net = new Net();
     private initializerExecuted: boolean = false;
 
     destroyed: boolean = false;
@@ -125,7 +126,7 @@ export class ClientComponent {
             if (initializerFunction) {
                 this.initializer = initializerFunction;
                 this.initializer.apply(this, [{
-                    net: new Net()
+                    net: this.net
                 }]);
             }
         }
@@ -284,7 +285,7 @@ export class ClientComponent {
         // run the initializer
         if (this.initializer && ! this.initializerExecuted) {
             this.initializer.apply(this, [{
-                net: new Net()
+                net: this.net
             }]);
         }
 
