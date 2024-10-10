@@ -375,20 +375,27 @@ export class ClientComponent {
         });
     }
 
+    // normally, ref will return a HTMLElement, however if ref attribute is found on a component tag
+    // this will upgrade it to ClientComponent
     private promoteRefs() {
         this.children.forEach((child) => {
             const ref = child.domNode.getAttribute('ref');
             if (ref) {
-                console.log('ref promoted');
                 this.refs[ref] = child;
             }
         });
     }
 
+    // returns a single HTMLElement or ClientComponent that has ref="refName" attribute
+    // if ref attribute is on a component tag, the ref will be promoted to ClientComponent
+    // in other cases it returns the HTMLElement
+    // this does not check if the ref exists
+    // you should make sure it does, otherwise you will get undefined at runtime
     public ref<T>(refName: string): T {
         return this.refs[refName] as T;
     }
 
+    // returns an array of HTMLElement (type of the elements can be specified) that have array:ref="refName"
     public refArray<T>(refName: string): Array<T> {
         return (this.refsArray[refName] || []) as Array<T>;
     }
