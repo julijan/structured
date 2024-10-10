@@ -83,16 +83,15 @@ export class ClientComponent {
             this.parent = parent;
         }
 
-        this.store = new DataStoreView(store, this);
+        this.storeGlobal = store;
+        this.store = new DataStoreView(this.storeGlobal, this);
 
         this.initRefs();
         this.initData();
         this.initModels();
-
-        this.storeGlobal = store;
-
         this.initConditionals();
         this.initChildren(this.domNode, this);
+        this.promoteRefs();
 
         this.loaded = !this.data.if;
 
@@ -102,12 +101,11 @@ export class ClientComponent {
         }
 
         // update conditionals whenever any data in component's store has changed
-        this.store.onChange('*', function () {
+        this.store.onChange('*', () => {
             this.updateConditionals(true);
         });
 
-        this.promoteRefs();
-
+        // run initializer, if one exists for current component
         if (window.initializers && window.initializers[this.name]) {
             this.init(window.initializers[this.name]);
         }
@@ -260,7 +258,6 @@ export class ClientComponent {
         // add any new initializers to global initializers list
         for (const key in componentData.initializers) {
             if (!window.initializers[key]) {
-                console.log('registering initializer', key);
                 window.initializers[key] = componentData.initializers[key];
                 if (this.name === key) {
                     this.init(componentData.initializers[key] as string);
@@ -285,6 +282,7 @@ export class ClientComponent {
         this.initModels();
         this.initConditionals();
         this.updateConditionals(false);
+        this.promoteRefs();
 
         // run the initializer
         if (this.initializer && ! this.initializerExecuted) {
@@ -664,7 +662,6 @@ export class ClientComponent {
         // add any missing initializers to global initializers list
         for (let key in res.initializers) {
             if (!window.initializers[key]) {
-                console.log('registering initializer', key);
                 window.initializers[key] = res.initializers[key];
                 if (this.name === key) {
                     this.init(res.initializers[key] as string);
