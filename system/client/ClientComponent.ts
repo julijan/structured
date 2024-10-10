@@ -1,5 +1,5 @@
 import { ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject } from '../Types.js';
-import { attributeValueFromString, attributeValueToString, isAsync, mergeDeep, queryStringDecode, toCamelCase } from '../Util.js';
+import { attributeValueFromString, attributeValueToString, mergeDeep, queryStringDecode, toCamelCase } from '../Util.js';
 import { DataStoreView } from './DataStoreView.js';
 import { DataStore } from './DataStore.js';
 import { Net } from './Net.js';
@@ -56,13 +56,6 @@ export class ClientComponent {
     } = {};
     private refsArray: {
         [key: string]: Array<HTMLElement | ClientComponent>;
-    } = {};
-
-    // a place for user-defined "methods"
-    // executed using run method
-    // these should be arrow functions in order to keep the context
-    private callbacks: {
-        [key: string]: Function;
     } = {};
 
     loaded: boolean;
@@ -228,7 +221,7 @@ export class ClientComponent {
         }
 
         if (typeof this.onRedraw === 'function') {
-            this.run(this.onRedraw);
+            this.onRedraw.apply(this)
         }
 
         this.loaded = false;
@@ -824,30 +817,10 @@ export class ClientComponent {
         return '';
     }
 
-    // run a user defined callback
-    async run<T>(callbackNameOrFn: string | Function, args: Array<any> = []): Promise<T | undefined> {
-        let fn = callbackNameOrFn;
-
-        if (typeof fn === 'string') {
-            fn = this.callbacks[fn];
-        }
-
-        if (typeof fn === 'function') {
-            if (isAsync(fn)) {
-                return await fn(...args) as T;
-            } else {
-                return fn(...args) as T;
-            }
-        }
-        // calback not defined
-        console.error(`Callback ${callbackNameOrFn} is not defined`);
-        return undefined;
-    }
-
     private async destroy(): Promise<void> {
         // if the user has defined a destroy callback, run it
         if (typeof this.onDestroy === 'function') {
-            await this.run(this.onDestroy);
+            await this.onDestroy.apply(this);
         }
 
         // remove all event listeners attached to DOM elements
