@@ -133,22 +133,22 @@ export class ClientComponent {
         this.initializerExecuted = true;
     }
 
-    // parse all data-attr attributes into this.data object converting the data-attr to camelCase
+    // parse all data-[key] attributes found on this.domNode into this.data object
+    // key converted to camelCase
+    // values are expected to be encoded using attributeValueToString
+    // and will be decoded using attributeValueFromString
     private initData(): void {
         for (let i = 0; i < this.domNode.attributes.length; i++) {
             // data-attr, convert to dataAttr and store value
-            // if (this.domNode.attributes[i].name.indexOf('data-') === 0) {
             if (/^((number|string|boolean|object|any):)?data-[^\s]+/.test(this.domNode.attributes[i].name)) {
                 const value = this.domNode.attributes[i].value;
                 const attrData = attributeValueFromString(value);
 
                 if (typeof attrData === 'object') {
-                    // this.data[attrData.key] = attrData.value;
                     this.setData(attrData.key, attrData.value);
                 } else {
                     // not a valid attribute data string, assign as is (string)
                     const key = toCamelCase(this.domNode.attributes[i].name.substring(5));
-                    // this.data[key] = attrData;
                     this.setData(key, attrData);
                 }
             }
