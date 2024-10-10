@@ -645,7 +645,9 @@ export class ClientComponent {
         return this.data[key] as T;
     }
 
-    public show(domNode: HTMLElement, enableTransition: boolean) {
+    // shows a previously hidden DOM node (domNode.style.display = '')
+    // if the DOM node has data-transition attributes, it will run the transition while showing the node
+    public show(domNode: HTMLElement, enableTransition: boolean = true) {
         if (!enableTransition) {
             domNode.style.display = '';
             return;
@@ -709,7 +711,9 @@ export class ClientComponent {
 
     }
 
-    public hide(domNode: HTMLElement, enableTransition: boolean) {
+    // hides the given DOM node (domNode.style.display = 'none')
+    // if the DOM node has data-transition attributes, it will run the transition before hiding the node
+    public hide(domNode: HTMLElement, enableTransition: boolean = true) {
         if (!enableTransition) {
             domNode.style.display = 'none';
             return;
