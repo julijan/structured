@@ -168,6 +168,15 @@ export function queryStringDecode(queryString: string, initialValue: PostedDataD
     return initialValue;
 }
 
+// loop through given object, for each key, runs callbackEach providing the key and value to it
+// this is a basic for ... in loop, but makes it more TS friendly
+// object keys are always a string according to TS, which requires type casting
+export function objectEach<T>(obj: T, callbackEach: (key: keyof T, value: T[keyof T]) => void) {
+    for (const key in obj) {
+        callbackEach(key, obj[key]);
+    }
+}
+
 // converts string-with-dashes to stringWithDashes
 export function toCamelCase(dataKey: string, separator: string = '-'): string {
     let index: number;
