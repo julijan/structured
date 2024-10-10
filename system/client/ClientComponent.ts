@@ -144,12 +144,12 @@ export class ClientComponent {
 
                 if (typeof attrData === 'object') {
                     // this.data[attrData.key] = attrData.value;
-                    this.set(attrData.key, attrData.value);
+                    this.setData(attrData.key, attrData.value);
                 } else {
                     // not a valid attribute data string, assign as is (string)
                     const key = toCamelCase(this.domNode.attributes[i].name.substring(5));
                     // this.data[key] = attrData;
-                    this.set(key, attrData);
+                    this.setData(key, attrData);
                 }
             }
         }
@@ -172,14 +172,15 @@ export class ClientComponent {
         return data.reverse();
     }
 
-    // set a data value (data-attr)
-    // also sets data[key] and store(key, val)
-    public set(key: string, value: any): ClientComponent {
-        const dataKey = 'data-' + key;
-        const val = attributeValueToString(key, value);
-        this.domNode.setAttribute(dataKey, val);
-        this.data[toCamelCase(key)] = value;
-        this.store.set(key, value);
+    // sets this.data[key] and this.store(key, val), key is passed through toCamelCase
+    // sets data-[key]="value" attribute on this.domNode, value passed through attributeValueToString
+    // returns this to allow chaining
+    public setData(key: string, value: any): ClientComponent {
+        const dataKey = `data-${key}`;
+        this.domNode.setAttribute(dataKey, attributeValueToString(key, value));
+        const keyCamelCase = toCamelCase(key);
+        this.data[keyCamelCase] = value;
+        this.store.set(keyCamelCase, value);
         return this;
     }
 
@@ -252,7 +253,7 @@ export class ClientComponent {
         this.redrawRequest = null;
 
         for (const key in componentData.data) {
-            this.set(key, componentData.data[key]);
+            this.setData(key, componentData.data[key]);
             this.store.set(key, componentData.data[key]);
         }
 
@@ -377,7 +378,7 @@ export class ClientComponent {
                 node.addEventListener('input', () => {
                     const value = queryStringDecode(`${field}=${(node as HTMLInputElement).value}`);
                     const key = Object.keys(value)[0];
-                    this.set(key || 'undefined', mergeDeep(this.getData(key) || {}, value[key]));
+                    this.setData(key || 'undefined', mergeDeep(this.getData(key) || {}, value[key]));
                 });
             }
         }
