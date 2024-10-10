@@ -58,18 +58,6 @@ export class ClientComponent {
         [key: string]: Array<HTMLElement | ClientComponent>;
     } = {};
 
-    // used for showing/hiding conditionals
-    private transitions: ClientComponentTransitions = {
-        show: {
-            fade: false,
-            slide: false
-        },
-        hide: {
-            fade: false,
-            slide: false
-        }
-    };
-
     // a place for user-defined "methods"
     // executed using run method
     // these should be arrow functions in order to keep the context
@@ -660,10 +648,6 @@ export class ClientComponent {
             return this.data as T;
         }
         return this.data[key] as T;
-    }
-
-    public setTransition(action: keyof ClientComponentTransitions, transition: keyof ClientComponentTransition, durationMs: false | number): void {
-        this.transitions[action][transition] = durationMs;
     }
 
     public show(domNode: HTMLElement, enableTransition: boolean) {
