@@ -270,7 +270,9 @@ export class ClientComponent {
 
         // re-init children because their associated domNode is no longer part of the DOM
         // component initializers will get lost
-        this.children = [];
+        Array.from(this.children).forEach((child) => {
+            child.destroy();
+        });
         this.initChildren(this.domNode, this);
 
         // re-init conditionals and refs
