@@ -214,6 +214,8 @@ export class ClientComponent {
     public async redraw(data?: LooseObject): Promise<void> {
         if (this.destroyed) {return;}
 
+        this.unbindAll();
+
         data = (data ? mergeDeep({}, data) : {}) as LooseObject;
         // we delete componentId from data to allow passing entire componentData to child
         // without overwriting it's id
@@ -864,7 +866,9 @@ export class ClientComponent {
         this.destroyed = true;
     }
 
-    public bind(element: HTMLElement | undefined | null, event: string, callback: (e: Event) => void) {
+    // add an event listener to given DOM node
+    // stores it to ClientComponent.bound so it can be unbound when needed using unbindAll
+    public bind(element: HTMLElement, event: string, callback: (e: Event) => void) {
         if (element instanceof HTMLElement) {
             this.bound.push({
                 element,
@@ -875,6 +879,7 @@ export class ClientComponent {
         }
     }
 
+    // remove all bound event listeners using ClientComponent.bind
     private unbindAll() {
         this.bound.forEach((bound) => {
             bound.element.removeEventListener(bound.event, bound.callback);
