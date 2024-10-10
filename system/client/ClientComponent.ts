@@ -474,11 +474,21 @@ export class ClientComponent {
         }
     }
 
-    public setConditionalCallback(name: string, callback: (args?: any) => boolean): void {
+    // conditionals (data-if and data-classname-[className]) both support methods in condition
+    // eg. data-if="someMethod()"
+    // this allows users to define callbacks used in conditionals' conditions
+    // by default, this also runs updateConditionals
+    // as there might be conditionals that are using this callback
+    public conditionalCallback(name: string, callback: (args?: any) => boolean, updateConditionals: boolean = true): void {
         this.conditionalCallbacks[name] = callback;
-        this.updateConditionals(false);
+        if (updateConditionals) {
+            this.updateConditionals(false);
+        }
     }
 
+    // updates conditionals (data-if and data-classname-[className])
+    // data-if (conditionally show/hide DOM node)
+    // data-classname-[className] (conditionally add className to classList of the DOM node)
     private updateConditionals(enableTransition: boolean) {
         if (this.destroyed) {return;}
 
