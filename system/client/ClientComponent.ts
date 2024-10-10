@@ -1,5 +1,5 @@
 import { ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject } from '../Types.js';
-import { attributeValueFromString, attributeValueToString, mergeDeep, queryStringDecode, toCamelCase } from '../Util.js';
+import { attributeValueFromString, attributeValueToString, mergeDeep, objectEach, queryStringDecode, toCamelCase } from '../Util.js';
 import { DataStoreView } from './DataStoreView.js';
 import { DataStore } from './DataStore.js';
 import { Net } from './Net.js';
@@ -774,6 +774,10 @@ export class ClientComponent {
 
     }
 
+    // reads attribute values of
+    // data-transition-show-slide, data-transition-show-fade,
+    // data-transition-hide-slide, data-transition-hide-fade
+    // and parses them into ClientComponentTransitions object
     private transitionAttributes(domNode: HTMLElement): ClientComponentTransitions {
         const transitions: ClientComponentTransitions = {
             show: {
@@ -786,23 +790,32 @@ export class ClientComponent {
             }
         };
 
-        for (const action in transitions) {
-            for (const transition in transitions[action as keyof ClientComponentTransitions]) {
-                const attrName = `data-transition-${action}-${transition}`;
-                if (domNode.hasAttribute(attrName)) {
-                    transitions[action as keyof ClientComponentTransitions][transition as keyof ClientComponentTransition] = parseInt(domNode.getAttribute(attrName) || '0');
+        objectEach(transitions, (transitionEvent, transition) => {
+            objectEach(transition, (transitionType) => {
+                const attributeName = `data-transition-${transitionEvent}-${transitionType}`;
+                if (domNode.hasAttribute(attributeName)) {
+                    const valueRaw = domNode.getAttribute(attributeName);
+                    let value: number | false = false;
+                    if (typeof valueRaw === 'string' && /^\d+$/.test(valueRaw)) {
+                        value = parseInt(valueRaw);
+                    }
+                    transition[transitionType] = value;
                 }
-            }
-        }
+            });
+        });
 
         return transitions;
     }
 
+    // reads data-transition-axis-[show|hide] of given domNode
+    // returns "" if attribute is missing or has an unrecognized value
+    // return "X" or "Y" if a proper value is found
     private transitionAxis(domNode: HTMLElement, showHide: 'show' | 'hide'): 'X' | 'Y' | '' {
-        const key = `data-transition-axis-${showHide}`;
-        let val = domNode.getAttribute(key);
+        const attributeName = `data-transition-axis-${showHide}`;
+        if (! domNode.hasAttribute(attributeName)) {return '';}
+        let val = domNode.getAttribute(attributeName);
         if (typeof val === 'string') {
-            val = val.toUpperCase();
+            val = val.trim().toUpperCase();
             if (val.length > 0) {
                 val = val.substring(0, 1);
             }

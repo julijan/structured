@@ -184,7 +184,5 @@ export type ClientComponentTransition = {
     slide: false|number
 }
 
-export type ClientComponentTransitions = {
-    show: ClientComponentTransition,
-    hide: ClientComponentTransition
-}
+export type ClientComponentTransitionEvent = 'show' | 'hide';
+export type ClientComponentTransitions = Record<ClientComponentTransitionEvent, ClientComponentTransition>;
