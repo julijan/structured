@@ -888,6 +888,8 @@ export class ClientComponent {
             await this.onDestroy.apply(this);
         }
 
+        this.store.destroy();
+
         // remove all event listeners attached to DOM elements
         this.unbindAll();
 
