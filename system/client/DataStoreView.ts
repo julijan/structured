@@ -10,6 +10,7 @@ export class DataStoreView {
 
     private store: DataStore;
     private component: ClientComponent;
+    private destroyed = false;
 
     constructor(store: DataStore, component: ClientComponent) {
         this.store = store;
@@ -17,11 +18,14 @@ export class DataStoreView {
     }
 
     public set(key: string, val: any, force: boolean = false): DataStoreView {
-        this.store.set(this.component, key, val, force);
+        if (! this.destroyed) {
+            this.store.set(this.component, key, val, force);
+        }
         return this;
     }
 
     public get(key: string): any {
+        if (this.destroyed) {return undefined;}
         return this.store.get(this.componentId(), key);
     }
 
@@ -30,12 +34,20 @@ export class DataStoreView {
     }
 
     public keys(): Array<string> {
+        if (this.destroyed) {return [];}
         return Object.keys(this.store.get(this.componentId()));
     }
 
     // clear data for owner component
     public clear() {
         this.store.clear(this.componentId());
+    }
+
+    // clear data and unbind onChange listeners for owner component
+    // mark this instance as destroyed so it no longer accepts any input
+    public destroy() {
+        this.store.destroy(this.componentId());
+        this.destroyed = true;
     }
 
     // return owner component id
@@ -46,6 +58,7 @@ export class DataStoreView {
     // add callback to be called when a given key's value is changed
     // if key === '*' then it will be called when any of the key's values is changed
     public onChange(key: string | AsteriskAny, callback: StoreChangeCallback): DataStoreView {
+        if (this.destroyed) {return this;}
         this.store.onChange(this.component.getData<string>('componentId'), key, (key, value, oldValue, componentId) => {
             if (! this.component.destroyed) {
                 // only run callback if the component is not destroyed

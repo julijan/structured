@@ -53,8 +53,14 @@ export class DataStore {
     }
 
     // clear data for given componentId
-    public clear(componentId: string) {
+    public clear(componentId: string): void {
         this.data[componentId] = {};
+    }
+
+    // clear data and unbind onChange listeners for given componentId
+    public destroy(componentId: string): void {
+        this.unbindAll(componentId);
+        this.clear(componentId);
     }
 
     // add callback to be called when a given key's value is changed
@@ -70,5 +76,10 @@ export class DataStore {
         this.changeListeners[componentId][key].push(callback);
 
         return this;
+    }
+
+    // unbind all onChange listeners for given component id
+    private unbindAll(componentId: string): void {
+        delete this.changeListeners[componentId];
     }
 }
