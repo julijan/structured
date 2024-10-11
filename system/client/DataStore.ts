@@ -52,6 +52,11 @@ export class DataStore {
         return this.data[componentId][key];
     }
 
+    // clear data for given componentId
+    public clear(componentId: string) {
+        this.data[componentId] = {};
+    }
+
     // add callback to be called when a given key's value is changed
     // if key === '*' then it will be called when any of the key's values is changed
     public onChange(componentId: string, key: string | AsteriskAny, callback: StoreChangeCallback): DataStore {

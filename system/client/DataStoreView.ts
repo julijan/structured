@@ -22,7 +22,7 @@ export class DataStoreView {
     }
 
     public get(key: string): any {
-        return this.store.get(this.component.getData<string>('componentId'), key);
+        return this.store.get(this.componentId(), key);
     }
 
     public toggle(key: string) {
@@ -30,7 +30,17 @@ export class DataStoreView {
     }
 
     public keys(): Array<string> {
-        return Object.keys(this.store.get(this.component.getData<string>('componentId')));
+        return Object.keys(this.store.get(this.componentId()));
+    }
+
+    // clear data for owner component
+    public clear() {
+        this.store.clear(this.componentId());
+    }
+
+    // return owner component id
+    private componentId(): string {
+        return this.component.getData<string>('componentId');
     }
 
     // add callback to be called when a given key's value is changed
