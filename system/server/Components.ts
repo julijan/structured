@@ -71,7 +71,7 @@ export class Components {
                         entry.module = new componentConstructor.default();
 
                         entry.renderTagName = entry.module?.tagName || 'div';
-                        entry.exportData = entry.module?.exportData || false;
+                        entry.exportData = typeof entry.module?.exportData === 'boolean' ? entry.module.exportData : false;
                         entry.exportFields = entry.module?.exportFields;
                         entry.attributes = entry.module?.attributes;
                     }
