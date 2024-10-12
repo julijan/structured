@@ -56,7 +56,8 @@ export class Components {
                         },
                         hasJS : existsSync(jsServerPath),
                         html: this.loadHTML(absolutePath),
-                        exportData: false
+                        exportData: false,
+                        static: false
                     }
 
                     // load client side initializer
@@ -74,6 +75,7 @@ export class Components {
                         entry.exportData = typeof entry.module?.exportData === 'boolean' ? entry.module.exportData : false;
                         entry.exportFields = entry.module?.exportFields;
                         entry.attributes = entry.module?.attributes;
+                        entry.static = typeof entry.module?.static === 'boolean' ? entry.module.static : false;
                     }
 
                     this.components.push(entry);

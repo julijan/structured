@@ -99,6 +99,8 @@ export type ComponentEntry = {
     },
     hasJS: boolean,
     html : string,
+
+    static: boolean,
     
     // server side component module
     module?: ComponentScaffold,
@@ -125,6 +127,8 @@ export interface ComponentScaffold  {
     exportData?: boolean,
     // selectively export data
     exportFields? : Array<string>,
+
+    static?: boolean,
 
     attributes?: Record<string, string>,
 

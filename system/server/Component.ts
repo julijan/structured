@@ -372,6 +372,11 @@ export class Component {
     }
 
     protected fillData(data: LooseObject): void {
+        if (this.entry && this.entry.static === true) {
+            // defined as static component, skip compilation
+            this.dom.innerHTML = this.entry.html;
+            return;
+        }
         const template = Handlebars.compile(this.entry ? this.entry.html : this.dom.innerHTML);
         this.dom.innerHTML = template(data);
     }
