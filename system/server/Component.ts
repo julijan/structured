@@ -343,6 +343,8 @@ export class Component {
         }
     }
 
+    // component attributes can have a data type prefix [prefix]:data-[name]="[val]"
+    // returns the prefix
     private attributePreffix(attrName: string): string|null {
         const index = attrName.indexOf(':');
         if (index < 0) {
@@ -351,21 +353,26 @@ export class Component {
         return attrName.substring(0, index);
     }
 
+    // returns the user defined data type of given attribute
+    // for example number:data-total returns 'number'
     private attributeDataType(attrName: string): 'string'|'number'|'object'|'boolean'|'any' {
-        const preffix = this.attributePreffix(attrName);
-        if (preffix === null) {
-            // no preffix
-            return 'any';
-        }
-
-        if (['string', 'number', 'object', 'boolean', 'any'].includes(preffix)) {
-            return preffix as 'string'|'number'|'object'|'boolean'|'any';
+        const prefix = this.attributePreffix(attrName);
+        
+        if (
+            prefix === 'string' ||
+            prefix === 'number' ||
+            prefix === 'object' ||
+            prefix === 'boolean'
+        ) {
+            return prefix;
         }
 
         // unrecognized attribute preffix
         return 'any';
     }
 
+    // removes the data-type prefix from given attribute name
+    // for example number:data-total returns data-total
     private attributeUnpreffixed(attrName: string): string {
         const index = attrName.indexOf(':');
         if (index < 0) {
@@ -374,6 +381,7 @@ export class Component {
         return attrName.substring(index + 1);
     }
 
+    // compile/fill in data for current component
     protected fillData(data: LooseObject): void {
         if (this.entry && this.entry.static === true) {
             // defined as static component, skip compilation
