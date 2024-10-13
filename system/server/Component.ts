@@ -23,7 +23,7 @@ export class Component {
     attributesRaw: RequestBodyArguments = {};
 
     // extracted from data-attribute on component tag
-    attributes: Record<string, string> = {};
+    attributes: Record<string, string|number|boolean|LooseObject|null> = {};
 
     dom: HTMLElement; // jsdom
 
@@ -104,7 +104,7 @@ export class Component {
     // if force is true, component will be rendered even if it has a data-if attribute
     public async init(html: string, data?: LooseObject, force: boolean = false): Promise<void> {
         // extract data-atributes
-        this.attributes = this.getAttributesData();
+        this.initAttributesData();
 
         if (! this.attributes.if || force) {
             // no data-if
@@ -165,7 +165,7 @@ export class Component {
 
         // allocate an unique ID for this component
         // used client side to uniquely identify the component when it accesses it's storage
-        if (! this.attributes.componentId) {
+        if (typeof this.attributes.componentId !== 'string') {
             this.id = this.document.allocateId(this);
             this.dom.setAttribute('data-component-id', this.id);
         } else {
@@ -240,7 +240,7 @@ export class Component {
 
         const data: LooseObject = {}
 
-        if (this.attributes.use === null) {
+        if (typeof this.attributes.use !== 'string') {
             return data;
         }
 
@@ -282,52 +282,71 @@ export class Component {
         return data;
     }
 
-    // parse all data-attr attributes into data object converting the data-attr to camelCase
-    protected getAttributesData(domNode?: HTMLElement): LooseObject {
+    // fill this.attributes and this.attributesRaw using attributes found on domNode
+    // encode all non-encoded attributes using attributeValueToString
+    protected initAttributesData(domNode?: HTMLElement): void {
         if (domNode === undefined) {
             domNode = this.dom;
         }
-        const data: LooseObject = {}
         for (let i = 0; i < domNode.attributes.length; i++) {
             const attrNameRaw = domNode.attributes[i].name;
+
+            // attributes can have a data prefix eg. number:data-num="3"
+            // return unprefixed attribute name
             const attrNameUnprefixed = this.attributeUnpreffixed(attrNameRaw);
+
             if (attrNameUnprefixed.indexOf('data-') === 0) {
+                // only attributes starting with data- are stored to this.attributes
+                // rest are only kept in attributesRaw
                 const attrDataType = this.attributeDataType(attrNameRaw);
                 
-                const dataRaw = attributeValueFromString(domNode.attributes[i].value);
-                const valRaw = typeof dataRaw === 'string' ? dataRaw : dataRaw.value as string;
-                const key = typeof dataRaw !== 'string' ? dataRaw.key : toCamelCase(attrNameUnprefixed.substring(5));
-                let val: string|number|boolean|LooseObject|null = '';
+                // attributes will usually be encoded using attributeValueToString, decode the value
+                // using attributeValueFromString, if it was encoded dataDecoded is { key: string, value: any }
+                // otherwise dataDecoded is a string
+                const dataDecoded = attributeValueFromString(domNode.attributes[i].value);
 
-                if (attrDataType === 'any' || attrDataType === 'string') {
-                    val = valRaw;
-                } else if (attrDataType === 'number') {
-                    val = parseFloat(valRaw);
-                } else if (attrDataType === 'boolean') {
-                    val = typeof valRaw === 'string' ? valRaw === 'true' || valRaw === '1' : !!valRaw;
-                } else if (attrDataType === 'object') {
-                    if (typeof valRaw === 'string') {
-                        if (valRaw.trim().length > 1) {
-                            val = JSON.parse(valRaw);
-                        } else {
-                            val = null;
+                // store the fact whether value was encoded, we need it later
+                const valueEncoded = typeof dataDecoded === 'object';
+
+                // value in it's raw form
+                // if the value was encoded it has correct type
+                // if the value was not encoded it may have incorrect type (solved later)
+                let value = valueEncoded ? dataDecoded.value as string|number|boolean|LooseObject|null : dataDecoded;
+
+                // key of encoded values is preserved as-is
+                // key of non-encoded values is in-dashed-form, if so, we convert it to camel case
+                const key = valueEncoded ? dataDecoded.key : toCamelCase(attrNameUnprefixed.substring(5));
+
+                if (! valueEncoded) {
+                    // value was not encoded
+                    if (typeof value === 'string') {
+                        // data type of value is currently string as the value was not encoded
+                        // data-attr may have had a data type prefix, if so, make sure data type is restored
+                        if (attrDataType === 'number') {
+                            value = parseFloat(value);
+                        } else if (attrDataType === 'boolean') {
+                            value = value === 'true' || value === '1';
+                        } else if (attrDataType === 'object') {
+                            if (typeof value === 'string') {
+                                if (value.trim().length > 1) {
+                                    value = JSON.parse(value);
+                                } else {
+                                    value = null;
+                                }
+                            }
                         }
-                    } else {
-                        val = valRaw;
                     }
+
+                    // encode attribute value using attributeValueToString
+                    const attrData = attributeValueToString(key, value);
+                    domNode.setAttribute(attrNameRaw, attrData);
                 }
 
-                data[key] = val;
-                
-                // data-attr, convert to dataAttr and store value
-                const attrData = attributeValueToString(key, val);
-
-                domNode.setAttribute(attrNameRaw, attrData);
-
+                // store value
+                this.attributes[key] = value;
             }
-            this.attributesRaw[domNode.attributes[i].name] = domNode.attributes[i].value;
+            this.attributesRaw[attrNameRaw] = domNode.attributes[i].value;
         }
-        return data;
     }
 
     private attributePreffix(attrName: string): string|null {
