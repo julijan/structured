@@ -5,7 +5,6 @@ import { ComponentEntry, LooseObject, RequestBodyArguments } from '../Types.js';
 
 import { existsSync, readFileSync } from 'fs';
 import * as path from 'path';
-import { default as Handlebars }  from 'handlebars';
 import * as jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
@@ -75,11 +74,6 @@ export class Component {
             }
         } else {
             this.entry = null;
-        }
-
-        // register handlebars helpers
-        if (! (this instanceof Document)) {
-            this.document.application.helpers.applyTo(Handlebars);
         }
     }
 
@@ -386,7 +380,7 @@ export class Component {
             this.dom.innerHTML = this.entry.html;
             return;
         }
-        const template = Handlebars.compile(this.entry ? this.entry.html : this.dom.innerHTML);
-        this.dom.innerHTML = template(data);
+        const html = this.entry ? this.entry.html : this.dom.innerHTML;
+        this.dom.innerHTML = this.document.application.handlebars.compile(html, data);
     }
 }

@@ -7,7 +7,6 @@ import { Application } from './Application.js';
 import { DocumentHead } from './DocumentHead.js';
 import { Component } from './Component.js';
 import { attributeValueToString, randomString } from '../Util.js';
-import { default as Handlebars } from 'handlebars';
 
 export class Document extends Component {
 
@@ -34,8 +33,6 @@ export class Document extends Component {
         // include client side JS, not an actual URL, Application.ts adds a request handler
         // for routes starting with /assets/client-js/
         this.head.addJS('/assets/client-js/client/Client.js', 0, { type: 'module' });
-
-        this.application.helpers.applyTo(Handlebars);
 
         this.application.emit('documentCreated', this);
     }

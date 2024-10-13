@@ -10,7 +10,7 @@ import { Components } from './Components.js';
 import { Session } from './Session.js';
 import { toSnakeCase } from '../Util.js';
 import { Request } from './Request.js';
-import { Helpers } from './Helpers.js';
+import { Handlebars } from './Handlebars.js';
 import { Cookies } from './Cookies.js';
 
 export class Application {
@@ -28,7 +28,7 @@ export class Application {
     readonly components: Components = new Components();
 
     // handlebars helpers manager
-    readonly helpers: Helpers = new Helpers();
+    readonly handlebars: Handlebars = new Handlebars();
 
     constructor(port: number, host?: string) {
         this.host = host;
@@ -49,7 +49,7 @@ export class Application {
 
         // load handlebars helpers
         try {
-            await this.helpers.loadFrom('../Helpers.js');
+            await this.handlebars.loadHelpers('../Helpers.js');
         } catch(e) {
             console.error(e.message);
         }
