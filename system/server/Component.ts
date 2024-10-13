@@ -202,8 +202,6 @@ export class Component {
                 dataIf[i].style.display = 'none';
             }
         }
-
-        return;
     }
 
     public setAttributes(attributes: Record<string, any>, prefix: string = '', encode: boolean = true): void {
@@ -218,25 +216,17 @@ export class Component {
     private async initChildren(passData?: LooseObject, force: boolean = false): Promise<void> {
         const componentTags = this.document.application.components.componentNames;
 
-        for (let i = 0; i < componentTags.length; i++) {
-            const tag = componentTags[i];
-            const component = this.document.application.components.components.find((cmp) => {
-                return cmp.name == tag;
-            });
-    
+        const childNodes = this.dom.querySelectorAll<HTMLElement>(componentTags.join(', '));
+
+        for (let i = 0; i < childNodes.length; i++) {
+            const childNode = childNodes[i];
+            const component = this.document.application.components.getByName(childNode.tagName);
             if (component) {
-                const componentInstances = this.dom.querySelectorAll<HTMLElement>(tag);
-    
-                for (let j = 0; j < componentInstances.length; j++) {
-                    const child = new Component(component.name, componentInstances[j], this, false);
-                    await child.init(componentInstances[j].outerHTML, passData, force);
-                    this.children.push(child);
-                }
-    
+                const child = new Component(component.name, childNode, this, false);
+                await child.init(childNode.outerHTML, passData, force);
+                this.children.push(child);
             }
         }
-        
-        return;
     }
 
     // use string is coming from data-use attribute defined on the component
