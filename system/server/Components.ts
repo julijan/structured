@@ -5,7 +5,8 @@ import { ComponentEntry } from '../Types';
 
 export class Components {
 
-    components: Array<ComponentEntry> = [];
+    // upper-case component name -> ComponentEntry
+    private readonly components: Record<string, ComponentEntry> = {};
     componentNames: Array<string> = [];
 
     public loadComponents(relativeToPath?: string): void {
@@ -78,7 +79,7 @@ export class Components {
                         entry.static = typeof entry.module?.static === 'boolean' ? entry.module.static : false;
                     }
 
-                    this.components.push(entry);
+                    this.components[componentName.toUpperCase()] = entry;
                     this.componentNames.push(entry.name);
                 }
             }
@@ -86,9 +87,7 @@ export class Components {
     }
 
     public getByName(name: string): null|ComponentEntry {
-        return this.components.find((componentEntry) => {
-            return componentEntry.name == name;
-        }) || null;
+        return this.components[name.toUpperCase()] || null;
     }
 
     private loadHTML(path: string): string {
