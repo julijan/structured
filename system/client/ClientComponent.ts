@@ -131,7 +131,8 @@ export class ClientComponent {
             if (initializerFunction) {
                 this.initializer = initializerFunction;
                 this.initializer.apply(this, [{
-                    net: this.net
+                    net: this.net,
+                    isRedraw: false
                 }]);
             }
         }
@@ -230,13 +231,16 @@ export class ClientComponent {
         }
 
         // request a component to be re-rendered on the server
+        // unwrap = true so that component container is excluded
+        // this component already has it's own container and we only care about what changed within it
         const redrawRequest = new NetRequest('POST', '/componentRender', {
             'content-type': 'application/json'
         });
         this.redrawRequest = redrawRequest.xhr;
         const componentDataJSON = await redrawRequest.send(JSON.stringify({
             component: this.name,
-            attributes: this.data
+            attributes: this.data,
+            unwrap: true
         }));
         // clear redraw request as the request is executed and does not need to be cancelled
         // in case component gets redrawn again
@@ -266,6 +270,7 @@ export class ClientComponent {
         this.domNode.innerHTML = componentData.html;
 
         // apply new data received from the server as it may have changed
+        // only exported data is included here
         objectEach(componentData.data, (key, val) => {
             this.setData(key, val);
         });
@@ -295,9 +300,10 @@ export class ClientComponent {
         this.promoteRefs();
 
         // run the initializer
-        if (this.initializer && ! this.initializerExecuted) {
+        if (this.initializer) {
             this.initializer.apply(this, [{
-                net: this.net
+                net: this.net,
+                isRedraw: true
             }]);
         }
 
@@ -658,12 +664,14 @@ export class ClientComponent {
 
         // request rendered component from the server
         // expected result is JSON, containing { html, initializers, data }
+        // unwrap set to false as we want the component container to be returned (unlike redraw)
         const req = new NetRequest('POST', '/componentRender', {
             'content-type': 'application/json'
         });
         const componentDataJSON = await req.send(JSON.stringify({
             component: componentName,
-            attributes: data
+            attributes: data,
+            unwrap: false
         }));
 
         const res: {
