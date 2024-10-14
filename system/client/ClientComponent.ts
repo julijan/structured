@@ -93,8 +93,6 @@ export class ClientComponent {
         this.initChildren(this.domNode, this);
         this.promoteRefs();
 
-        this.loaded = !this.data.if;
-
         // update conditionals as soon as component is initialized
         if (this.conditionals.length > 0) {
             this.updateConditionals(false);
@@ -112,8 +110,11 @@ export class ClientComponent {
 
         // deferred component, redraw it immediately
         if (this.data.deferred === true) {
+            this.loaded = false;
             this.setData('deferred', false);
             this.redraw();
+        } else {
+            this.loaded = true;
         }
     }
 
@@ -210,22 +211,17 @@ export class ClientComponent {
     }
 
     // fetch from server and replace with new HTML
-    // optionally can provide data that the component will receive when rendering
+    // if data is provided, each key will be set on component using this.setData
+    // and as such, component will receive it when rendering
     public async redraw(data?: LooseObject): Promise<void> {
         if (this.destroyed) {return;}
 
+        // set data if provided
         if (data) {
             objectEach(data, (key, val) => {
                 this.setData(key, val);
             });
         }
-
-        this.unbindAll();
-
-        data = (data ? mergeDeep({}, data) : {}) as LooseObject;
-        // we delete componentId from data to allow passing entire componentData to child
-        // without overwriting it's id
-        delete data.componentId;
 
         // abort existing redraw call, if in progress
         if (this.redrawRequest !== null) {
@@ -233,26 +229,32 @@ export class ClientComponent {
             this.redrawRequest = null;
         }
 
-        if (typeof this.onRedraw === 'function') {
-            this.onRedraw.apply(this)
-        }
-
-        this.loaded = false;
-
-        data = mergeDeep(data, this.data) as LooseObject;
-
+        // request a component to be re-rendered on the server
         const redrawRequest = new NetRequest('POST', '/componentRender', {
             'content-type': 'application/json'
         });
         this.redrawRequest = redrawRequest.xhr;
-
         const componentDataJSON = await redrawRequest.send(JSON.stringify({
             component: this.name,
-            attributes: data
+            attributes: this.data
         }));
+        // clear redraw request as the request is executed and does not need to be cancelled
+        // in case component gets redrawn again
+        this.redrawRequest = null;
 
         // should only happen if a previous redraw attempt was aborted
         if (componentDataJSON.length === 0) { return; }
+
+        // mark component as not loaded
+        this.loaded = false;
+
+        // if user has defined onRedraw callback, run it
+        if (typeof this.onRedraw === 'function') {
+            this.onRedraw.apply(this)
+        }
+
+        // remove all bound event listeners as DOM will get replaced in the process
+        this.unbindAll();
 
         const componentData: {
             html: string;
@@ -260,24 +262,20 @@ export class ClientComponent {
             data: LooseObject;
         } = JSON.parse(componentDataJSON);
 
-        this.redrawRequest = null;
+        // populate this.domNode with new HTML
+        this.domNode.innerHTML = componentData.html;
 
-        for (const key in componentData.data) {
-            this.setData(key, componentData.data[key]);
-            this.store.set(key, componentData.data[key]);
-        }
+        // apply new data received from the server as it may have changed
+        objectEach(componentData.data, (key, val) => {
+            this.setData(key, val);
+        });
 
         // add any new initializers to global initializers list
         for (const key in componentData.initializers) {
             if (!window.initializers[key]) {
                 window.initializers[key] = componentData.initializers[key];
-                if (this.name === key) {
-                    this.init(componentData.initializers[key] as string);
-                }
             }
         }
-        this.domNode.innerHTML = componentData.html;
-
 
         // re-init children because their associated domNode is no longer part of the DOM
         // component initializers will get lost
@@ -303,6 +301,7 @@ export class ClientComponent {
             }]);
         }
 
+        // mark component as loaded
         this.loaded = true;
     }
 
