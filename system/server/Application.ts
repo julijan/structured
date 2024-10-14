@@ -68,11 +68,10 @@ export class Application {
             const input = ctx.body as unknown as {
                 component: string,
                 attributes: RequestBodyArguments,
-                data?: LooseObject,
                 unwrap?: boolean
             };
 
-            await this.respondWithComponent(ctx, input.component, input.attributes || undefined, input.data || undefined, input.unwrap === undefined ? true : input.unwrap);
+            await this.respondWithComponent(ctx, input.component, input.attributes || undefined, typeof input.unwrap === 'boolean' ? input.unwrap : true);
         });
 
         // special request handler, serve the client side JS
@@ -128,7 +127,7 @@ export class Application {
     }
 
     // renders a component with give data and sends it as a response
-    private async respondWithComponent(ctx: RequestContext, componentName: string, attributes: RequestBodyArguments, data?: LooseObject, unwrap: boolean = true): Promise<boolean> {
+    private async respondWithComponent(ctx: RequestContext, componentName: string, attributes: RequestBodyArguments, unwrap: boolean = true): Promise<boolean> {
         const component = this.components.getByName(componentName);
         if (component) {
             const document = new Document(this, '', ctx);
@@ -141,7 +140,7 @@ export class Application {
             }, {} as LooseObject) : {});
 
             ctx.respondWith({
-                html: document.children[0].dom.outerHTML,
+                html: document.children[0].dom[unwrap ? 'innerHTML' : 'outerHTML'],
                 initializers: document.initInitializers(),
                 data: exportedData
             });
