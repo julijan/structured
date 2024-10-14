@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "version": "0.2.4",
+  "version": "0.3.0",
   "scripts": {
     "develop": "tsc --watch",
     "startDev": "cd build && nodemon --watch '../app/**/*' --watch '../build/**/*' -e js,html,css index.js",
