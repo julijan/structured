@@ -129,6 +129,20 @@ export class Component {
         // set data-component="this.name" attribute on tag
         this.dom.setAttribute(conf.views.componentAttribute, this.name);
 
+        // if component is marked as deferred (module.deferred returns true), stop here
+        // ClientComponent will request a redraw as soon as it's initialized
+        // setting attributes.deferred = false, to avoid looping
+        if (
+            this.entry !== null &&
+            typeof this.entry.module !== 'undefined' &&
+            typeof this.entry.module.deferred === 'function' &&
+            this.entry.module.deferred(this.attributes, this.document.ctx, this.document.application) &&
+            this.attributes.deferred !== false
+        ) {
+            this.setAttributes({deferred: true}, 'data-', true);
+            return;
+        }
+
         if (typeof this.attributes.use === 'string' && this.parent !== null) {
             // data-use was found on component tag
             // if parent Component.data contains it, include it with data

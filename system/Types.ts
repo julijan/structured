@@ -129,6 +129,7 @@ export interface ComponentScaffold  {
     exportFields? : Array<string>,
 
     static?: boolean,
+    deferred?: (data: Record<string, any>, ctx: RequestContext | undefined, app: Application) => boolean,
 
     attributes?: Record<string, string>,
 

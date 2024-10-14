@@ -109,6 +109,12 @@ export class ClientComponent {
         if (window.initializers && window.initializers[this.name]) {
             this.init(window.initializers[this.name]);
         }
+
+        // deferred component, redraw it immediately
+        if (this.data.deferred === true) {
+            this.setData('deferred', false);
+            this.redraw();
+        }
     }
 
     // set initializer callback and execute it
@@ -207,6 +213,12 @@ export class ClientComponent {
     // optionally can provide data that the component will receive when rendering
     public async redraw(data?: LooseObject): Promise<void> {
         if (this.destroyed) {return;}
+
+        if (data) {
+            objectEach(data, (key, val) => {
+                this.setData(key, val);
+            });
+        }
 
         this.unbindAll();
 
