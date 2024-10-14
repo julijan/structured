@@ -177,7 +177,8 @@ export type Initializers = {
 }
 
 export type InitializerFunctionContext = {
-    net: Net
+    net: Net,
+    isRedraw: boolean
 }
 
 export type StoreChangeCallback = (key: string, value: any, oldValue: any, componentId: string) => void
