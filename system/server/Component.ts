@@ -3,8 +3,6 @@ import { Document } from './Document.js';
 import { attributeValueFromString, attributeValueToString, toCamelCase } from '../Util.js';
 import { ComponentEntry, LooseObject } from '../Types.js';
 
-import { existsSync, readFileSync } from 'fs';
-import * as path from 'path';
 import * as jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
@@ -75,22 +73,6 @@ export class Component {
         } else {
             this.entry = null;
         }
-    }
-
-    // load the view from file system
-    public async loadView(pathRelative: string, data?: LooseObject): Promise<boolean> {
-        const viewPath = path.resolve('../' + conf.views.path + '/' + pathRelative + (pathRelative.endsWith('.html') ? '' : '.html'));
-
-        if (! existsSync(viewPath)) {
-            console.warn(`Couldn't load document ${this.document.head.title}: ${viewPath}`);
-            return false;
-        }
-
-        const html = readFileSync(viewPath).toString();
-
-        await this.init(html, data);
-        
-        return true;
     }
     
     // load component's data and fill it

@@ -7,6 +7,8 @@ import { Application } from './Application.js';
 import { DocumentHead } from './DocumentHead.js';
 import { Component } from './Component.js';
 import { attributeValueToString, randomString } from '../Util.js';
+import path from 'path';
+import { existsSync, readFileSync } from 'fs';
 
 export class Document extends Component {
 
@@ -119,6 +121,23 @@ export class Document extends Component {
         return id;
     }
 
+    // load the view from file system
+    public async loadView(pathRelative: string, data?: LooseObject): Promise<boolean> {
+        const viewPath = path.resolve('../' + conf.views.path + '/' + pathRelative + (pathRelative.endsWith('.html') ? '' : '.html'));
+
+        if (! existsSync(viewPath)) {
+            console.warn(`Couldn't load document ${this.document.head.title}: ${viewPath}`);
+            return false;
+        }
+
+        const html = readFileSync(viewPath).toString();
+
+        await this.init(html, data);
+        
+        return true;
+    }
+
+    // load given component into this document
     public async loadComponent(componentName: string, data?: LooseObject) {
         const componentEntry = this.document.application.components.getByName(componentName);
         if (componentEntry) {
