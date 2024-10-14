@@ -1,7 +1,7 @@
 import conf from '../../app/Config.js';
 import { Document } from './Document.js';
 import { attributeValueFromString, attributeValueToString, toCamelCase } from '../Util.js';
-import { ComponentEntry, LooseObject, RequestBodyArguments } from '../Types.js';
+import { ComponentEntry, LooseObject } from '../Types.js';
 
 import { existsSync, readFileSync } from 'fs';
 import * as path from 'path';
@@ -19,7 +19,7 @@ export class Component {
     path: Array<string> = [];
 
     // all attributes found on component's tag
-    attributesRaw: RequestBodyArguments = {};
+    attributesRaw: Record<string, string> = {};
 
     // extracted from data-attribute on component tag
     attributes: Record<string, string|number|boolean|LooseObject|null> = {};
@@ -95,37 +95,41 @@ export class Component {
     
     // load component's data and fill it
     // load any nested components recursively
-    // if force is true, component will be rendered even if it has a data-if attribute
-    public async init(html: string, data?: LooseObject, force: boolean = false): Promise<void> {
-        // extract data-atributes
+    public async init(html: string, data?: LooseObject): Promise<void> {
+
+        // extract data-atributes and encode non-encoded attributes
         this.initAttributesData();
 
-        if (! this.attributes.if || force) {
-            // no data-if
-            // replace the original tag name with a div
-            const div = this.dom.ownerDocument.createElement(this.entry?.renderTagName || 'div');
-            div.innerHTML = html;
-            if (this.dom.parentNode) {
-                this.dom.parentNode.insertBefore(div, this.dom);
-                this.dom.parentNode.removeChild(this.dom);
-            }
-            this.dom = div;
+        // create component container replacng the original tag name with a div
+        // (or whatever is set as renderTagName on ComponentEntry)
+        const div = this.dom.ownerDocument.createElement(this.entry?.renderTagName || 'div');
 
-            // re-apply attributes the orignal tag had
-            for (const attributeName in this.attributesRaw) {
-                this.dom.setAttribute(attributeName, this.attributesRaw[attributeName].toString());
-            }
+        // fill container with given HTML
+        div.innerHTML = html;
+
+        // replace component tag with newly created container
+        if (this.dom.parentNode) {
+            this.dom.parentNode.insertBefore(div, this.dom);
+            this.dom.parentNode.removeChild(this.dom);
         }
+
+        // set the new container as this.dom
+        this.dom = div;
+
+        // re-apply attributes the orignal tag had
+        // no need to encode values at this point
+        // any non-encoded attributes got encoded earlier by initAttributesData
+        this.setAttributes(this.attributesRaw, '', false);
         
-        // store initializer function on owner document
-        if (this.entry?.initializer && ! this.document.initializers[this.name]) {
+        // store initializer function on owner Document
+        if (this.entry !== null && this.entry.initializer !== undefined && typeof this.document.initializers[this.name] === 'undefined') {
             this.document.initializers[this.name] = this.entry.initializer;
         }
 
         // set data-component="this.name" attribute on tag
         this.dom.setAttribute(conf.views.componentAttribute, this.name);
 
-        if (this.attributes.use && this.parent) {
+        if (typeof this.attributes.use === 'string' && this.parent !== null) {
             // data-use was found on component tag
             // if parent Component.data contains it, include it with data
             // set data-component-parent when a component uses parent data
@@ -134,28 +138,24 @@ export class Component {
             this.attributes = Object.assign(this.importedParentData(this.parent.data) || {}, this.attributes);
         }
 
-        if (! this.attributes.if || force) {
-            // load data
-            if (data === undefined) {
-                if (this.entry && this.entry.module) {
-                    // component has a server side part, fetch data using getData
-                    this.data = (await this.entry.module.getData(this.attributes, this.document.ctx, this.document.application)) || {};
-                } else {
-                    // if the component has no server side part
-                    // then use attributes as data
-                    this.data = Object.assign({}, this.attributes);
-                }
+        // load data
+        if (data === undefined) {
+            if (this.entry && this.entry.module) {
+                // component has a server side part, fetch data using getData
+                this.data = await this.entry.module.getData(this.attributes, this.document.ctx, this.document.application) || {};
             } else {
-                this.data = Object.assign(data, this.attributes);
+                // if the component has no server side part
+                // then use attributes as data
+                this.data = Object.assign({}, this.attributes);
             }
-
-            // fill in before loading the components as user may output new components depending on the data
-            // eg. if data is an array user may output a ListItem component using Handlebars each
-            // we want those to be found as children
-            this.fillData(data === undefined ? this.data : data);
-
-            await this.initChildren(undefined, force);
+        } else {
+            this.data = Object.assign(data, this.attributes);
         }
+
+        // fill in before loading the components as user may output new components depending on the data
+        // eg. if data is an array user may output a ListItem component using Handlebars each
+        // we want those to be found as children
+        this.fillData(this.data);
 
         // allocate an unique ID for this component
         // used client side to uniquely identify the component when it accesses it's storage
@@ -166,12 +166,10 @@ export class Component {
             this.id = this.attributes.componentId;
         }
 
-        if (this.entry === undefined || this.entry?.exportData) {
+        if (this.entry === null || this.entry.exportData) {
             // export all data if component has no server side part
             this.setAttributes(this.data, 'data-');
-        }
-
-        if (this.entry) {
+        } else if (this.entry) {
             // export specified fields if it has a server side part
             if (this.entry.exportFields) {
                 this.setAttributes(this.entry.exportFields.reduce((prev, field) => {
@@ -180,12 +178,14 @@ export class Component {
                 }, {} as Record<string, any>), 'data-');
             }
 
-            // if attributes are present on component, add those to the node
+            // if attributes are present on ComponentEntry, add those to the DOM node
             if (this.entry.attributes) {
                 this.setAttributes(this.entry.attributes, '', false);
             }
         }
         
+        await this.initChildren();
+
         // add style display = none to all data-if's
         // this will prevent twitching client side
         // (otherwise elements that should be hidden might appear for a brief second)
@@ -201,26 +201,31 @@ export class Component {
     public setAttributes(attributes: Record<string, any>, prefix: string = '', encode: boolean = true): void {
         if (typeof attributes === 'object' && attributes !== null) {
             for (const attr in attributes) {
-                const value = encode ? attributeValueToString(attr, attributes[attr]) : attributes[attr];
+                const encoded = typeof attributes[attr] === 'string' && attributes[attr].indexOf('base64:') === 0;
+                const value = (encode && !encoded) ? attributeValueToString(attr, attributes[attr]) : attributes[attr];
                 this.dom.setAttribute(prefix + attr, value);
             }
         }
     }
 
-    private async initChildren(passData?: LooseObject, force: boolean = false): Promise<void> {
+    private async initChildren(passData?: LooseObject): Promise<void> {
         const componentTags = this.document.application.components.componentNames;
 
         const childNodes = this.dom.querySelectorAll<HTMLElement>(componentTags.join(', '));
+        // const promises: Array<Promise<void>> = [];
 
         for (let i = 0; i < childNodes.length; i++) {
             const childNode = childNodes[i];
             const component = this.document.application.components.getByName(childNode.tagName);
             if (component) {
                 const child = new Component(component.name, childNode, this, false);
-                await child.init(childNode.outerHTML, passData, force);
+                // promises.push(child.init(childNode.outerHTML, passData));
+                await child.init(childNode.outerHTML, passData);
                 this.children.push(child);
             }
         }
+
+        // await Promise.all(promises);
     }
 
     // use string is coming from data-use attribute defined on the component
@@ -357,7 +362,7 @@ export class Component {
     // for example number:data-total returns 'number'
     private attributeDataType(attrName: string): 'string'|'number'|'object'|'boolean'|'any' {
         const prefix = this.attributePreffix(attrName);
-        
+
         if (
             prefix === 'string' ||
             prefix === 'number' ||
