@@ -386,9 +386,13 @@ export class ClientComponent {
             const field = node.getAttribute('data-model');
             if (field) {
                 node.addEventListener('input', () => {
-                    const value = queryStringDecode(`${field}=${(node as HTMLInputElement).value}`);
+                    const value = queryStringDecode(`${field}=${encodeURIComponent((node as HTMLInputElement).value)}`);
                     const key = Object.keys(value)[0];
-                    this.setData(key || 'undefined', mergeDeep(this.getData(key) || {}, value[key]));
+                    if (typeof value[key] === 'object') {
+                        this.setData(key, mergeDeep(this.getData(key) || {}, value[key]));
+                    } else {
+                        this.setData(key, value[key]);
+                    }
                 });
             }
         }
