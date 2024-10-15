@@ -1,5 +1,5 @@
 import { ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject } from '../Types.js';
-import { attributeValueFromString, attributeValueToString, mergeDeep, objectEach, queryStringDecode, toCamelCase } from '../Util.js';
+import { attributeValueFromString, attributeValueToString, objectEach, queryStringDecodedSetValue, toCamelCase } from '../Util.js';
 import { DataStoreView } from './DataStoreView.js';
 import { DataStore } from './DataStore.js';
 import { Net } from './Net.js';
@@ -391,13 +391,12 @@ export class ClientComponent {
             const field = node.getAttribute('data-model');
             if (field) {
                 node.addEventListener('input', () => {
-                    const value = queryStringDecode(`${field}=${encodeURIComponent((node as HTMLInputElement).value)}`);
-                    const key = Object.keys(value)[0];
-                    if (typeof value[key] === 'object') {
-                        this.setData(key, mergeDeep({}, this.getData(key) || {}, value[key]));
-                    } else {
-                        this.setData(key, value[key]);
-                    }
+                    const isCheckbox = node.tagName === 'INPUT' && (node as HTMLInputElement).type === 'checkbox';
+                    const valueRaw = isCheckbox ? (node as HTMLInputElement).checked : (node as HTMLInputElement).value;
+                    const value = queryStringDecodedSetValue(field, valueRaw);
+                    objectEach(value, (key, val) => {
+                        this.setData(key, val);
+                    });
                 });
             }
         }
