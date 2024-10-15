@@ -70,7 +70,7 @@ export class ClientComponent {
         [key: string]: any;
     } = {};
 
-    constructor(parent: ClientComponent | null, name: string, domNode: HTMLElement, store: DataStore) {
+    constructor(parent: ClientComponent | null, name: string, domNode: HTMLElement, store: DataStore, autoInit: boolean = true) {
         this.name = name;
         this.domNode = domNode;
         if (parent === null) {
@@ -104,7 +104,8 @@ export class ClientComponent {
         });
 
         // run initializer, if one exists for current component
-        if (window.initializers && window.initializers[this.name]) {
+        // if autoInit = false component will not be automatically initialized
+        if (autoInit && window.initializers !== undefined && this.name in window.initializers) {
             this.init();
         }
 
@@ -119,7 +120,7 @@ export class ClientComponent {
     }
 
     // set initializer callback and execute it
-    private init() {
+    private init(isRedraw: boolean = false) {
         const initializer = window.initializers[this.name];
         if (! initializer) {return;}
         if (! this.initializerExecuted && ! this.destroyed) {
@@ -134,7 +135,7 @@ export class ClientComponent {
                 this.initializer = initializerFunction;
                 this.initializer.apply(this, [{
                     net: this.net,
-                    isRedraw: false
+                    isRedraw
                 }]);
             }
         }
@@ -196,7 +197,7 @@ export class ClientComponent {
     // instantiate a ClientComponent with them and add them to this.children
     // if callback is a function, for each instantiated child
     // callback is executed with child as first argument
-    private initChildren(scope?: HTMLElement, parent?: ClientComponent, callback?: (component: ClientComponent) => void): void {
+    private initChildren(scope?: HTMLElement, parent?: ClientComponent, callback?: (component: ClientComponent) => void, autoInit: boolean = true): void {
         if (scope === undefined) {
             scope = this.domNode;
         }
@@ -206,7 +207,7 @@ export class ClientComponent {
             if (childNode.nodeType == 1) {
                 if ((childNode as HTMLElement).hasAttribute('data-component')) {
                     // found a child component, add to children
-                    const component = new ClientComponent(parent || null, (childNode as HTMLElement).getAttribute('data-component') || '', childNode as HTMLElement, this.storeGlobal);
+                    const component = new ClientComponent(parent || null, (childNode as HTMLElement).getAttribute('data-component') || '', childNode as HTMLElement, this.storeGlobal, autoInit);
                     if (typeof callback === 'function') {
                         callback(component);
                     }
@@ -304,13 +305,26 @@ export class ClientComponent {
         // init new children, restoring their store change listeners in the process
         this.initChildren(this.domNode, this, (childNew) => {
             const childNewId = childNew.getData<string>('componentId');
-            if (childNewId in childStoreChangeCallbacks) {
+            const existingChild = childNewId in childStoreChangeCallbacks;
+            if (existingChild) {
+                // child existed before redraw, re-apply onChange callbacks
                 objectEach(childStoreChangeCallbacks[childNewId], (key, callbacks) => {
                     callbacks.forEach((callback) => {
                         childNew.store.onChange(key, callback);
                     });
                 });
             }
+
+            // idea was that existing child nodes would be initialized with isRedraw = true
+            // however after giving it some thought - probably not desirable
+            // the whole idea with isRedraw is to inform the initializer whether it's
+            // a fresh instance of ClientComponent or an existing one
+            // while child (even existing ones) are technically redrawn in this case,
+            // they do get a fresh instance of a ClientComponent, hence isRedraw = true would be misleading
+            // keeping this comment here in case in the future a need arises to inform children
+            // they were redrawn as a consequence of parent redraw
+            // if ever done, make sure to set 4th argument of initChildren to false (disabling autoInit)
+            // childNew.init(existingChild);
         });
 
         // re-init conditionals and refs
@@ -325,10 +339,8 @@ export class ClientComponent {
 
         // run the initializer
         if (this.initializer) {
-            this.initializer.apply(this, [{
-                net: this.net,
-                isRedraw: true
-            }]);
+            this.initializerExecuted = false;
+            this.init(true);
         }
 
         // mark component as loaded
