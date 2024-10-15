@@ -748,9 +748,6 @@ export class ClientComponent {
         for (let key in res.initializers) {
             if (!window.initializers[key]) {
                 window.initializers[key] = res.initializers[key];
-                if (this.name === key) {
-                    this.init(res.initializers[key] as string);
-                }
             }
         }
 
