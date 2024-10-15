@@ -1,4 +1,4 @@
-import { ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject } from '../Types.js';
+import { ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject, StoreChangeCallback } from '../Types.js';
 import { attributeValueFromString, attributeValueToString, mergeDeep, objectEach, queryStringDecodedSetValue, toCamelCase } from '../Util.js';
 import { DataStoreView } from './DataStoreView.js';
 import { DataStore } from './DataStore.js';
@@ -192,7 +192,9 @@ export class ClientComponent {
 
     // find all DOM nodes with data-component attribute within this component,
     // instantiate a ClientComponent with them and add them to this.children
-    private initChildren(scope?: HTMLElement, parent?: ClientComponent): void {
+    // if callback is a function, for each instantiated child
+    // callback is executed with child as first argument
+    private initChildren(scope?: HTMLElement, parent?: ClientComponent, callback?: (component: ClientComponent) => void): void {
         if (scope === undefined) {
             scope = this.domNode;
         }
@@ -202,10 +204,14 @@ export class ClientComponent {
             if (childNode.nodeType == 1) {
                 if ((childNode as HTMLElement).hasAttribute('data-component')) {
                     // found a child component, add to children
-                    this.children.push(new ClientComponent(parent || null, (childNode as HTMLElement).getAttribute('data-component') || '', childNode as HTMLElement, this.storeGlobal));
+                    const component = new ClientComponent(parent || null, (childNode as HTMLElement).getAttribute('data-component') || '', childNode as HTMLElement, this.storeGlobal);
+                    if (typeof callback === 'function') {
+                        callback(component);
+                    }
+                    this.children.push(component);
                 } else {
                     // not a component, resume from here recursively
-                    this.initChildren((childNode as HTMLElement), parent);
+                    this.initChildren((childNode as HTMLElement), parent, callback);
                 }
             }
         }
@@ -282,12 +288,28 @@ export class ClientComponent {
             }
         }
 
-        // re-init children because their associated domNode is no longer part of the DOM
-        // component initializers will get lost
+        // destroy existing children as their associated domNode is no longer part of the DOM
+        // new children will be initialized based on the new DOM
+        // new DOM may contain same children (same componentId) however by destroying the children
+        // any store change listeners will be lost, before destroying each child
+        // keep a copy of the store change listeners, which we'll use later to restore those listeners
+        const childStoreChangeCallbacks: Record<string, Record<string, Array<StoreChangeCallback>>> = {}
         Array.from(this.children).forEach((child) => {
+            childStoreChangeCallbacks[child.getData<string>('componentId')] = child.store.onChangeCallbacks();
             child.destroy();
         });
-        this.initChildren(this.domNode, this);
+
+        // init new children, restoring their store change listeners in the process
+        this.initChildren(this.domNode, this, (childNew) => {
+            const childNewId = childNew.getData<string>('componentId');
+            if (childNewId in childStoreChangeCallbacks) {
+                objectEach(childStoreChangeCallbacks[childNewId], (key, callbacks) => {
+                    callbacks.forEach((callback) => {
+                        childNew.store.onChange(key, callback);
+                    });
+                });
+            }
+        });
 
         // re-init conditionals and refs
         this.refs = {};
