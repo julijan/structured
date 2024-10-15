@@ -467,7 +467,17 @@ export class ClientComponent {
             modelNodes.forEach((modelNode) => {
                 // on change, update component data
                 modelNode.addEventListener('input', () => {
-                    update(modelData(modelNode));
+                    let data = modelData(modelNode);
+                    const key = Object.keys(data)[0];
+                    if (typeof data[key] === 'object') {
+                        const dataExisting = this.getData<LooseObject|undefined>(key);
+                        if (dataExisting !== undefined) {
+                            data = mergeDeep({}, {[key]: dataExisting}, data);
+                        } else {
+                            data = mergeDeep({}, data);
+                        }
+                    }
+                    update(data);
                 });
 
                 // include current node's data into initial update data
