@@ -105,7 +105,7 @@ export class ClientComponent {
 
         // run initializer, if one exists for current component
         if (window.initializers && window.initializers[this.name]) {
-            this.init(window.initializers[this.name]);
+            this.init();
         }
 
         // deferred component, redraw it immediately
@@ -119,7 +119,9 @@ export class ClientComponent {
     }
 
     // set initializer callback and execute it
-    private init(initializer: InitializerFunction | string) {
+    private init() {
+        const initializer = window.initializers[this.name];
+        if (! initializer) {return;}
         if (! this.initializerExecuted && ! this.destroyed) {
             let initializerFunction: InitializerFunction | null = null;
             if (typeof initializer === 'string') {
