@@ -1,6 +1,6 @@
 import { IncomingMessage, ServerResponse } from "http";
-import { LooseObject, PostedDataDecoded, RequestBodyFile, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from "../Types.js";
-import { mergeDeep, queryStringDecode } from "../Util.js";
+import { PostedDataDecoded, RequestBodyFile, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from "../Types.js";
+import { mergeDeep, queryStringDecode, queryStringDecodedSetValue } from "../Util.js";
 import conf from "../../app/Config.js";
 import { RequestContextData } from "../../app/Types.js";
 import { Application } from "./Application.js";
@@ -454,32 +454,10 @@ export class Request {
                 // but in reality key will often be an object or an array
                 // so we need to recursively create the object and fill it with file
                 // then merge that result with resulting files object
-                files = mergeDeep(files, this.multipartSetFile(parts[1], file));
+                files = mergeDeep(files, queryStringDecodedSetValue(parts[1], file));
             }
             return null;
         })
         return files;
-    }
-
-    private static multipartSetFile(name: string, file: RequestBodyFile): LooseObject {
-        // convert the name to PostedDataDecoded
-        // it will either be { key: true } or a nested object eventually ending with a value = true
-        const fileItem = queryStringDecode(name);
-
-        // recursively search the object returned above and find value = true, replace it with given file
-        const setFile = (obj: LooseObject) => {
-            for (const key in obj) {
-                if (typeof obj[key] === 'object' && obj[key] !== null) {
-                    // not here, resume recursively
-                    setFile(obj[key]);
-                } else if (obj[key] === true) {
-                    // found the place for the file, populate it
-                    obj[key] = file;
-                }
-            }
-        }
-
-        setFile(fileItem);
-        return fileItem;
     }
 }

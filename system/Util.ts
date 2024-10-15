@@ -1,4 +1,4 @@
-import { PostedDataDecoded } from "./Types.js";
+import { LooseObject, PostedDataDecoded } from "./Types.js";
 
 
 // process given query string into an object
@@ -166,6 +166,40 @@ export function queryStringDecode(queryString: string, initialValue: PostedDataD
     }
 
     return initialValue;
+}
+
+// sometimes we want to use queryStringDeocde simply to parse a complex query string
+// with nested keys into an object, with intent to assign a non-primitive value to it later
+// for example decoding "obj[nested][key]" would produce { obj: { nested: { key: true } } }
+// we might want to set the "key" to something other than true, or another primitive value
+// so doing obj[nested][key]=[desiredValue] is impossible
+// as the type of the value can't be coerced to string
+// this function takes an object produced by queryStringDecode or a query string itself
+// and the value to be populated, populates the key with value = true with given value
+// and returns the populated object
+export function queryStringDecodedSetValue(obj: PostedDataDecoded | string, value: any): LooseObject {
+    // obj given as string, decode it first to PostedDataDecoded
+    if (typeof obj === 'string') {
+        obj = queryStringDecode(obj);
+    }
+    
+    // obj is either { key: true } or a nested object eventually ending with a value = true
+    // replace true with given value
+    // recursively search the object and find value = true, replace it with given file
+    const setValue = (obj: LooseObject) => {
+        for (const key in obj) {
+            if (typeof obj[key] === 'object' && obj[key] !== null) {
+                // not here, resume recursively
+                setValue(obj[key]);
+            } else if (obj[key] === true) {
+                // found the place for the file, populate it
+                obj[key] = value;
+            }
+        }
+    }
+
+    setValue(obj);
+    return obj;
 }
 
 // loop through given object, for each key, runs callbackEach providing the key and value to it
