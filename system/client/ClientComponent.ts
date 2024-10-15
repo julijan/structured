@@ -394,7 +394,7 @@ export class ClientComponent {
                     const value = queryStringDecode(`${field}=${encodeURIComponent((node as HTMLInputElement).value)}`);
                     const key = Object.keys(value)[0];
                     if (typeof value[key] === 'object') {
-                        this.setData(key, mergeDeep(this.getData(key) || {}, value[key]));
+                        this.setData(key, mergeDeep({}, this.getData(key) || {}, value[key]));
                     } else {
                         this.setData(key, value[key]);
                     }
