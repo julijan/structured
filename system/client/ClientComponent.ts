@@ -1,5 +1,5 @@
 import { ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject } from '../Types.js';
-import { attributeValueFromString, attributeValueToString, objectEach, queryStringDecodedSetValue, toCamelCase } from '../Util.js';
+import { attributeValueFromString, attributeValueToString, mergeDeep, objectEach, queryStringDecodedSetValue, toCamelCase } from '../Util.js';
 import { DataStoreView } from './DataStoreView.js';
 import { DataStore } from './DataStore.js';
 import { Net } from './Net.js';
@@ -381,31 +381,72 @@ export class ClientComponent {
 
     // make inputs with data-model="field" work
     // nested data works too, data-model="obj[nested][key]" or data-model="obj[nested][key][]"
-    private initModels(node?: HTMLElement) {
+    private initModels(node?: HTMLElement, modelNodes: Array<HTMLInputElement> = []) {
         const isSelf = node === undefined;
         if (node === undefined) {
             node = this.domNode;
         }
 
-        if (node.hasAttribute('data-model') && (node.tagName === 'INPUT' || node.tagName === 'SELECT' || node.tagName === 'TEXTAREA')) {
+        // given a HTMLInput element that has data-model attribute, returns an object with the data
+        // for example:
+        // data-model="name" may result with { name: "John" }
+        // data-model="user[name]" may result with { user: { name: "John" } }
+        const modelData = (node: HTMLInputElement): LooseObject => {
             const field = node.getAttribute('data-model');
             if (field) {
-                node.addEventListener('input', () => {
-                    const isCheckbox = node.tagName === 'INPUT' && (node as HTMLInputElement).type === 'checkbox';
-                    const valueRaw = isCheckbox ? (node as HTMLInputElement).checked : (node as HTMLInputElement).value;
-                    const value = queryStringDecodedSetValue(field, valueRaw);
-                    objectEach(value, (key, val) => {
-                        this.setData(key, val);
-                    });
-                });
+                const isCheckbox = node.tagName === 'INPUT' && node.type === 'checkbox';
+                const valueRaw = isCheckbox ? node.checked : node.value;
+                const value = queryStringDecodedSetValue(field, valueRaw);
+                return value;
             }
+            return {}
         }
 
-        node.childNodes.forEach((child) => {
-            if (child.nodeType === 1 && (isSelf || !node?.hasAttribute('data-component'))) {
-                this.initModels(child as HTMLElement);
-            }
-        });
+        // given a loose object, sets all keys with corresponding value on current component
+        const update = (data: LooseObject) => {
+            objectEach(data, (key, val) => {
+                this.setData(key, val);
+            });
+        }
+
+        if (node.hasAttribute('data-model') && (node.tagName === 'INPUT' || node.tagName === 'SELECT' || node.tagName === 'TEXTAREA')) {
+            // found a model node, store to array modelNodes
+            modelNodes.push(node as HTMLInputElement);
+        } else {
+            // not a model, but may contain models
+            // init model nodes recursively from here
+            node.childNodes.forEach((child) => {
+                if (child.nodeType === 1 && (isSelf || !node?.hasAttribute('data-component'))) {
+                    this.initModels(child as HTMLElement, modelNodes);
+                }
+            });
+        }
+
+        if (isSelf) {
+            // all model nodes are now contained in modelNodes array
+
+            // data for the initial update, we want to gather all data up in one object
+            // so that nested keys don't trigger more updates than necessary
+            let data: LooseObject = {}
+            modelNodes.forEach((modelNode) => {
+                // on change, update component data
+                modelNode.addEventListener('input', () => {
+                    update(modelData(modelNode));
+                });
+
+                // include current node's data into initial update data
+                const field = modelNode.getAttribute('data-model');
+                if (field) {
+                    const isCheckbox = modelNode.tagName === 'INPUT' && modelNode.type === 'checkbox';
+                    const valueRaw = isCheckbox ? modelNode.checked : modelNode.value;
+                    const value = queryStringDecodedSetValue(field, valueRaw);
+                    data = mergeDeep(data, value);
+                }
+            });
+
+            // run the initial data update with data gathered from all model nodes
+            update(data);
+        }
     }
 
     // normally, ref will return a HTMLElement, however if ref attribute is found on a component tag
