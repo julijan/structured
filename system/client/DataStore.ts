@@ -78,6 +78,11 @@ export class DataStore {
         return this;
     }
 
+    // return all on change callbacks for given component
+    public onChangeCallbacks(componentId: string): Record<string, Array<StoreChangeCallback>> {
+        return this.changeListeners[componentId];
+    }
+
     // unbind all onChange listeners for given component id
     private unbindAll(componentId: string): void {
         delete this.changeListeners[componentId];
