@@ -24,7 +24,7 @@ export class DataStoreView {
         return this;
     }
 
-    public get(key: string): any {
+    public get<T>(key: string): T|undefined {
         if (this.destroyed) {return undefined;}
         return this.store.get(this.componentId(), key);
     }
