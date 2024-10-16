@@ -53,6 +53,14 @@ export class DataStore {
         return this.data[componentId][key];
     }
 
+    public hasKey(componentId: string, key: string): boolean {
+        if (! (componentId in this.data)) {
+            return false;
+        }
+
+        return key in this.data[componentId];
+    }
+
     // clear data for given componentId
     public clear(componentId: string): void {
         this.data[componentId] = {};

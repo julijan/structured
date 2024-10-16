@@ -1,4 +1,5 @@
 import { AsteriskAny, StoreChangeCallback } from '../Types.js';
+import { objectEach } from '../Util.js';
 import { ClientComponent } from './ClientComponent.js';
 import { DataStore } from './DataStore.js';
 
@@ -36,6 +37,17 @@ export class DataStoreView {
     public keys(): Array<string> {
         if (this.destroyed) {return [];}
         return Object.keys(this.store.get(this.componentId()));
+    }
+
+    // import this.component.data to store
+    // existing keys are skipped
+    public import() {
+        objectEach(this.component.getData(), (key, val) => {
+            // skip existing key
+            if (! this.store.hasKey(this.componentId(), key)) {
+                this.set(key, val);
+            }
+        });
     }
 
     // clear data for owner component
