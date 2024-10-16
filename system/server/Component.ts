@@ -111,6 +111,15 @@ export class Component {
         // set data-component="this.name" attribute on tag
         this.dom.setAttribute(conf.views.componentAttribute, this.name);
 
+        // allocate an unique ID for this component
+        // used client side to uniquely identify the component when it accesses it's storage
+        if (typeof this.attributes.componentId !== 'string') {
+            this.id = this.document.allocateId(this);
+            this.dom.setAttribute('data-component-id', this.id);
+        } else {
+            this.id = this.attributes.componentId;
+        }
+
         // if component is marked as deferred (module.deferred returns true), stop here
         // ClientComponent will request a redraw as soon as it's initialized
         // setting attributes.deferred = false, to avoid looping
@@ -152,15 +161,6 @@ export class Component {
         // eg. if data is an array user may output a ListItem component using Handlebars each
         // we want those to be found as children
         this.fillData(this.data);
-
-        // allocate an unique ID for this component
-        // used client side to uniquely identify the component when it accesses it's storage
-        if (typeof this.attributes.componentId !== 'string') {
-            this.id = this.document.allocateId(this);
-            this.dom.setAttribute('data-component-id', this.id);
-        } else {
-            this.id = this.attributes.componentId;
-        }
 
         if (this.entry === null || this.entry.exportData) {
             // export all data if component has no server side part
