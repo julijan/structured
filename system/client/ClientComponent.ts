@@ -576,16 +576,23 @@ export class ClientComponent {
                     return value == rightHandSide;
                 } else if (comparisonSymbol === '===') {
                     return value === rightHandSide;
-                } else if (comparisonSymbol === '>') {
-                    return value > rightHandSide;
-                } else if (comparisonSymbol === '>=') {
-                    return value >= rightHandSide;
-                } else if (comparisonSymbol === '<') {
-                    return value < rightHandSide;
-                } else if (comparisonSymbol === '<=') {
-                    return value <= rightHandSide;
-                } else if (comparisonSymbol === '!=') {
-                    return value != rightHandSide;
+                } else {
+                    // number comparison
+                    if (typeof value !== 'number') {
+                        // if value is not a number, these comparisons makes no sense, return false
+                        return false;
+                    }
+                    if (comparisonSymbol === '>') {
+                        return value > rightHandSide;
+                    } else if (comparisonSymbol === '>=') {
+                        return value >= rightHandSide;
+                    } else if (comparisonSymbol === '<') {
+                        return value < rightHandSide;
+                    } else if (comparisonSymbol === '<=') {
+                        return value <= rightHandSide;
+                    } else if (comparisonSymbol === '!=') {
+                        return value != rightHandSide;
+                    }
                 }
 
                 return false;
@@ -593,11 +600,12 @@ export class ClientComponent {
             } else {
                 // not a comparison (case 1)
                 const negated = parts[1] === '!';
-                const isTrue = this.store.get(property);
+                const isTrue = this.store.get<boolean>(property);
                 if (negated) {
                     return !isTrue;
                 }
-                return isTrue;
+                // value may not be a boolean, coerce to boolean without changing value
+                return !!isTrue;
             }
         }
     }
