@@ -511,7 +511,7 @@ export class ClientComponent {
 
             // promote array refs
             const refArray = child.domNode.getAttribute('array:ref');
-            if (refArray) {
+            if (refArray !== null && refArray in this.refsArray) {
                 const nodeIndex = this.refsArray[refArray].indexOf(child.domNode);
                 if (nodeIndex > -1) {
                     this.refsArray[refArray].splice(nodeIndex, 1, child);
