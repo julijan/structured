@@ -503,9 +503,19 @@ export class ClientComponent {
     // this will upgrade it to ClientComponent
     private promoteRefs() {
         this.children.forEach((child) => {
+            // promote regular refs
             const ref = child.domNode.getAttribute('ref');
             if (ref) {
                 this.refs[ref] = child;
+            }
+
+            // promote array refs
+            const refArray = child.domNode.getAttribute('array:ref');
+            if (refArray) {
+                const nodeIndex = this.refsArray[refArray].indexOf(child.domNode);
+                if (nodeIndex > -1) {
+                    this.refsArray[refArray].splice(nodeIndex, 1, child);
+                }
             }
         });
     }
