@@ -93,11 +93,6 @@ export class ClientComponent {
         this.initChildren(this.domNode, this);
         this.promoteRefs();
 
-        // update conditionals as soon as component is initialized
-        if (this.conditionals.length > 0) {
-            this.updateConditionals(false);
-        }
-
         // update conditionals whenever any data in component's store has changed
         this.store.onChange('*', () => {
             this.updateConditionals(true);
@@ -107,6 +102,11 @@ export class ClientComponent {
         // if autoInit = false component will not be automatically initialized
         if (autoInit && window.initializers !== undefined && this.name in window.initializers) {
             this.init();
+        }
+
+        // update conditionals as soon as component is initialized
+        if (this.conditionals.length > 0) {
+            this.updateConditionals(false);
         }
 
         // deferred component, redraw it immediately
@@ -334,7 +334,6 @@ export class ClientComponent {
         this.initRefs();
         this.initModels();
         this.initConditionals();
-        this.updateConditionals(false);
         this.promoteRefs();
 
         // run the initializer
@@ -342,6 +341,8 @@ export class ClientComponent {
             this.initializerExecuted = false;
             this.init(true);
         }
+
+        this.updateConditionals(false);
 
         // mark component as loaded
         this.loaded = true;
