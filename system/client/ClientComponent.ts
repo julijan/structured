@@ -112,7 +112,7 @@ export class ClientComponent {
         // deferred component, redraw it immediately
         if (this.data.deferred === true) {
             this.loaded = false;
-            this.setData('deferred', false);
+            this.setData('deferred', false, false);
             this.redraw();
         } else {
             this.loaded = true;
@@ -154,11 +154,11 @@ export class ClientComponent {
                 const attrData = attributeValueFromString(value);
 
                 if (typeof attrData === 'object') {
-                    this.setData(attrData.key, attrData.value);
+                    this.setData(attrData.key, attrData.value, false);
                 } else {
                     // not a valid attribute data string, assign as is (string)
                     const key = toCamelCase(this.domNode.attributes[i].name.substring(5));
-                    this.setData(key, attrData);
+                    this.setData(key, attrData, false);
                 }
             }
         }
@@ -181,15 +181,18 @@ export class ClientComponent {
         return data.reverse();
     }
 
-    // sets this.data[key] and this.store(key, val), key is passed through toCamelCase
+    // sets this.data[key] and optionally this.store[key], key is passed through toCamelCase
     // sets data-[key]="value" attribute on this.domNode, value passed through attributeValueToString
+    // if updateStore is true (default) value is also applied to this.store
     // returns this to allow chaining
-    public setData(key: string, value: any): ClientComponent {
+    public setData(key: string, value: any, updateStore: boolean = true): ClientComponent {
         const dataKey = `data-${key}`;
         this.domNode.setAttribute(dataKey, attributeValueToString(key, value));
         const keyCamelCase = toCamelCase(key);
         this.data[keyCamelCase] = value;
-        this.store.set(keyCamelCase, value);
+        if (updateStore) {
+            this.store.set(keyCamelCase, value);
+        }
         return this;
     }
 
@@ -229,7 +232,7 @@ export class ClientComponent {
         // set data if provided
         if (data) {
             objectEach(data, (key, val) => {
-                this.setData(key, val);
+                this.setData(key, val, false);
             });
         }
 
@@ -281,7 +284,7 @@ export class ClientComponent {
         // apply new data received from the server as it may have changed
         // only exported data is included here
         objectEach(componentData.data, (key, val) => {
-            this.setData(key, val);
+            this.setData(key, val, false);
         });
 
         // add any new initializers to global initializers list
@@ -442,7 +445,7 @@ export class ClientComponent {
         // given a loose object, sets all keys with corresponding value on current component
         const update = (data: LooseObject) => {
             objectEach(data, (key, val) => {
-                this.setData(key, val);
+                this.store.set(key, val);
             });
         }
 
@@ -471,7 +474,7 @@ export class ClientComponent {
                     let data = modelData(modelNode);
                     const key = Object.keys(data)[0];
                     if (typeof data[key] === 'object') {
-                        const dataExisting = this.getData<LooseObject|undefined>(key);
+                        const dataExisting = this.store.get<LooseObject>(key);
                         if (dataExisting !== undefined) {
                             data = mergeDeep({}, {[key]: dataExisting}, data);
                         } else {
