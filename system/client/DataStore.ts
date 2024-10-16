@@ -1,4 +1,5 @@
 import { AsteriskAny, StoreChangeCallback } from '../Types.js';
+import { equalDeep } from '../Util.js';
 import { ClientComponent } from './ClientComponent.js';
 
 
@@ -22,7 +23,7 @@ export class DataStore {
 
         const oldValue = this.get(componentId, key);
 
-        if (! force && oldValue === val) {
+        if (! force && equalDeep({ value: oldValue }, { value: val })) {
             return this;
         }
 
