@@ -364,6 +364,108 @@ export function isObject(item: any) {
     return (item && typeof item === 'object' && !Array.isArray(item));
 }
 
+// deep comparison of 2 objects
+export function equalDeep(a: LooseObject, b: LooseObject): boolean {
+    if (a === b) {
+        // same object
+        return true;
+    }
+
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+
+    if (keysA.length !== keysB.length) {
+        // key count different, not same
+        return false;
+    }
+
+    // same number of keys
+    const keyDifferent = keysA.some((keyA) => {
+        return ! (keyA in b);
+    });
+
+    if (keyDifferent) {
+        // some of the keys are different, not same
+        return false;
+    }
+
+    // objects have the same keys, make sure values are also the same
+    for (let i = 0; i < keysA.length; i++) {
+        const key = keysA[i];
+        const valA = a[key];
+        const valB = b[key];
+        const typeA = typeof valA;
+        const typeB = typeof valB;
+
+        if (valA === valB) {
+            // same value, continue
+            continue;
+        }
+
+        if (typeA !== typeB) {
+            // value type different, not same
+            return false;
+        } else {
+            // same type, if primitive, comapre values
+            if (typeA !== 'object') {
+                if (valA !== valB) {
+                    return false;
+                }
+            }
+        }
+
+        // values have the same type, if they were exact same they would already pass this iteration
+        // at this point primitives have been compared in the first check in the itration
+        // both types should be "object" at this point (object, array or null)
+        // null is also an object, make sure either both are null, or none is null
+        if ((valA === null && valB !== null) || (valA !== null && valB === null)) {
+            // one is null, other is not
+            return false;
+        }
+
+        
+        // make sure either both are array, or none is array
+        const isArrayA = Array.isArray(valA);
+        const isArrayB = Array.isArray(valB);
+        if ((isArrayA && ! isArrayB) || (! isArrayA && isArrayB)) {
+            // one is array, other is not
+            return false;
+        }
+
+        // at this point both values are either array or object
+        if (! isArrayA && ! isArrayB) {
+            // neither is an array, both are objects
+            // pass the values through equalsDeep, if not the same, objects are not the same either
+            if (! equalDeep(valA, valB)) {
+                return false;
+            }
+        }
+
+        if (isArrayA && isArrayB) {
+            // both are arrays
+            if (valA.length !== valB.length) {
+                // arrays of different length
+                return false;
+            }
+
+
+            for (let j = 0; j < valA.length; j++) {
+                if (! equalDeep({
+                    value: valA[j]
+                }, {
+                    value: valB[j]
+                })) {
+                    // different value at index, not the same array, objects not same
+                    return false;
+                }
+            }
+        }
+    }
+
+    // all checks passed, same objects
+    return true;
+}
+
 export function mergeDeep(target: any, ...sources: Array<any>) {
     if (!sources.length) return target;
     const source = sources.shift();
