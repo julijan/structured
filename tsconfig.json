@@ -16,7 +16,8 @@
         "baseUrl": ".",
         "rootDir": ".",
         "paths": {
-            "/assets/ts/*": ["./assets/ts/*"]
+            "/assets/ts/*": ["./assets/ts/*"],
+            "/assets/client-js/*": ["./system/*"]
         }
     },
     "include": ["./system/**/*", "./app/**/*", "./assets/ts/**/*", "index.ts"]
