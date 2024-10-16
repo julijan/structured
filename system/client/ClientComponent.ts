@@ -998,6 +998,13 @@ export class ClientComponent {
     }
 
     private async destroy(): Promise<void> {
+
+        // if being redrawn, abort redraw request
+        if (this.redrawRequest) {
+            this.redrawRequest.abort();
+            this.redrawRequest = null;
+        }
+
         // if the user has defined a destroy callback, run it
         if (typeof this.onDestroy === 'function') {
             await this.onDestroy.apply(this);
