@@ -4,6 +4,7 @@ import { symbolArrays } from "./Symbols.js";
 import { RequestContextData } from "../app/Types.js";
 import { Net } from './client/Net.js';
 import { ClientComponent } from './client/ClientComponent.js';
+import { Component } from "./server/Component.js";
 
 export type RequestMethod = 'GET'|'POST'|'PUT'|'PATCH'|'DELETE';
 
@@ -133,7 +134,7 @@ export interface ComponentScaffold  {
 
     attributes?: Record<string, string>,
 
-    getData: (this: ComponentScaffold, data: RequestBodyArguments|LooseObject, ctx: undefined|RequestContext, app: Application) => Promise<LooseObject | null>
+    getData: (this: ComponentScaffold, data: RequestBodyArguments|LooseObject, ctx: undefined|RequestContext, app: Application, component: Component) => Promise<LooseObject | null>
     [key: string] : any
 }
 
