@@ -118,6 +118,8 @@ export class Document extends Component {
             } while(this.componentIds.includes(id));
         }
 
+        this.componentIds.push(id);
+
         return id;
     }
 
