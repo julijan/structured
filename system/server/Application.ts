@@ -12,6 +12,7 @@ import { toSnakeCase } from '../Util.js';
 import { Request } from './Request.js';
 import { Handlebars } from './Handlebars.js';
 import { Cookies } from './Cookies.js';
+import { RequestContextData } from '../../app/Types.js';
 
 export class Application {
     host?: string;
@@ -29,6 +30,9 @@ export class Application {
 
     // handlebars helpers manager
     readonly handlebars: Handlebars = new Handlebars();
+
+    // fields from RequestContext.data to be exported for all components
+    readonly exportedRequestContextData: Array<keyof RequestContextData> = [];
 
     constructor(port: number, host?: string) {
         this.host = host;
@@ -119,6 +123,15 @@ export class Application {
             await listeners[i](payload);
         }
         return;
+    }
+
+    // export given fields to all components
+    public exportContextFields(...fields: Array<keyof RequestContextData>) {
+        fields.forEach((field) => {
+            if (! this.exportedRequestContextData.includes(field)) {
+                this.exportedRequestContextData.push(field);
+            }
+        });
     }
 
     // given file extension (or file name), returns the appropriate content-type

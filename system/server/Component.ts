@@ -1,9 +1,10 @@
 import conf from '../../app/Config.js';
 import { Document } from './Document.js';
-import { attributeValueFromString, attributeValueToString, toCamelCase } from '../Util.js';
+import { attributeValueFromString, attributeValueToString, objectEach, toCamelCase } from '../Util.js';
 import { ComponentEntry, LooseObject } from '../Types.js';
 
 import * as jsdom from 'jsdom';
+import { RequestContextData } from '../../app/Types.js';
 const { JSDOM } = jsdom;
 
 export class Component {
@@ -120,6 +121,21 @@ export class Component {
             this.id = this.attributes.componentId;
         }
 
+        // export RequestContext.data fields specified in Application.exporteRequestContextData
+        const exportedContextData = this.document.application.exportedRequestContextData.reduce((prev, field) => {
+            if (! this.document.ctx) {return prev;}
+            if (field in this.document.ctx.data) {
+                prev[field] = this.document.ctx.data[field];
+            }
+            return prev;
+        }, {} as Record<keyof RequestContextData, any>)
+        objectEach(exportedContextData, (key, val) => {
+            if (this.document.application.exportedRequestContextData.includes(key)) {
+                this.setAttributes({ [key]: val }, 'data-', true);
+            }
+        });
+        this.data = exportedContextData;
+
         // if component is marked as deferred (module.deferred returns true), stop here
         // ClientComponent will request a redraw as soon as it's initialized
         // setting attributes.deferred = false, to avoid looping
@@ -147,14 +163,14 @@ export class Component {
         if (data === undefined) {
             if (this.entry && this.entry.module) {
                 // component has a server side part, fetch data using getData
-                this.data = await this.entry.module.getData(this.attributes, this.document.ctx, this.document.application, this) || {};
+                this.data = Object.assign(this.data, await this.entry.module.getData(this.attributes, this.document.ctx, this.document.application, this) || {});
             } else {
                 // if the component has no server side part
                 // then use attributes as data
-                this.data = Object.assign({}, this.attributes);
+                this.data = Object.assign(exportedContextData, this.attributes);
             }
         } else {
-            this.data = Object.assign(data, this.attributes);
+            this.data = Object.assign(exportedContextData, data, this.attributes);
         }
 
         // fill in before loading the components as user may output new components depending on the data
