@@ -134,7 +134,7 @@ export class FormValidation {
         }
     }
 
-    public publicRegisterDecorator(name: string, decorator: ValidatorErrorDecorator): void {
+    public registerDecorator(name: string, decorator: ValidatorErrorDecorator): void {
         this.decorators[name] = decorator;
     }
 
@@ -168,7 +168,7 @@ export class FormValidation {
                         // custom callback (ValidatorFunction)
                         const valid = await rule.apply(this, [data, entry.field[0], 0, entry.rules]);
                         if (! valid) {
-                            this.addError(result.errors, data, entry.field, 'callback')
+                            await this.addError(result.errors, data, entry.field, 'callback');
                         }
                     } else {
                         // uses a validator
@@ -177,7 +177,7 @@ export class FormValidation {
                             if (this.validators[rule]) {
                                 const valid = await this.validators[rule].apply(this, [data, entry.field[0], 0, entry.rules]);
                                 if (! valid) {
-                                    this.addError(result.errors, data, entry.field, rule);
+                                    await this.addError(result.errors, data, entry.field, rule);
                                 }
                             }
                         } else {
@@ -187,7 +187,7 @@ export class FormValidation {
                             if (this.validators[validatorName]) {
                                 const valid = await this.validators[validatorName].apply(this, [data, entry.field[0], arg, entry.rules]);
                                 if (! valid) {
-                                    this.addError(result.errors, data, entry.field, validatorName, arg);
+                                    await this.addError(result.errors, data, entry.field, validatorName, arg);
                                 }
                             }
                         }
@@ -204,12 +204,12 @@ export class FormValidation {
         return result;
     }
 
-    private addError(errors: ValidationErrors|ValidationErrorsSingle, data: PostedDataDecoded, field: [string, string], rule: string, arg?: any): void {
+    private async addError(errors: ValidationErrors|ValidationErrorsSingle, data: PostedDataDecoded, field: [string, string], rule: string, arg?: any): Promise<void> {
         // error will be a human readable error returned by decorator
         // if no decorator is found for the rule, rule itself becomes the error
         let errorMessage = '';
         if (this.decorators[rule]) {
-            errorMessage = this.decorators[rule](field[1], data, field[0], arg);
+            errorMessage = await this.decorators[rule](field[1], data, field[0], arg);
         } else {
             errorMessage = rule;
         }
