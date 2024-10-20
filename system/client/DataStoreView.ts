@@ -40,11 +40,11 @@ export class DataStoreView {
     }
 
     // import this.component.data to store
-    // existing keys are skipped
-    public import() {
+    // existing keys are skipped unless force = true
+    public import(force: boolean = false) {
         objectEach(this.component.getData(), (key, val) => {
-            // skip existing key
-            if (! this.store.hasKey(this.componentId(), key)) {
+            // skip existing key, unless force = true
+            if (force || ! this.store.hasKey(this.componentId(), key)) {
                 this.set(key, val);
             }
         });
