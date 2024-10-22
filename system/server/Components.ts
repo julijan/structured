@@ -25,9 +25,10 @@ export class Components {
                 this.loadComponents(absolutePath);
             } else {
                 // file, register component entry
-                if (component.endsWith('.html')) {
+                if (component.endsWith('.html') || component.endsWith('.hbs')) {
                     // remove .html to get componentName
-                    const componentName = component.substring(0, component.length - 5);
+                    const componentNameParts = component.split('.');
+                    const componentName = componentNameParts.slice(0, componentNameParts.length - 1).join('.');
 
                     const pathAbsolute = relativeToPath || '';
                     const pathRelative = path.relative('../', pathAbsolute);
