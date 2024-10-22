@@ -1,5 +1,6 @@
 import { HelperDelegate } from "handlebars";
 import { LooseObject } from "./Types.js";
+import { attributeValueToString } from "./Util.js";
 
 const helpers: Record<string, HelperDelegate> = {
 
@@ -64,6 +65,13 @@ const helpers: Record<string, HelperDelegate> = {
             return '';
         }
         return '';
+    },
+
+    // used as <div {{{attr [attrName] [attrValue]}}}></div>
+    // returns data-[attrName]="attributeValueToString([attrValue])"
+    // valu can be of any type and will be preserved since it is encoded using attributeValueToString
+    'attr': function(key: string, val: any) {
+        return `data-${key}="${attributeValueToString(key, val)}"`;
     },
 
     // allows conditionally rendering a string/block
