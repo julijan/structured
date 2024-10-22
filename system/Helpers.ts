@@ -74,50 +74,6 @@ const helpers: Record<string, HelperDelegate> = {
         return `data-${key}="${attributeValueToString(key, val)}"`;
     },
 
-    // allows conditionally rendering a string/block
-    'tern' : function(...args: Array<any>) {
-        if (args.length < 2) {return '';}
-
-        const argArray = args.slice(0, args.length - 1);
-        const hash = args[args.length - 1];
-
-        const className = argArray[0];
-
-        if (argArray.length === 1) {
-            if (typeof className === 'string') {
-                return className;
-            }
-            if (argArray[0]) {
-                return hash.fn();
-            }
-            return '';
-        }
-
-        if (argArray.length === 2) {
-            if (typeof argArray[0] === 'string') {
-                if (argArray[1]) {
-                    return className;
-                }
-                return '';
-            } else {
-                if (argArray[0] == argArray[1]) {
-                    return hash.fn();
-                }
-                return '';
-            }
-        }
-
-        if (argArray.length === 3) {
-            if (argArray[1] == argArray[2]) {
-                return className;
-            }
-            return '';
-        }
-
-        console.log(`Template error in helper ${hash.name}. Too many arguments, expected 1 - 3 arguments, got ${argArray.length}`);
-        return '';
-    },
-
     // converts newline characters to <br>
     'nl2br': function(...args) {
         if (args.length === 1 && 'fn' in args[0]) {
