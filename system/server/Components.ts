@@ -86,12 +86,19 @@ export class Components {
         });
     }
 
+    // get component by name
     public getByName(name: string): null|ComponentEntry {
         return this.components[name.toUpperCase()] || null;
     }
 
+    // load HTML from given path
     private loadHTML(path: string): string {
-        return readFileSync(path).toString();
+        return this.stripComments(readFileSync(path).toString());
+    }
+
+    // remove all HTML comments
+    private stripComments(html: string): string {
+        return html.replaceAll(/<!--[^(-->)]+-->/g, '');
     }
 
 }
