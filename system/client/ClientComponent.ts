@@ -4,6 +4,7 @@ import { DataStoreView } from './DataStoreView.js';
 import { DataStore } from './DataStore.js';
 import { Net } from './Net.js';
 import { NetRequest } from './NetRequest.js';
+import { EventEmitter } from './EventEmitter.js';
 
 // window.initializers will always be present
 // each Document has a list of initializers used in components within it
@@ -14,7 +15,7 @@ declare global {
     }
 }
 
-export class ClientComponent {
+export class ClientComponent extends EventEmitter {
     readonly name: string;
     children: Array<ClientComponent> = [];
     readonly parent: ClientComponent;
@@ -71,6 +72,7 @@ export class ClientComponent {
     } = {};
 
     constructor(parent: ClientComponent | null, name: string, domNode: HTMLElement, store: DataStore, autoInit: boolean = true) {
+        super();
         this.name = name;
         this.domNode = domNode;
         if (parent === null) {
