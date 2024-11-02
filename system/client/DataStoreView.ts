@@ -1,5 +1,4 @@
 import { AsteriskAny, StoreChangeCallback } from '../Types.js';
-import { objectEach } from '../Util.js';
 import { ClientComponent } from './ClientComponent.js';
 import { DataStore } from './DataStore.js';
 
@@ -41,11 +40,12 @@ export class DataStoreView {
 
     // import this.component.data to store
     // existing keys are skipped unless force = true
-    public import(force: boolean = false) {
-        objectEach(this.component.getData(), (key, val) => {
+    public import(fields?: Array<string>, force: boolean = false) {
+        const fieldsImported = Array.isArray(fields) ? fields : Object.keys(this.component.getData());
+        fieldsImported.forEach((field) => {
             // skip existing key, unless force = true
-            if (force || ! this.store.hasKey(this.componentId(), key)) {
-                this.set(key, val);
+            if (force || ! this.store.hasKey(this.componentId(), field)) {
+                this.set(field, this.component.getData(field));
             }
         });
     }
