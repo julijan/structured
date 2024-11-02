@@ -85,6 +85,8 @@ export class ClientComponent extends EventEmitter {
             this.parent = parent;
         }
 
+        const initializerExists = window.initializers !== undefined && this.name in window.initializers;
+
         this.storeGlobal = store;
         this.store = new DataStoreView(this.storeGlobal, this);
 
@@ -102,12 +104,16 @@ export class ClientComponent extends EventEmitter {
 
         // run initializer, if one exists for current component
         // if autoInit = false component will not be automatically initialized
-        if (autoInit && window.initializers !== undefined && this.name in window.initializers) {
+        if (autoInit && initializerExists) {
             this.init();
         }
 
         // update conditionals as soon as component is initialized
         if (this.conditionals.length > 0) {
+            if (! initializerExists) {
+                // component has no initializer, import all exported fields
+                this.store.import(undefined, false, false);
+            }
             this.updateConditionals(false);
         }
 
