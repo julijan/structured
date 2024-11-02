@@ -17,9 +17,9 @@ export class DataStoreView {
         this.component = component;
     }
 
-    public set(key: string, val: any, force: boolean = false): DataStoreView {
+    public set(key: string, val: any, force: boolean = false, triggerListeners: boolean = true): DataStoreView {
         if (! this.destroyed) {
-            this.store.set(this.component, key, val, force);
+            this.store.set(this.component, key, val, force, triggerListeners);
         }
         return this;
     }
@@ -40,12 +40,12 @@ export class DataStoreView {
 
     // import this.component.data to store
     // existing keys are skipped unless force = true
-    public import(fields?: Array<string>, force: boolean = false) {
+    public import(fields?: Array<string>, force: boolean = false, triggerListeners: boolean = true) {
         const fieldsImported = Array.isArray(fields) ? fields : Object.keys(this.component.getData());
         fieldsImported.forEach((field) => {
             // skip existing key, unless force = true
             if (force || ! this.store.hasKey(this.componentId(), field)) {
-                this.set(field, this.component.getData(field));
+                this.set(field, this.component.getData(field), force, triggerListeners);
             }
         });
     }

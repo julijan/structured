@@ -18,7 +18,7 @@ export class DataStore {
     } = {};
 
     // return self to allow chained calls to set
-    public set(component: ClientComponent, key: string, val: any, force: boolean = false): DataStore {
+    public set(component: ClientComponent, key: string, val: any, force: boolean = false, triggerListeners: boolean = true): DataStore {
         const componentId = component.getData<string>('componentId');
 
         const oldValue = this.get(componentId, key);
@@ -33,11 +33,13 @@ export class DataStore {
 
         this.data[componentId][key] = val;
 
-        if (this.changeListeners[componentId] && (this.changeListeners[componentId][key] || this.changeListeners[componentId]['*'])) {
-            // there are change listeners, call them
-            (this.changeListeners[componentId][key] || []).concat(this.changeListeners[componentId]['*'] || []).forEach((cb) => {
-                cb.apply(component, [key, val, oldValue, componentId]);
-            });
+        if (triggerListeners) {
+            if (this.changeListeners[componentId] && (this.changeListeners[componentId][key] || this.changeListeners[componentId]['*'])) {
+                // there are change listeners, call them
+                (this.changeListeners[componentId][key] || []).concat(this.changeListeners[componentId]['*'] || []).forEach((cb) => {
+                    cb.apply(component, [key, val, oldValue, componentId]);
+                });
+            }
         }
 
         return this;
