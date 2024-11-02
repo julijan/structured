@@ -589,7 +589,15 @@ export class ClientComponent extends EventEmitter {
             if (isComparison) {
                 // comparison (case 2)
                 // left hand side is the property name, right hand side is an expression
-                const rightHandSide = eval(`${parts[4]}`);
+                let rightHandSide = null;
+                try {
+                    // this won't fail as long as parts[4] is a recognized primitive (number, boolean, string...)
+                    rightHandSide = eval(`${parts[4]}`);
+                } catch(e) {
+                    // parts[4] failed to be parsed as a primitive
+                    // assume it's a store value to allow comparing one store value to another
+                    rightHandSide = this.store.get(parts[4]);
+                }
 
                 const comparisonSymbol = parts[3];
 
