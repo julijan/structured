@@ -21,7 +21,7 @@ export function importEnv(prefix?: string, smartPrimitives: boolean = true): Env
                     value = true;
                 } else if (value === 'false') {
                     value = false;
-                } else if (/^\d+$/.test(value)) {
+                } else if (/^-?\d+$/.test(value)) {
                     value = parseInt(value);
                 } else if (/^\d+\.\d+$/.test(value)) {
                     value = parseFloat(value);
