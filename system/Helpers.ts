@@ -1,43 +1,31 @@
 import { HelperDelegate } from "handlebars";
-import { LooseObject } from "./Types.js";
-import { attributeValueToString } from "./Util.js";
+import { attributeValueToString, objectEach } from "./Util.js";
 
 const helpers: Record<string, HelperDelegate> = {
 
     // {{{htmlTag tagName}}} outputs <tagName></tagName>
-    'htmlTag' : function(...args) {
+    htmlTag : function(...args) {
         // output a tag with given name
         return `<${args[0]}></${args[0]}>`;
     },
 
     // {{{layoutComponent componentName data}}} outputs <tagName data-use="data.key0,data.key1..."></tagName>
-    'layoutComponent': function(...args) {
+    layoutComponent: function(...args) {
         // output a tag with given name
         if (args.length < 2 || args.length > 4) {
             console.warn('layoutComponent expects 1 - 3 arguments (componentName, data?, attributes?) got ' + (args.length - 1));
         }
 
-        const componentName = args[0];
-        let data = {}
-        let attributes: LooseObject = {};
+        const argsUsed = args.slice(0, args.length - 1);
 
-        let useString = '';
+        const componentName = argsUsed[0];
+        const data = argsUsed[1];
+        const attributes = argsUsed[2];
+        const dataAttributes: Array<string> = [];
         let attributesString = '';
 
-        if (args.length > 2) {
-            // got data
-            data = args[1];
-            if (data) {
-                const useKeys = Object.keys(data);
-                useString = useKeys.map((item) => {
-                    return `data.${item}`;
-                }).join(',');
-            }
-        }
-
-        if (args.length > 3) {
+        if (attributes) {
             // got attributes
-            attributes = args[2];
             if (attributes) {
                 const attrNames = Object.keys(attributes);
                 attributesString = attrNames.map((attrName) => {
@@ -52,12 +40,18 @@ const helpers: Record<string, HelperDelegate> = {
                 }).filter((val) => val !== null).join(' ');
             }
         }
+
+        if (data) {
+            objectEach(data, (key, val) => {
+                dataAttributes.push(`data-${key as string}="${attributeValueToString(key as string, val)}"`);
+            });
+        }
         
-        return `<${componentName}${useString.length > 0 ? ` data-use="${useString}"` : ''} ${attributesString}></${componentName}>`;
+        return `<${componentName} ${dataAttributes.length > 0 ? dataAttributes.join(' ') : ''} ${attributesString}></${componentName}>`;
     },
 
     // JSON.stringify the given object
-    'json': function(...args) {
+    json: function(...args) {
         if (args.length > 1) {
             if (typeof args[0] === 'object' && args[0] !== null) {
                 return JSON.stringify(args[0]);
@@ -70,12 +64,12 @@ const helpers: Record<string, HelperDelegate> = {
     // used as <div {{{attr [attrName] [attrValue]}}}></div>
     // returns data-[attrName]="attributeValueToString([attrValue])"
     // valu can be of any type and will be preserved since it is encoded using attributeValueToString
-    'attr': function(key: string, val: any) {
+    attr: function(key: string, val: any) {
         return `data-${key}="${attributeValueToString(key, val)}"`;
     },
 
     // converts newline characters to <br>
-    'nl2br': function(...args) {
+    nl2br: function(...args) {
         if (args.length === 1 && 'fn' in args[0]) {
             // block
             return (args[0].fn(this) || '').replaceAll('\n', '<br>');
@@ -88,7 +82,7 @@ const helpers: Record<string, HelperDelegate> = {
     },
 
     // preserve indentation in given string by replacing space with &nbsp;
-    'indent': function(...args) {
+    indent: function(...args) {
         if (args.length === 1 && 'fn' in args[0]) {
             // block
             return args[0].fn(this).replaceAll(' ', '&nbsp;').replaceAll('\t', '&nbsp;'.repeat(4));
