@@ -185,7 +185,9 @@ export class Component {
             // export specified fields if it has a server side part
             if (this.entry.exportFields) {
                 this.setAttributes(this.entry.exportFields.reduce((prev, field) => {
-                    prev[field] = this.data[field];
+                    if (this.data[field] !== undefined) {
+                        prev[field] = this.data[field];
+                    }
                     return prev;
                 }, {} as Record<string, any>), 'data-');
             }
