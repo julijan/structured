@@ -13,7 +13,7 @@ export class EventEmitter {
     }
 
     // emit event with given payload
-    public emit(eventName: string, payload: any): void {
+    public emit(eventName: string, payload?: any): void {
         if (Array.isArray(this.listeners[eventName])) {
             this.listeners[eventName].forEach((callback) => {
                 callback(payload);
