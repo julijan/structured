@@ -212,7 +212,7 @@ export class ClientComponent extends EventEmitter {
         return this;
     }
 
-    // find all DOM nodes with data-component attribute within this component,
+    // find all DOM nodes with data-structured-component attribute within this component,
     // instantiate a ClientComponent with them and add them to this.children
     // if callback is a function, for each instantiated child
     // callback is executed with child as first argument
@@ -224,9 +224,9 @@ export class ClientComponent extends EventEmitter {
         for (let i = 0; i < scope.childNodes.length; i++) {
             const childNode = scope.childNodes[i];
             if (childNode.nodeType == 1) {
-                if ((childNode as HTMLElement).hasAttribute('data-component')) {
+                if ((childNode as HTMLElement).hasAttribute('data-structured-component')) {
                     // found a child component, add to children
-                    const component = new ClientComponent(parent || null, (childNode as HTMLElement).getAttribute('data-component') || '', childNode as HTMLElement, this.storeGlobal, autoInit);
+                    const component = new ClientComponent(parent || null, (childNode as HTMLElement).getAttribute('data-structured-component') || '', childNode as HTMLElement, this.storeGlobal, autoInit);
                     if (typeof callback === 'function') {
                         callback(component);
                     }
@@ -393,7 +393,7 @@ export class ClientComponent extends EventEmitter {
         }
 
         node.childNodes.forEach((child) => {
-            if (child.nodeType === 1 && (isSelf || !node?.hasAttribute('data-component'))) {
+            if (child.nodeType === 1 && (isSelf || !node?.hasAttribute('data-structured-component'))) {
                 this.initConditionals(child as HTMLElement);
             }
         });
@@ -429,7 +429,7 @@ export class ClientComponent extends EventEmitter {
         }
 
         node.childNodes.forEach((child) => {
-            if (child.nodeType === 1 && (isSelf || !node?.hasAttribute('data-component'))) {
+            if (child.nodeType === 1 && (isSelf || !node?.hasAttribute('data-structured-component'))) {
                 this.initRefs(child as HTMLElement);
             }
         });
@@ -472,7 +472,7 @@ export class ClientComponent extends EventEmitter {
             // not a model, but may contain models
             // init model nodes recursively from here
             node.childNodes.forEach((child) => {
-                if (child.nodeType === 1 && (isSelf || !node?.hasAttribute('data-component'))) {
+                if (child.nodeType === 1 && (isSelf || !node?.hasAttribute('data-structured-component'))) {
                     this.initModels(child as HTMLElement, modelNodes);
                 }
             });
@@ -825,7 +825,7 @@ export class ClientComponent extends EventEmitter {
         const tmpContainer = document.createElement('div');
         tmpContainer.innerHTML = res.html;
 
-        // get the first child, which is always the component wrapper <div data-component="..."></div>
+        // get the first child, which is always the component wrapper <div data-structured-component="..."></div>
         const componentNode = tmpContainer.firstChild as HTMLElement;
 
         // create an instance of ClientComponent for the added component and add it to this.children

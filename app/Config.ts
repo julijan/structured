@@ -18,8 +18,6 @@ const conf = {
         // relative to views.path
         componentsPath: 'components',
 
-        componentAttribute : 'data-component',
-
         // whether you want to enable the specially handled URI that allows rendering individual components on the server
         // by default /component/(componentName)/(primaryKey)
         componentRenderURIEnable : true,

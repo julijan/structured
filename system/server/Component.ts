@@ -1,4 +1,3 @@
-import conf from '../../app/Config.js';
 import { Document } from './Document.js';
 import { attributeValueFromString, attributeValueToString, objectEach, toCamelCase } from '../Util.js';
 import { ComponentEntry, LooseObject } from '../Types.js';
@@ -109,8 +108,8 @@ export class Component {
             this.document.initializers[this.name] = this.entry.initializer;
         }
 
-        // set data-component="this.name" attribute on tag
-        this.dom.setAttribute(conf.views.componentAttribute, this.name);
+        // set data-structured-component="this.name" attribute on tag
+        this.dom.setAttribute('data-structured-component', this.name);
 
         // allocate an unique ID for this component
         // used client side to uniquely identify the component when it accesses it's storage
