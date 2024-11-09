@@ -109,12 +109,13 @@ export type ComponentEntry = {
     // default is "div"
     renderTagName?: string,
 
-    // whether to set data-component-data on rendered component so it's available client side
+    // if true, all component data is exported to ClientComponent
     exportData: boolean,
 
-    // selectively export data
+    // selectively export data to ClientComponent
     exportFields? : Array<string>,
 
+    // attributes added to rendered DOM node
     attributes?: Record<string, string>,
     
     // client side component initializer
