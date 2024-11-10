@@ -170,9 +170,7 @@ export type ValidationResult = {
     errors: ValidationErrors|ValidationErrorsSingle
 }
 
-export type InitializerFunction = {
-    (this: ClientComponent, ctx : InitializerFunctionContext) : void
-}
+export type InitializerFunction = (this: ClientComponent, ctx : InitializerFunctionContext) => Promise<void>
 
 export type Initializers = {
     [key: string] : InitializerFunction
