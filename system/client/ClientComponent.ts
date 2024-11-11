@@ -601,7 +601,7 @@ export class ClientComponent extends EventEmitter {
             return isTrue;
         } else {
             // expression not a method
-            const parts = /^(!)?\s*([a-zA-Z]+[a-zA-Z0-9_]*)\s*((?:==)|(?:===)|(?:!=)|<|>|(?:<=)|(?:>=))?\s*([^=].+)?$/.exec(condition);
+            const parts = /^(!)?\s*([a-zA-Z]+[a-zA-Z0-9_]*)\s*((?:==)|(?:===)|(?:!=)|(?:!==)|<|>|(?:<=)|(?:>=))?\s*([^=].+)?$/.exec(condition);
             if (parts === null) {
                 console.error(`Could not parse condition ${condition}`);
                 return false;
@@ -629,6 +629,10 @@ export class ClientComponent extends EventEmitter {
                     return value == rightHandSide;
                 } else if (comparisonSymbol === '===') {
                     return value === rightHandSide;
+                } else if (comparisonSymbol === '!=') {
+                    return value != rightHandSide;
+                } else if (comparisonSymbol === '!==') {
+                    return value !== rightHandSide;
                 } else {
                     // number comparison
                     if (typeof value !== 'number') {
@@ -643,8 +647,6 @@ export class ClientComponent extends EventEmitter {
                         return value < rightHandSide;
                     } else if (comparisonSymbol === '<=') {
                         return value <= rightHandSide;
-                    } else if (comparisonSymbol === '!=') {
-                        return value != rightHandSide;
                     }
                 }
 
