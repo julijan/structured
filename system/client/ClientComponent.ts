@@ -134,13 +134,11 @@ export class ClientComponent extends EventEmitter {
         }
         
         this.loaded = true;
-        if (this.isRoot) {
-            // root initialized
-            // at this point all components are loaded and initialized. Emit a "ready" event on root.
-            // Some components may want to use find or query and won't find what they are looking for
-            // because it was not yet initialized, those should wait for this event before using find/query
-            this.emit('ready');
-        }
+        
+        // component emits "ready" when initialized
+        // when a component emits "ready" it means it and all of it's children recursively have been initialized
+        // if root emits "ready", that means all components in current document are initialized
+        this.emit('ready');
     }
 
     // set initializer callback and execute it
