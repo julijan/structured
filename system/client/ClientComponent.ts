@@ -302,6 +302,17 @@ export class ClientComponent extends EventEmitter {
         // remove all bound event listeners as DOM will get replaced in the process
         this.unbindAll();
 
+        // destroy existing children as their associated domNode is no longer part of the DOM
+        // new children will be initialized based on the new DOM
+        // new DOM may contain same children (same componentId) however by destroying the children
+        // any store change listeners will be lost, before destroying each child
+        // keep a copy of the store change listeners, which we'll use later to restore those listeners
+        const childStoreChangeCallbacks: Record<string, Record<string, Array<StoreChangeCallback>>> = {}
+        Array.from(this.children).forEach((child) => {
+            childStoreChangeCallbacks[child.getData<string>('componentId')] = child.store.onChangeCallbacks();
+            child.remove();
+        });
+
         const componentData: {
             html: string;
             initializers: Record<string, string>;
@@ -323,17 +334,6 @@ export class ClientComponent extends EventEmitter {
                 window.initializers[key] = componentData.initializers[key];
             }
         }
-
-        // destroy existing children as their associated domNode is no longer part of the DOM
-        // new children will be initialized based on the new DOM
-        // new DOM may contain same children (same componentId) however by destroying the children
-        // any store change listeners will be lost, before destroying each child
-        // keep a copy of the store change listeners, which we'll use later to restore those listeners
-        const childStoreChangeCallbacks: Record<string, Record<string, Array<StoreChangeCallback>>> = {}
-        Array.from(this.children).forEach((child) => {
-            childStoreChangeCallbacks[child.getData<string>('componentId')] = child.store.onChangeCallbacks();
-            child.destroy();
-        });
 
         // init new children, restoring their store change listeners in the process
         await this.initChildren(this.domNode, (childNew) => {
