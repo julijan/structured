@@ -99,7 +99,7 @@ export class Components {
 
     // remove all HTML comments
     private stripComments(html: string): string {
-        return html.replaceAll(/<!--[^(-->)]+-->/g, '');
+        return html.replaceAll(/<!--(?!-?>)(?!.*--!>)(?!.*<!--(?!>)).*?(?<!<!-)-->/g, '');
     }
 
 }
