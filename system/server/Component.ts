@@ -2,9 +2,9 @@ import { Document } from './Document.js';
 import { attributeValueFromString, attributeValueToString, objectEach, toCamelCase } from '../Util.js';
 import { ComponentEntry, LooseObject } from '../Types.js';
 
-import * as jsdom from 'jsdom';
 import { RequestContextData } from '../../app/Types.js';
-const { JSDOM } = jsdom;
+import { DOMFragment } from './dom/DOMFragment.js';
+import { DOMNode } from './dom/DOMNode.js';
 
 export class Component {
     id: string;
@@ -17,12 +17,12 @@ export class Component {
     path: Array<string> = [];
 
     // all attributes found on component's tag
-    attributesRaw: Record<string, string> = {};
+    attributesRaw: Record<string, string | true> = {};
 
     // extracted from data-attribute on component tag
     attributes: Record<string, string|number|boolean|LooseObject|null> = {};
 
-    dom: HTMLElement; // jsdom
+    dom: DOMNode; // jsdom
 
     data: LooseObject = {};
 
@@ -30,15 +30,15 @@ export class Component {
 
     isRoot: boolean;
 
-    constructor(name: string, node?: HTMLElement, parent?: Document|Component, autoInit: boolean = true) {
+    constructor(name: string, node?: DOMNode, parent?: Document|Component, autoInit: boolean = true) {
         this.name = name;
 
         if (name === 'root') {
-            this.dom = new JSDOM().window.document.body;
+            this.dom = new DOMFragment();
             this.path.push('');
             this.isRoot = true;
         } else {
-            this.dom = node || new JSDOM().window.document.body;
+            this.dom = node || new DOMFragment();
             if (parent) {
                 this.path = parent.path.concat(this.name);
             }
@@ -84,19 +84,11 @@ export class Component {
 
         // create component container replacng the original tag name with a div
         // (or whatever is set as renderTagName on ComponentEntry)
-        const div = this.dom.ownerDocument.createElement(this.entry?.renderTagName || 'div');
+        this.dom.tagName = this.entry?.renderTagName || 'div';
 
         // fill container with given HTML
-        div.innerHTML = html;
+        this.dom.innerHTML = html;
 
-        // replace component tag with newly created container
-        if (this.dom.parentNode) {
-            this.dom.parentNode.insertBefore(div, this.dom);
-            this.dom.parentNode.removeChild(this.dom);
-        }
-
-        // set the new container as this.dom
-        this.dom = div;
 
         // re-apply attributes the orignal tag had
         // no need to encode values at this point
@@ -203,7 +195,7 @@ export class Component {
         // this will prevent twitching client side
         // (otherwise elements that should be hidden might appear for a brief second)
         if (this.isRoot) {
-            const dataIf = this.dom.querySelectorAll<HTMLElement>('[data-if]');
+            const dataIf = this.dom.queryByHasAttribute('[data-if]');
 
             for (let i = 0; i < dataIf.length; i++) {
                 dataIf[i].style.display = 'none';
@@ -224,7 +216,7 @@ export class Component {
     private async initChildren(passData?: LooseObject): Promise<void> {
         const componentTags = this.document.application.components.componentNames;
 
-        const childNodes = this.dom.querySelectorAll<HTMLElement>(componentTags.join(', '));
+        const childNodes = this.dom.queryByTagName(...componentTags);
         // const promises: Array<Promise<void>> = [];
 
         for (let i = 0; i < childNodes.length; i++) {
@@ -296,7 +288,7 @@ export class Component {
 
     // fill this.attributes and this.attributesRaw using attributes found on domNode
     // encode all non-encoded attributes using attributeValueToString
-    protected initAttributesData(domNode?: HTMLElement): void {
+    protected initAttributesData(domNode?: DOMNode): void {
         if (domNode === undefined) {
             domNode = this.dom;
         }
@@ -315,7 +307,7 @@ export class Component {
                 // attributes will usually be encoded using attributeValueToString, decode the value
                 // using attributeValueFromString, if it was encoded dataDecoded is { key: string, value: any }
                 // otherwise dataDecoded is a string
-                const dataDecoded = attributeValueFromString(domNode.attributes[i].value);
+                const dataDecoded = attributeValueFromString(domNode.attributes[i].value.toString());
 
                 // store the fact whether value was encoded, we need it later
                 const valueEncoded = typeof dataDecoded === 'object';
