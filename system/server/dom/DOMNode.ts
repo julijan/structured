@@ -114,12 +114,12 @@ export class DOMNode {
         const style = Object.keys(this.style).reduce((style, styleName) => {
             const styleValue = this.style[styleName as keyof CSSStyleDeclaration];
             if (styleValue?.toString().trim().length === 0) {return style};
-            style += ` ${styleName}: ${styleValue}`;
+            style += ` ${styleName}: ${styleValue};`;
             return style;
         }, '');
 
 
-        return `<${this.tagName}${attributes}${style.trim().length > 0 ? ` style=${style}` : ''}>${this.selfClosing ? '' : `${this.innerHTML}</${this.tagName}>`}`;
+        return `<${this.tagName}${attributes}${style.trim().length > 0 ? ` style="${style}"` : ''}>${this.selfClosing ? '' : `${this.innerHTML}</${this.tagName}>`}`;
     }
 
     toObject():JSONNode {
