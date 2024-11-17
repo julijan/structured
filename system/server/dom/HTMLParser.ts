@@ -71,7 +71,7 @@ export class HTMLParser {
 
             if (char === '/') {
                 if (this.tokenCurrent.length === 0) {
-                    throw new Error(`Unexpected tag closing sequence "</", expected opening tag, line ${this.line()}`);
+                    throw this.error(`Unexpected tag closing sequence "</", expected opening tag`);
                 }
                 // ignore this one, it's a self closing tag, but we will expect to find ">" anyway
                 return true;
@@ -79,7 +79,7 @@ export class HTMLParser {
 
             if (char === '>') {
                 if (this.tokenCurrent.length === 0) {
-                    throw new Error(`Found an empty HTML tag <>, line ${this.line()}`);
+                    throw this.error(`Found an empty HTML tag <>`);
                 }
                 // opening tag end, create node and switch context to new node
                 const node = new DOMNode(this.tokenCurrent);
@@ -111,7 +111,7 @@ export class HTMLParser {
             }
 
             if (char !== '_' && ! this.isLetter(charCode) && (this.tokenCurrent.length > 0 && ! this.isNumber(charCode))) {
-                throw new Error(`Expected a-Z after HTML opening tag on line ${this.line()}`);
+                throw this.error(`Expected a-Z after HTML opening tag`);
             }
 
             this.tokenCurrent += char;
@@ -123,7 +123,7 @@ export class HTMLParser {
             }
             if (char === '>') {
                 if (this.tokenCurrent !== this.context.tagName) {
-                    throw new Error(`Found closing tag ${this.tokenCurrent}, expected ${this.context.tagName}, line ${this.line()}`);
+                    throw this.error(`Found closing tag ${this.tokenCurrent}, expected ${this.context.tagName}`);
                 }
                 // tag closed, switch context to parent of the current context
                 this.context = this.context.parentNode || this.fragment;
@@ -190,7 +190,7 @@ export class HTMLParser {
             } else if (char === '/') {
                 return true;
             } else {
-                throw new Error(`Unexpected character ${char} after attribute value, line ${this.line()}`);
+                throw this.error(`Unexpected character ${char} after attribute value`);
             }
         }
 
@@ -218,6 +218,10 @@ export class HTMLParser {
 
     public dom() {
         return this.fragment;
+    }
+
+    private error(message: string): Error {
+        return new Error(`HTMLParser: ${message}\nLine ${this.line()}\nHTML:\n${this.html}\n`);
     }
 
 }
