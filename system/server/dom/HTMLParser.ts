@@ -1,0 +1,223 @@
+import { DOMFragment } from "./DOMFragment.js";
+import { DOMNode } from "./DOMNode.js";
+
+export class HTMLParser {
+
+    private readonly html: string;
+
+    private offset: number = 0;
+    private context: DOMFragment | DOMNode;
+    private state: 'idle' | 'tagStart' | 'tagOpen' | 'tagClose' | 'attributeName' | 'attributeValueStart' | 'attributeValue' | 'attributeEnd' | 'text' = 'idle';
+
+    private tokenCurrent: string = '';
+
+    private fragment: DOMFragment = new DOMFragment();
+
+    private attributeOpenQuote: '"' | "'" = '"';
+    private attributeNameCurrent: string = '';
+    private attributeContext: DOMNode | null = null;
+
+    constructor(html: string) {
+        this.html = html;
+        this.context = this.fragment;
+        while (this.parse()) {
+            // console.log({ char: this.char(), state: this.state, context: this.context.tagName });
+            this.offset++;
+        }
+    }
+
+    private char(): string {
+        return this.html.charAt(this.offset);
+    }
+
+    public parse(): boolean {
+        if (this.offset >= this.html.length) {
+            // done
+            return false;
+        }
+
+        const char = this.char();
+        const charCode = char.charCodeAt(0);
+
+        if (this.state === 'idle') {
+            if (char === ' ') {return true;}
+            if (char === '<') {
+                this.state = 'tagStart';
+                this.tokenCurrent = '';
+                return true;
+            }
+            
+            // text
+            this.state = 'text';
+            this.tokenCurrent = char;
+
+        } else if (this.state === 'tagStart') {
+            if (char === '/') {
+                this.state = 'tagClose';
+                return true;
+            }
+
+            if (this.isLetter(charCode)) {
+                this.state = 'tagOpen';
+                this.tokenCurrent = char;
+                return true;
+            }
+        } else if (this.state === 'tagOpen') {
+            // this state means we found "<" previously and we expect to find the tag name
+
+            if (char === '\n') {
+                return true;
+            }
+
+            if (char === '/') {
+                if (this.tokenCurrent.length === 0) {
+                    throw new Error(`Unexpected tag closing sequence "</", expected opening tag, line ${this.line()}`);
+                }
+                // ignore this one, it's a self closing tag, but we will expect to find ">" anyway
+                return true;
+            }
+
+            if (char === '>') {
+                if (this.tokenCurrent.length === 0) {
+                    throw new Error(`Found an empty HTML tag <>, line ${this.line()}`);
+                }
+                // opening tag end, create node and switch context to new node
+                const node = new DOMNode(this.tokenCurrent);
+                this.context.appendChild(node);
+                this.state = 'idle';
+                this.tokenCurrent = '';
+                if (! node.selfClosing) {
+                    this.context = node;
+                }
+                this.attributeContext = node;
+                return true;
+            }
+
+            if (char === ' ') {
+                if (this.tokenCurrent.length === 0) {
+                    return true;
+                }
+
+                // encountered space after opening tag name, could be a start of attribute name
+                this.state = 'attributeName';
+                const node = new DOMNode(this.tokenCurrent);
+                this.context.appendChild(node);
+                this.tokenCurrent = '';
+                if (! node.selfClosing) {
+                    this.context = node;
+                }
+                this.attributeContext = node;
+                return true;
+            }
+
+            if (char !== '_' && ! this.isLetter(charCode) && (this.tokenCurrent.length > 0 && ! this.isNumber(charCode))) {
+                throw new Error(`Expected a-Z after HTML opening tag on line ${this.line()}`);
+            }
+
+            this.tokenCurrent += char;
+            return true;
+        } else if(this.state === 'tagClose') {
+            if (char === '/') {
+                // slash before closing tag eg. <input name="..." />
+                return true;
+            }
+            if (char === '>') {
+                if (this.tokenCurrent !== this.context.tagName) {
+                    throw new Error(`Found closing tag ${this.tokenCurrent}, expected ${this.context.tagName}, line ${this.line()}`);
+                }
+                // tag closed, switch context to parent of the current context
+                this.context = this.context.parentNode || this.fragment;
+                this.state = 'idle';
+            }
+            this.tokenCurrent += char;
+        } else if (this.state === 'text') {
+            if (char === '<') {
+                // end text
+                this.state = 'tagStart';
+                this.context.appendChild(this.tokenCurrent);
+                this.tokenCurrent = '';
+                return true;
+            }
+            this.tokenCurrent += char;
+        } else if (this.state === 'attributeName') {
+            if (char === '=' || char === ' ' || char === '>') {
+                // end of attribute name
+                if (char === '=') {
+                    this.state = 'attributeValueStart';
+                } else if (char === ' ') {
+                    return true;
+                } else if (char === '>') {
+                    this.state = 'idle';
+                }
+                if (this.tokenCurrent.length > 0) {
+                    if (this.attributeContext) {
+                        this.attributeContext.setAttribute(this.tokenCurrent, true);
+                    }
+                    this.attributeNameCurrent = this.tokenCurrent;
+                    this.tokenCurrent = '';
+                    return true;
+                }
+            }
+
+            this.tokenCurrent += char;
+        } else if (this.state === 'attributeValueStart') {
+            if (char === '"' || char === "'") {
+                this.state = 'attributeValue';
+                this.attributeOpenQuote = char;
+                return true;
+            }
+        } else if (this.state === 'attributeValue') {
+
+            if (char === this.attributeOpenQuote) {
+                // attribute value ended
+                if (this.attributeContext) {
+                    this.attributeContext.setAttribute(this.attributeNameCurrent, this.tokenCurrent);
+                }
+                this.tokenCurrent = '';
+                this.attributeNameCurrent = '';
+                this.state = 'attributeEnd';
+                return true;
+            }
+
+            this.tokenCurrent += char;
+        } else if (this.state === 'attributeEnd') {
+            if (char === '>') {
+                this.state = 'idle';
+                return true;
+            } if (char === ' ' || char === '\n') {
+                this.state = 'attributeName';
+                return true;
+            } else if (char === '/') {
+                return true;
+            } else {
+                throw new Error(`Unexpected character ${char} after attribute value, line ${this.line()}`);
+            }
+        }
+
+        return true;
+
+    }
+
+    // returns current line
+    private line(): number {
+        return this.html.substring(0, this.offset).split('\n').length;
+    }
+
+    private isLetter(charCode: number): boolean {
+        const isLowerCase = charCode > 96 && charCode < 123;
+        if (isLowerCase) {return true;}
+        const isUpperCase = charCode > 64 && charCode < 91;
+        if (isUpperCase) {return true;}
+
+        return false;
+    }
+
+    private isNumber(charCode: number): boolean {
+        return charCode > 47 && charCode < 58;
+    }
+
+    public dom() {
+        return this.fragment;
+    }
+
+}
