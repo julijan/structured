@@ -9,7 +9,7 @@ type JSONNode = {
     strings: Array<string>
 }
 
-export const selfClosingTags: ReadonlyArray<string> = ['br', 'hr', 'input', 'img', 'link', 'meta', 'source', 'embed', 'area'];
+export const selfClosingTags: ReadonlyArray<string> = ['br', 'hr', 'input', 'img', 'link', 'meta', 'source', 'embed', 'path', 'area'];
 
 export class DOMNode {
 
