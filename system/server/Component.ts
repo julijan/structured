@@ -195,7 +195,7 @@ export class Component {
         // this will prevent twitching client side
         // (otherwise elements that should be hidden might appear for a brief second)
         if (this.isRoot) {
-            const dataIf = this.dom.queryByHasAttribute('[data-if]');
+            const dataIf = this.dom.queryByHasAttribute('data-if');
 
             for (let i = 0; i < dataIf.length; i++) {
                 dataIf[i].style.display = 'none';
