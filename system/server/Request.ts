@@ -407,7 +407,7 @@ export class Request {
             } else {
                 const fn = (await import('file:///' + filePath)).default;
                 if (typeof fn === 'function') {
-                    await fn(this.app);
+                    fn(this.app);
                 }
             }
         }
