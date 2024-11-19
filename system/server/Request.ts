@@ -210,7 +210,12 @@ export class Request {
             
             // run the request handler callback
             try {
-                await handler.callback.apply(handler.scope, [context]);
+                const response = await handler.callback.apply(handler.scope, [context]);
+                // unless the headers have been sent (eg. by user calling ctx.respondWith)
+                // send the response returned by route
+                if (! context.response.headersSent) {
+                    context.respondWith(response);
+                }
             } catch(e) {
                 console.log('Error executing request handler ', e, handler.callback.toString());
             }
