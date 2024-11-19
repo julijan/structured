@@ -781,7 +781,7 @@ export class ClientComponent extends EventEmitter {
     // find all components with given name within this component
     // if recursive = true, it searches recursively
     // returns an array of found components
-    public query(componentName: string, results: Array<ClientComponent> = [], recursive: boolean = true): Array<ClientComponent> {
+    public query(componentName: string, recursive: boolean = true, results: Array<ClientComponent> = []): Array<ClientComponent> {
         for (let i = 0; i < this.children.length; i++) {
             const child = this.children[i];
             if (child.name == componentName) {
@@ -790,7 +790,7 @@ export class ClientComponent extends EventEmitter {
             } else {
                 if (recursive) {
                     // search recursively, if found return
-                    child.query(componentName, results, recursive);
+                    child.query(componentName, recursive, results);
                 }
             }
         }
