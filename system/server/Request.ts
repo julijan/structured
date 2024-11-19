@@ -170,8 +170,10 @@ export class Request {
             cookies: this.app.cookies.parse(request),
             isAjax : request.headers['x-requested-with'] == 'xmlhttprequest',
             respondWith: function (data: any) {
-                if (typeof data === 'string' || typeof data === 'number' || Buffer.isBuffer(data)) {
+                if (typeof data === 'string' || Buffer.isBuffer(data)) {
                     response.write(data);
+                } else if (typeof data === 'number') {
+                    response.write(data.toString());
                 } else if (data instanceof Document) {
                     response.setHeader('Content-Type', 'text/html');
                     response.write(data.toString());
