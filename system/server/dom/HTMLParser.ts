@@ -30,6 +30,10 @@ export class HTMLParser {
         return this.html.charAt(this.offset);
     }
 
+    private lastChar(): boolean {
+        return this.offset === this.html.length - 1;
+    }
+
     public parse(): boolean {
         if (this.offset >= this.html.length) {
             // done
@@ -139,6 +143,12 @@ export class HTMLParser {
                 return true;
             }
             this.tokenCurrent += char;
+
+            if (this.lastChar() && this.tokenCurrent.length > 0) {
+                // text within node is handled when node closing tag is found
+                // this handles text that is a direct child of the fragment
+                this.context.appendChild(this.tokenCurrent);
+            }
         } else if (this.state === 'attributeName') {
             if (char === '=' || char === ' ' || char === '>') {
                 // end of attribute name
