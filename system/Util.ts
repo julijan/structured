@@ -261,29 +261,27 @@ export function isAsync(fn: Function): boolean {
 }
 
 export function randomString(len: number): string {
-    let generators = [
+    const charCodes: Uint8Array = new Uint8Array(len);
+    const generators = [
         // uppercase letters
-        function(): string {
-            return String.fromCharCode(65 + Math.floor(Math.random() * 25));
+        function(): number {
+            return 65 + Math.floor(Math.random() * 26);
         },
         // lowercase letters
-        function(): string {
-            return String.fromCharCode(97 + Math.floor(Math.random() * 25));
+        function(): number {
+            return 97 + Math.floor(Math.random() * 26);
         },
         // numbers
-        function(): string {
-            return String.fromCharCode(48 + Math.floor(Math.random() * 10));
+        function(): number {
+            return 48 + Math.floor(Math.random() * 10);
         }
-    ]
+    ];
 
-    let str = '';
-
-    while (str.length < len) {
-        let generator = generators[Math.floor(Math.random() * generators.length)];
-        str += generator();
+    for (let i = 0; i < len; i++) {
+        charCodes[i] = generators[Math.floor(Math.random() * generators.length)]();
     }
 
-    return str;
+    return String.fromCodePoint(...charCodes);
 }
 
 export function unique<T>(arr: Array<T>): Array<T> {
