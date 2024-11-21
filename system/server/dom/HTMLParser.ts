@@ -154,8 +154,6 @@ export class HTMLParser {
                 // end of attribute name
                 if (char === '=') {
                     this.state = 'attributeValueStart';
-                } else if (char === ' ') {
-                    return true;
                 } else if (char === '>') {
                     this.state = 'idle';
                 }
