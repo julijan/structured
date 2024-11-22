@@ -90,7 +90,7 @@ export class Application {
                 response.statusCode = 404;
             }
             return;
-        });
+        }, this, true);
 
         await this.start();
     }
