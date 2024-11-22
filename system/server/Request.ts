@@ -30,7 +30,14 @@ export class Request {
     // pattern can have matches in it which will later populate ctx.args, eg. /users/(id:num) or /example/(argName)
     // callback.this will be the scope if scope is provided, otherwise scope is the Application instance
     // if pattern is given as array, one request handler will be created for each element of the array
-    public on(methods: RequestMethod|Array<RequestMethod>, pattern: string|RegExp|Array<string|RegExp>, callback: RequestCallback, scope?: any): void {
+    // if isStaticAsset = true, (before/after)RequestHandler event not emitted, body and GET args not parsed
+    public on(
+        methods: RequestMethod|Array<RequestMethod>,
+        pattern: string|RegExp|Array<string|RegExp>,
+        callback: RequestCallback,
+        scope?: any,
+        isStaticAsset: boolean = false
+    ): void {
 
         if (! (methods instanceof Array)) {
             methods = [methods];
@@ -54,7 +61,8 @@ export class Request {
             match,
             methods,
             callback,
-            scope
+            scope,
+            staticAsset: isStaticAsset
         }
 
         this.handlers.push(handler);
@@ -195,34 +203,35 @@ export class Request {
 
         
         if (handler !== null) {
-            // handler is found
-            await this.app.emit('beforeRequestHandler', context);
-            
-            try {
-                // parse request body, this will populate ctx.bodyRaw and if possible ctx.body
-                await this.parseBody(context);
-            } catch(e) {
-                console.error(`Error parsing request body: ${e.message}`);
+            // handler exists
+            if (! handler.staticAsset) {
+                // run beforeRequestHandler callbacks
+                await this.app.emit('beforeRequestHandler', context);
+                
+                try {
+                    // parse request body, this will populate ctx.bodyRaw and if possible ctx.body
+                    await this.parseBody(context);
+                } catch(e) {
+                    console.error(`Error parsing request body: ${e.message}`);
+                }
+
+                // extract URI arguments, if pattern included capture groups, those will be included
+                // for example pattern /users/(userId:num) -> { userId: number }
+                const URIArgs = this.extractURIArguments(uri, handler.match);
+                context.args = URIArgs;
             }
 
-            // extract URI arguments, if pattern included capture groups, those will be included
-            // for example pattern /users/(userId:num) -> { userId: number }
-            const URIArgs = this.extractURIArguments(uri, handler.match);
-            context.args = URIArgs;
             
             // run the request handler callback
             try {
-                const response = await handler.callback.apply(handler.scope, [context]);
-                // unless the headers have been sent (eg. by user calling ctx.respondWith)
-                // send the response returned by route
-                if (! context.response.headersSent) {
-                    context.respondWith(response);
-                }
+                await handler.callback.apply(handler.scope, [context]);
             } catch(e) {
                 console.log('Error executing request handler ', e, handler.callback.toString());
             }
 
-            await this.app.emit('afterRequestHandler', context);
+            if (! handler.staticAsset) {
+                await this.app.emit('afterRequestHandler', context);
+            }
         } else {
             // handler not found, check if a static asset is requested
             let staticAsset = false;

@@ -14,7 +14,10 @@ export type RequestHandler = {
     match: Array<URISegmentPattern>|RegExp,
     methods: Array<RequestMethod>,
     callback: RequestCallback,
-    scope: any
+    scope: any,
+        
+    // if true, no (before/after)RequestHandler event is emitted, body and GET args not parsed
+    staticAsset: boolean
 }
 
 export type RequestContext = {
