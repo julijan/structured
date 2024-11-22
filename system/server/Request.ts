@@ -206,7 +206,17 @@ export class Request {
             // handler exists
             if (! handler.staticAsset) {
                 // run beforeRequestHandler callbacks
-                await this.app.emit('beforeRequestHandler', context);
+                const results = await this.app.emit('beforeRequestHandler', context);
+    
+                // if any of the beforeRequestHandler callbacks returned false, end the request here
+                // this provides a way for the developer to prevent the request handler from being executed
+                // which is useful in some cases, for example:
+                // beforeRequestHandler checks if user is logged in, if not redirects to login
+                // and returns false to prevent unauthorized access to user-only page
+                if (results.includes(false)) {
+                    context.response.end();
+                    return;
+                }
                 
                 try {
                     // parse request body, this will populate ctx.bodyRaw and if possible ctx.body
