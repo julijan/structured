@@ -115,14 +115,22 @@ export class Application {
         this.eventEmitter.on(evt, callback);
     }
 
-    // we want to be able to await it so we won't call EventEmitter.emit
-    // instead we'll manually execute the listeners awaiting each in the process
-    public async emit(evt: ApplicationEvents, payload?: any): Promise<void> {
-        const listeners = this.eventEmitter.rawListeners(evt);
+    // emit an event on Application
+    // this will run all event listeners attached to given eventName
+    // providing the payload as the first argument
+    // returns an array of all resolved values, any rejected promise values are discarded
+    public async emit(eventName: ApplicationEvents, payload?: any): Promise<Array<any>> {
+        const promises: Array<Promise<any>> = [];
+        const listeners = this.eventEmitter.rawListeners(eventName);
         for (let i = 0; i < listeners.length; i++) {
-            await listeners[i](payload);
+            promises.push(listeners[i](payload));
         }
-        return;
+        const results = await Promise.allSettled(promises);
+        return results.filter((res) => {
+            return res.status === 'fulfilled';
+        }).map((res) => {
+            return res.value;
+        });
     }
 
     // export given fields to all components
