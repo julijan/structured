@@ -1,5 +1,5 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
-import * as path from 'path';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import * as path from 'node:path';
 import conf from '../../app/Config.js';
 import { ComponentEntry } from '../Types';
 
@@ -11,7 +11,7 @@ export class Components {
 
     public loadComponents(relativeToPath?: string): void {
         if (relativeToPath === undefined) {
-            relativeToPath = path.resolve('../' + conf.views.path + '/' + conf.views.componentsPath);
+            relativeToPath = path.resolve((conf.runtime === 'Node.js' ? '../' : './') + conf.views.path + '/' + conf.views.componentsPath);
         }
         const components = readdirSync(relativeToPath);
         
@@ -31,18 +31,18 @@ export class Components {
                     const componentName = componentNameParts.slice(0, componentNameParts.length - 1).join('.');
 
                     const pathAbsolute = relativeToPath || '';
-                    const pathRelative = path.relative('../', pathAbsolute);
-                    const pathBuild = path.resolve('../build/' + pathRelative);
+                    const pathRelative = path.relative(conf.runtime === 'Node.js' ? '../' : './', pathAbsolute);
+                    const pathBuild = path.resolve('./' + pathRelative);
                     const pathRelativeToViews = path.relative(`./${conf.views.path}`, pathRelative);
 
                     const pathHTML = `${pathAbsolute}/${component}`;
 
                     // server side js file path (may not exist)
-                    const jsServerPath = `${pathBuild}/${componentName}.js`;
+                    const jsServerPath = `${pathBuild}/${componentName}.${conf.runtime === 'Node.js' ? 'js' : 'ts'}`;
                     const hasServerJS = existsSync(jsServerPath);
 
                     // client side js file path (may not exist)
-                    const jsClientPath = `${pathBuild}/${componentName}.client.js`;
+                    const jsClientPath = `${pathBuild}/${componentName}.client.${conf.runtime === 'Node.js' ? 'js' : 'ts'}`;
                     const hasClientJS = existsSync(jsClientPath);
 
                     const entry: ComponentEntry = {

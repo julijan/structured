@@ -1,11 +1,12 @@
-import { IncomingMessage, ServerResponse } from "http";
+import { IncomingMessage, ServerResponse } from "node:http";
 import { PostedDataDecoded, RequestBodyFile, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from "../Types.js";
 import { mergeDeep, queryStringDecode, queryStringDecodedSetValue } from "../Util.js";
 import conf from "../../app/Config.js";
 import { RequestContextData } from "../../app/Types.js";
 import { Application } from "./Application.js";
-import { existsSync, readdirSync, readFileSync, statSync } from "fs";
-import path from "path";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import path from "node:path";
+import { Buffer } from "node:buffer";
 import { Document } from "./Document.js";
 
 export class Request {
@@ -413,12 +414,15 @@ export class Request {
         if (basePath) {
             routesPath = basePath;
         } else {
-            routesPath = path.resolve(`../build/${conf.routes.path}`);
+            routesPath = path.resolve((conf.runtime === 'Node.js' ? '../build/' : './') + conf.routes.path);
         }
         const files = readdirSync(routesPath);
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
+            if (! (file.endsWith('.js') || file.endsWith('.ts'))) {
+                continue;
+            }
             const filePath = path.resolve(routesPath + '/' + file);
             const isDirectory = statSync(filePath).isDirectory();
             if (isDirectory) {

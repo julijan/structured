@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
-import { existsSync, readFileSync } from 'fs';
-import { createServer, Server } from 'http';
-import * as path from 'path';
+import { existsSync, readFileSync } from 'node:fs';
+import { createServer, Server } from 'node:http';
+import * as path from 'node:path';
 import * as mime from 'mime-types';
 import conf from '../../app/Config.js';
 import { ApplicationEvents, LooseObject, RequestBodyArguments, RequestCallback, RequestContext } from '../Types';

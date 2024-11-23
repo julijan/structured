@@ -1,14 +1,14 @@
-import { ServerResponse } from 'http';
+import { ServerResponse } from 'node:http';
 import { Md5 } from 'ts-md5';
 
-import { Initializers, LooseObject, RequestContext, StructuredClientConfig } from 'system/Types.js';
+import { Initializers, LooseObject, RequestContext, StructuredClientConfig } from '../../system/Types.js';
 import conf from '../../app/Config.js';
 import { Application } from './Application.js';
 import { DocumentHead } from './DocumentHead.js';
 import { Component } from './Component.js';
 import { attributeValueToString, randomString } from '../Util.js';
-import path from 'path';
-import { existsSync, readFileSync } from 'fs';
+import path from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
 
 export class Document extends Component {
 
