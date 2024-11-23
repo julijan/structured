@@ -1,7 +1,7 @@
 import { ServerResponse } from 'http';
 import { Md5 } from 'ts-md5';
 
-import { Initializers, LooseObject, RequestContext } from 'system/Types.js';
+import { Initializers, LooseObject, RequestContext, StructuredClientConfig } from 'system/Types.js';
 import conf from '../../app/Config.js';
 import { Application } from './Application.js';
 import { DocumentHead } from './DocumentHead.js';
@@ -72,10 +72,19 @@ export class Document extends Component {
         return initializers;
     }
 
+    private initClientConfig(): void {
+        const clientConf: StructuredClientConfig = {
+            componentRender: conf.url.componentRender
+        }
+        const clientConfString = `<script type="application/javascript">window.structuredClientConfig = ${JSON.stringify(clientConf)}</script>`;
+        this.head.add(clientConfString);
+    }
+
     public toString(): string {
 
         if (! this.initializersInitialized) {
             this.initInitializers();
+            this.initClientConfig();
         }
 
         return `<!DOCTYPE html>

@@ -33,6 +33,10 @@ export type StructuredConfig = {
     }
 }
 
+export type StructuredClientConfig = {
+    componentRender: StructuredConfig['url']['componentRender']
+}
+
 export type RequestMethod = 'GET'|'POST'|'PUT'|'PATCH'|'DELETE';
 
 export type RequestCallback = (ctx: RequestContext) => Promise<any>
