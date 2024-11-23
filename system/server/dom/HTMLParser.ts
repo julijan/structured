@@ -150,7 +150,8 @@ export class HTMLParser {
                 this.context.appendChild(this.tokenCurrent);
             }
         } else if (this.state === 'attributeName') {
-            if (char === '=' || char === ' ' || char === '>') {
+            const boundsChar = char === ' ' || char === '\n' || char === '\t';
+            if (boundsChar || char === '=' || char === '>') {
                 // end of attribute name
                 if (char === '=') {
                     this.state = 'attributeValueStart';
@@ -158,7 +159,7 @@ export class HTMLParser {
                     this.state = 'idle';
                 }
                 if (this.tokenCurrent.length > 0) {
-                    if (this.attributeContext) {
+                    if (this.attributeContext !== null && this.tokenCurrent.trim().length > 0) {
                         this.attributeContext.setAttribute(this.tokenCurrent, true);
                     }
                     this.attributeNameCurrent = this.tokenCurrent;
@@ -167,7 +168,9 @@ export class HTMLParser {
                 }
             }
 
-            this.tokenCurrent += char;
+            if (! boundsChar) {
+                this.tokenCurrent += char;
+            }
         } else if (this.state === 'attributeValueStart') {
             if (char === '"' || char === "'") {
                 this.state = 'attributeValue';
