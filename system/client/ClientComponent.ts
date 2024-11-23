@@ -235,9 +235,9 @@ export class ClientComponent extends EventEmitter {
         for (let i = 0; i < scope.childNodes.length; i++) {
             const childNode = scope.childNodes[i];
             if (childNode.nodeType == 1) {
-                if ((childNode as HTMLElement).hasAttribute('data-structured-component')) {
+                if ((childNode as HTMLElement).hasAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`)) {
                     // found a child component, add to children
-                    const component = new ClientComponent(this, (childNode as HTMLElement).getAttribute('data-structured-component') || '', childNode as HTMLElement, this.storeGlobal);
+                    const component = new ClientComponent(this, (childNode as HTMLElement).getAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`) || '', childNode as HTMLElement, this.storeGlobal);
                     this.children.push(component);
                     if (typeof callback === 'function') {
                         callback(component);
@@ -414,7 +414,7 @@ export class ClientComponent extends EventEmitter {
         }
 
         node.childNodes.forEach((child) => {
-            if (child.nodeType === 1 && (isSelf || !node?.hasAttribute('data-structured-component'))) {
+            if (child.nodeType === 1 && (isSelf || !node?.hasAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`))) {
                 this.initConditionals(child as HTMLElement);
             }
         });
@@ -450,7 +450,7 @@ export class ClientComponent extends EventEmitter {
         }
 
         node.childNodes.forEach((child) => {
-            if (child.nodeType === 1 && (isSelf || !node?.hasAttribute('data-structured-component'))) {
+            if (child.nodeType === 1 && (isSelf || !node?.hasAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`))) {
                 this.initRefs(child as HTMLElement);
             }
         });
@@ -493,7 +493,7 @@ export class ClientComponent extends EventEmitter {
             // not a model, but may contain models
             // init model nodes recursively from here
             node.childNodes.forEach((child) => {
-                if (child.nodeType === 1 && (isSelf || !node?.hasAttribute('data-structured-component'))) {
+                if (child.nodeType === 1 && (isSelf || !node?.hasAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`))) {
                     this.initModels(child as HTMLElement, modelNodes);
                 }
             });

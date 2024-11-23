@@ -5,6 +5,7 @@ import { ComponentEntry, LooseObject } from '../Types.js';
 import { RequestContextData } from '../../app/Types.js';
 import { DOMFragment } from './dom/DOMFragment.js';
 import { DOMNode } from './dom/DOMNode.js';
+import conf from '../../app/Config.js';
 
 export class Component {
     id: string;
@@ -101,7 +102,7 @@ export class Component {
         }
 
         // set data-structured-component="this.name" attribute on tag
-        this.dom.setAttribute('data-structured-component', this.name);
+        this.dom.setAttribute(`data-${conf.views.componentNameAttribute}`, this.name);
 
         // allocate an unique ID for this component
         // used client side to uniquely identify the component when it accesses it's storage

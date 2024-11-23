@@ -19,7 +19,8 @@ export type StructuredConfig = {
     },
     views: {
         path: string,
-        componentsPath: string
+        componentsPath: string,
+        componentNameAttribute: string
     },
     session: {
         cookieName: string,
@@ -35,7 +36,8 @@ export type StructuredConfig = {
 }
 
 export type StructuredClientConfig = {
-    componentRender: StructuredConfig['url']['componentRender']
+    componentRender: StructuredConfig['url']['componentRender'],
+    componentNameAttribute: string
 }
 
 export type RequestMethod = 'GET'|'POST'|'PUT'|'PATCH'|'DELETE';

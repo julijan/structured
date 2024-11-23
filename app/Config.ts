@@ -29,7 +29,9 @@ const conf: StructuredConfig = {
         path: '/app/views',
 
         // relative to views.path
-        componentsPath: ''
+        componentsPath: '',
+
+        componentNameAttribute: 'structured-component'
     },
     session: {
         cookieName: 'session',

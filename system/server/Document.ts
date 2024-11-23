@@ -74,7 +74,8 @@ export class Document extends Component {
 
     private initClientConfig(): void {
         const clientConf: StructuredClientConfig = {
-            componentRender: conf.url.componentRender
+            componentRender: conf.url.componentRender,
+            componentNameAttribute: conf.views.componentNameAttribute
         }
         const clientConfString = `<script type="application/javascript">window.structuredClientConfig = ${JSON.stringify(clientConf)}</script>`;
         this.head.add(clientConfString);
