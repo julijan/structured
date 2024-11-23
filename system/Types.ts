@@ -1,4 +1,4 @@
-import { IncomingMessage, ServerResponse } from "http";
+import { IncomingMessage, ServerResponse } from "node:http";
 import { Application } from "./server/Application.js";
 import { symbolArrays } from "./Symbols.js";
 import { RequestContextData } from "../app/Types.js";
@@ -30,7 +30,8 @@ export type StructuredConfig = {
     },
     http: {
         linkHeaderRel: 'preload' | 'preconnect'
-    }
+    },
+    runtime: 'Node.js' | 'Deno'
 }
 
 export type StructuredClientConfig = {

@@ -41,7 +41,8 @@ const conf: StructuredConfig = {
     http: {
         // used by Document.push, can be preload or preconnect
         linkHeaderRel : 'preload'
-    }
+    },
+    runtime: 'Node.js'
 }
 
 export default conf;
