@@ -148,7 +148,7 @@ export class Request {
 
         let uri = request.url || '/';
 
-        if (uri.length > 1 && conf.removeTrailingSlashURL && uri.endsWith('/')) {
+        if (conf.url.removeTrailingSlash && uri.length > 1 && uri.endsWith('/')) {
             uri = uri.substring(0, uri.length - 1);
         }
 
@@ -246,7 +246,7 @@ export class Request {
             // handler not found, check if a static asset is requested
             let staticAsset = false;
 
-            if (conf.assets.allow(context.request.url || '')) {
+            if (conf.url.isAsset(context.request.url || '')) {
                 // static asset
                 // unless accessing /assets/ts/* go directory up to get out of build
                 const basePath = context.request.url?.startsWith('/assets/ts/') ? './' : '../';
