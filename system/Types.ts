@@ -6,6 +6,33 @@ import { Net } from './client/Net.js';
 import { ClientComponent } from './client/ClientComponent.js';
 import { Component } from "./server/Component.js";
 
+export type StructuredConfig = {
+    envPrefix: string,
+    autoInit: boolean,
+    url: {
+        removeTrailingSlash: boolean,
+        componentRender: false | string,
+        isAsset: (url: string) => boolean
+    },
+    routes: {
+        path: string
+    },
+    views: {
+        path: string,
+        componentsPath: string
+    },
+    session: {
+        cookieName: string,
+        keyLength: number,
+        durationSeconds: number,
+        garbageCollectIntervalSeconds: number,
+        garbageCollectAfterSeconds: number
+    },
+    http: {
+        linkHeaderRel: 'preload' | 'preconnect'
+    }
+}
+
 export type RequestMethod = 'GET'|'POST'|'PUT'|'PATCH'|'DELETE';
 
 export type RequestCallback = (ctx: RequestContext) => Promise<any>

@@ -1,31 +1,35 @@
-const conf = {
+import { StructuredConfig } from "../system/Types.js";
+
+const conf: StructuredConfig = {
+    // system/Environment will load all env variables starting with envPrefix
     envPrefix: 'STRUCTURED',
+
+    // whether to call Application.init when an instance of Application is created
     autoInit: true,
-    removeTrailingSlashURL: true,
-    routes: {
-        path: '/app/routes'
-    },
-    assets: {
-        // control access to static assets
-        allow: function(uri: string) {
+
+    url: {
+        removeTrailingSlash: true,
+
+        // if you want to enable individual component rendering set this to URI (string)
+        // to disable component rendering set it to false
+        // setting this to false disallows the use of ClientComponent.redraw and ClientComponent.add
+        componentRender: '/componentRender',
+
+        // function that receives the requested URL and returns boolean, if true, treat as static asset
+        // if there is a registered request handler that matches this same URL, it takes precedence over this
+        isAsset: function(uri: string) {
             return uri.indexOf('/assets/') === 0;
         }
+    },
+    routes: {
+        path: '/app/routes'
     },
     views : {
         // relative to index.ts
         path: '/app/views',
 
         // relative to views.path
-        componentsPath: '',
-
-        // whether you want to enable the specially handled URI that allows rendering individual components on the server
-        // by default /component/(componentName)/(primaryKey)
-        componentRenderURIEnable : true,
-
-        // this URI is handled by Application
-        // URI matching the pattern componentRenderURI/(componentName)/(primaryKey) will respond with the rendered component
-        // this can be changed, but the URI arguments componentName and primaryKey must be captured with those names
-        componentRenderURI : '/component'
+        componentsPath: ''
     },
     session: {
         cookieName: 'session',
@@ -35,7 +39,8 @@ const conf = {
         garbageCollectAfterSeconds: 500
     },
     http: {
-        linkHeaderRel : 'preload' // used by Document.push, can be preload or preconnect
+        // used by Document.push, can be preload or preconnect
+        linkHeaderRel : 'preload'
     }
 }
 
