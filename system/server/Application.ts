@@ -67,16 +67,18 @@ export class Application {
         await this.request.loadHandlers();
         await this.emit('afterRoutes');
 
-        // special request handler, executed when ClientComponent.redraw is called
-        this.request.on('POST', '/componentRender', async (ctx) => {
-            const input = ctx.body as unknown as {
-                component: string,
-                attributes: RequestBodyArguments,
-                unwrap?: boolean
-            };
-
-            await this.respondWithComponent(ctx, input.component, input.attributes || undefined, typeof input.unwrap === 'boolean' ? input.unwrap : true);
-        });
+        if (conf.url.componentRender !== false) {
+            // special request handler, executed when ClientComponent.redraw is called
+            this.request.on('POST', `${conf.url.componentRender}`, async (ctx) => {
+                const input = ctx.body as unknown as {
+                    component: string,
+                    attributes: RequestBodyArguments,
+                    unwrap?: boolean
+                };
+    
+                await this.respondWithComponent(ctx, input.component, input.attributes || undefined, typeof input.unwrap === 'boolean' ? input.unwrap : true);
+            });
+        }
 
         // special request handler, serve the client side JS
         this.request.on('GET', /^\/assets\/client-js/, async ({ request, response }) => {

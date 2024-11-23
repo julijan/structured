@@ -1,4 +1,4 @@
-import { ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject, StoreChangeCallback } from '../Types.js';
+import { ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject, StoreChangeCallback, StructuredClientConfig } from '../Types.js';
 import { attributeValueFromString, attributeValueToString, mergeDeep, objectEach, queryStringDecodedSetValue, toCamelCase } from '../Util.js';
 import { DataStoreView } from './DataStoreView.js';
 import { DataStore } from './DataStore.js';
@@ -12,6 +12,7 @@ import { EventEmitter } from './EventEmitter.js';
 declare global {
     interface Window {
         initializers: Record<string, InitializerFunction | string>;
+        structuredClientConfig: StructuredClientConfig;
     }
 }
 
@@ -257,6 +258,12 @@ export class ClientComponent extends EventEmitter {
     // if data is provided, each key will be set on component using this.setData
     // and as such, component will receive it when rendering
     public async redraw(data?: LooseObject): Promise<void> {
+
+        if (window.structuredClientConfig.componentRender === false) {
+            console.error(`Can't redraw component, component rendering URL disabled`);
+            return;
+        }
+
         if (this.destroyed) {return;}
 
         // set data if provided
@@ -275,7 +282,7 @@ export class ClientComponent extends EventEmitter {
         // request a component to be re-rendered on the server
         // unwrap = true so that component container is excluded
         // this component already has it's own container and we only care about what changed within it
-        const redrawRequest = new NetRequest('POST', '/componentRender', {
+        const redrawRequest = new NetRequest('POST', window.structuredClientConfig.componentRender, {
             'content-type': 'application/json'
         });
         this.redrawRequest = redrawRequest.xhr;
@@ -804,6 +811,11 @@ export class ClientComponent extends EventEmitter {
     // added component will always be a child of this component
     // returns a promise that resolves with the added component
     public async add(appendTo: string | HTMLElement, componentName: string, data?: LooseObject): Promise<ClientComponent | null> {
+        if (window.structuredClientConfig.componentRender === false) {
+            console.error(`Can't add component, component rendering URL disabled`);
+            return null;
+        }
+
         const container = typeof appendTo === 'string' ? this.domNode.querySelector(appendTo) : appendTo;
 
         if (! (container instanceof HTMLElement)) {
@@ -813,7 +825,7 @@ export class ClientComponent extends EventEmitter {
         // request rendered component from the server
         // expected result is JSON, containing { html, initializers, data }
         // unwrap set to false as we want the component container to be returned (unlike redraw)
-        const req = new NetRequest('POST', '/componentRender', {
+        const req = new NetRequest('POST', window.structuredClientConfig.componentRender, {
             'content-type': 'application/json'
         });
         const componentDataJSON = await req.send(JSON.stringify({
