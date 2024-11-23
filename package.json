@@ -7,8 +7,8 @@
     "start": "cd build && node index.js"
   },
   "devDependencies": {
-    "@types/mime-types": "^2.1.1",
-    "@types/node": "^20.10.0"
+    "@types/mime-types": "^2.1.4",
+    "@types/node": "^22.9.3"
   },
   "dependencies": {
     "handlebars": "^4.7.8",
