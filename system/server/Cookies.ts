@@ -23,7 +23,7 @@ export class Cookies {
     // sets the Set-Cookie header, which will be sent with the output
     public set(response: ServerResponse, name: string, value: string|number, lifetimeSeconds: number, path: string = '/', sameSite: 'Strict' | 'Lax' | 'None' = 'Strict', domain?: string) {
         const expiresAt = lifetimeSeconds > 0 ? new Date(new Date().getTime() + lifetimeSeconds * 1000).toUTCString() : 0;
-        response.setHeader('Set-Cookie', `${name}=${value}; Expires=${expiresAt}; Path=${path}; SameSite=${sameSite}${domain ? `; domain=${domain}` : ''}`);
+        response.appendHeader('Set-Cookie', `${name}=${value}; Expires=${expiresAt}; Path=${path}; SameSite=${sameSite}${domain ? `; domain=${domain}` : ''}`);
     }
 
 }
