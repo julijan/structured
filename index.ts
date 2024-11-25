@@ -4,7 +4,7 @@ import { StructuredConfig } from './system/Types.js';
 // App configuration, this would usually be stored and exported
 // from a config file eg. Conf.ts
 const conf: StructuredConfig = {
-    // system/Environment will load all env variables starting with envPrefix
+    // Application.importEnv will load all env variables starting with [envPrefix]_
     envPrefix: 'STRUCTURED',
 
     // whether to call Application.init when an instance of Application is created
