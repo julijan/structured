@@ -7,34 +7,34 @@ import { ClientComponent } from './client/ClientComponent.js';
 import { Component } from "./server/Component.js";
 
 export type StructuredConfig = {
-    envPrefix: string,
-    autoInit: boolean,
+    readonly envPrefix?: string,
+    readonly autoInit: boolean,
     url: {
         removeTrailingSlash: boolean,
         componentRender: false | string,
         isAsset: (url: string) => boolean
     },
     routes: {
-        path: string
+        readonly path: string
     },
     views: {
-        path: string,
-        componentsPath: string,
-        componentNameAttribute: string
+        readonly path: string,
+        readonly componentsPath: string,
+        readonly componentNameAttribute: string
     },
     session: {
-        cookieName: string,
-        keyLength: number,
-        durationSeconds: number,
-        garbageCollectIntervalSeconds: number,
-        garbageCollectAfterSeconds: number
+        readonly cookieName: string,
+        readonly keyLength: number,
+        readonly durationSeconds: number,
+        readonly garbageCollectIntervalSeconds: number,
+        readonly garbageCollectAfterSeconds: number
     },
     http: {
         host?: string,
         port: number,
         linkHeaderRel: 'preload' | 'preconnect'
     },
-    runtime: 'Node.js' | 'Deno'
+    readonly runtime: 'Node.js' | 'Deno'
 }
 
 export type StructuredClientConfig = {
