@@ -30,6 +30,8 @@ export type StructuredConfig = {
         garbageCollectAfterSeconds: number
     },
     http: {
+        host?: string,
+        port: number,
         linkHeaderRel: 'preload' | 'preconnect'
     },
     runtime: 'Node.js' | 'Deno'
