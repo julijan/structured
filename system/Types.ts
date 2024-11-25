@@ -17,9 +17,8 @@ export type StructuredConfig = {
     routes: {
         readonly path: string
     },
-    views: {
+    components: {
         readonly path: string,
-        readonly componentsPath: string,
         readonly componentNameAttribute: string
     },
     session: {

@@ -74,7 +74,7 @@ export class Document extends Component {
     private initClientConfig(): void {
         const clientConf: StructuredClientConfig = {
             componentRender: this.application.config.url.componentRender,
-            componentNameAttribute: this.application.config.views.componentNameAttribute
+            componentNameAttribute: this.application.config.components.componentNameAttribute
         }
         const clientConfString = `<script type="application/javascript">window.structuredClientConfig = ${JSON.stringify(clientConf)}</script>`;
         this.head.add(clientConfString);
@@ -134,7 +134,7 @@ export class Document extends Component {
 
     // load the view from file system
     public async loadView(pathRelative: string, data?: LooseObject): Promise<boolean> {
-        const viewPath = path.resolve('../' + this.application.config.views.path + '/' + pathRelative + (pathRelative.endsWith('.html') ? '' : '.html'));
+        const viewPath = path.resolve('../' + this.application.config.components.path + '/' + pathRelative + (pathRelative.endsWith('.html') ? '' : '.html'));
 
         if (! existsSync(viewPath)) {
             console.warn(`Couldn't load document ${this.document.head.title}: ${viewPath}`);

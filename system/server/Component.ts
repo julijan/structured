@@ -101,7 +101,7 @@ export class Component {
         }
 
         // set data-structured-component="this.name" attribute on tag
-        this.dom.setAttribute(`data-${this.document.application.config.views.componentNameAttribute}`, this.name);
+        this.dom.setAttribute(`data-${this.document.application.config.components.componentNameAttribute}`, this.name);
 
         // allocate an unique ID for this component
         // used client side to uniquely identify the component when it accesses it's storage

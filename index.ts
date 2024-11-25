@@ -27,12 +27,9 @@ const conf: StructuredConfig = {
     routes: {
         path: '/app/routes'
     },
-    views : {
+    components : {
         // relative to index.ts
         path: '/app/views',
-
-        // relative to views.path
-        componentsPath: '',
 
         componentNameAttribute: 'structured-component'
     },

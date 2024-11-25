@@ -17,7 +17,7 @@ export class Components {
 
     public loadComponents(relativeToPath?: string): void {
         if (relativeToPath === undefined) {
-            relativeToPath = path.resolve((this.config.runtime === 'Node.js' ? '../' : './') + this.config.views.path + '/' + this.config.views.componentsPath);
+            relativeToPath = path.resolve((this.config.runtime === 'Node.js' ? '../' : './') + this.config.components.path);
         }
         const components = readdirSync(relativeToPath);
         
@@ -39,7 +39,7 @@ export class Components {
                     const pathAbsolute = relativeToPath || '';
                     const pathRelative = path.relative(this.config.runtime === 'Node.js' ? '../' : './', pathAbsolute);
                     const pathBuild = path.resolve('./' + pathRelative);
-                    const pathRelativeToViews = path.relative(`./${this.config.views.path}`, pathRelative);
+                    const pathRelativeToViews = path.relative(`./${this.config.components.path}`, pathRelative);
 
                     const pathHTML = `${pathAbsolute}/${component}`;
 
