@@ -3,8 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createServer, Server } from 'node:http';
 import * as path from 'node:path';
 import * as mime from 'mime-types';
-import conf from '../../app/Config.js';
-import { ApplicationEvents, LooseObject, RequestBodyArguments, RequestCallback, RequestContext } from '../Types';
+import { ApplicationEvents, LooseObject, RequestBodyArguments, RequestCallback, RequestContext, StructuredConfig } from '../Types';
 import { Document } from './Document.js';
 import { Components } from './Components.js';
 import { Session } from './Session.js';
@@ -15,8 +14,7 @@ import { Cookies } from './Cookies.js';
 import { RequestContextData } from '../../app/Types.js';
 
 export class Application {
-    host?: string;
-    port: number;
+    config: StructuredConfig;
 
     server: null|Server = null;
     listening: boolean = false;
@@ -26,7 +24,7 @@ export class Application {
     readonly cookies: Cookies = new Cookies();
     readonly session: Session = new Session(this);
     readonly request: Request = new Request(this);
-    readonly components: Components = new Components();
+    readonly components: Components = new Components(this);
 
     // handlebars helpers manager
     readonly handlebars: Handlebars = new Handlebars();
@@ -34,14 +32,13 @@ export class Application {
     // fields from RequestContext.data to be exported for all components
     readonly exportedRequestContextData: Array<keyof RequestContextData> = [];
 
-    constructor(port: number, host?: string) {
-        this.host = host;
-        this.port = port;
+    constructor(config: StructuredConfig) {
+        this.config = config;
 
         // enable sessions
         this.session.start();
 
-        if (conf.autoInit) {
+        if (this.config.autoInit) {
             this.init();
         }
     }
@@ -67,9 +64,9 @@ export class Application {
         await this.request.loadHandlers();
         await this.emit('afterRoutes');
 
-        if (conf.url.componentRender !== false) {
+        if (this.config.url.componentRender !== false) {
             // special request handler, executed when ClientComponent.redraw is called
-            this.request.on('POST', `${conf.url.componentRender}`, async (ctx) => {
+            this.request.on('POST', `${this.config.url.componentRender}`, async (ctx) => {
                 const input = ctx.body as unknown as {
                     component: string,
                     attributes: RequestBodyArguments,
@@ -103,8 +100,8 @@ export class Application {
             this.server = createServer((req, res) => {
                 this.request.handle(req, res);
             });
-            this.server.listen(this.port, this.host || '127.0.0.1', async () => {
-                const address = (this.host !== undefined ? this.host : '') + ':' + this.port;
+            this.server.listen(this.config.http.port, this.config.http.host || '127.0.0.1', async () => {
+                const address = (this.config.http.host !== undefined ? this.config.http.host : '') + ':' + this.config.http.port;
                 await this.emit('serverStarted');
                 console.log(`Server started on ${address}`);
                 resolve();

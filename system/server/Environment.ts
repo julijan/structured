@@ -1,4 +1,3 @@
-import conf from "../../app/Config.js";
 import { EnvConf } from "../../app/Types.js";
 import { LooseObject } from "../Types.js";
 
@@ -33,6 +32,3 @@ export function importEnv(prefix?: string, smartPrimitives: boolean = true): Env
     }
     return values as EnvConf;
 }
-
-
-export const env = importEnv(conf.envPrefix);

@@ -2,7 +2,6 @@ import { ServerResponse } from 'node:http';
 import { Md5 } from 'ts-md5';
 
 import { Initializers, LooseObject, RequestContext, StructuredClientConfig } from '../../system/Types.js';
-import conf from '../../app/Config.js';
 import { Application } from './Application.js';
 import { DocumentHead } from './DocumentHead.js';
 import { Component } from './Component.js';
@@ -43,10 +42,10 @@ export class Document extends Component {
     // HTTP2 push, Link headers
     push(response: ServerResponse): void {
         const resourcesJS = this.head.js.map((resource) => {
-            return `<${resource.path}>; rel=${conf.http.linkHeaderRel}; as=script; crossorigin=anonymous`;
+            return `<${resource.path}>; rel=${this.application.config.http.linkHeaderRel}; as=script; crossorigin=anonymous`;
         });
         const resourcesCSS = this.head.css.map((resource) => {
-            return `<${resource.path}>; rel=${conf.http.linkHeaderRel}; as=style; crossorigin=anonymous`;
+            return `<${resource.path}>; rel=${this.application.config.http.linkHeaderRel}; as=style; crossorigin=anonymous`;
         });
         const value = resourcesCSS.concat(resourcesJS).join(', ');
         response.setHeader('Link', value);
@@ -74,8 +73,8 @@ export class Document extends Component {
 
     private initClientConfig(): void {
         const clientConf: StructuredClientConfig = {
-            componentRender: conf.url.componentRender,
-            componentNameAttribute: conf.views.componentNameAttribute
+            componentRender: this.application.config.url.componentRender,
+            componentNameAttribute: this.application.config.views.componentNameAttribute
         }
         const clientConfString = `<script type="application/javascript">window.structuredClientConfig = ${JSON.stringify(clientConf)}</script>`;
         this.head.add(clientConfString);
@@ -135,7 +134,7 @@ export class Document extends Component {
 
     // load the view from file system
     public async loadView(pathRelative: string, data?: LooseObject): Promise<boolean> {
-        const viewPath = path.resolve('../' + conf.views.path + '/' + pathRelative + (pathRelative.endsWith('.html') ? '' : '.html'));
+        const viewPath = path.resolve('../' + this.application.config.views.path + '/' + pathRelative + (pathRelative.endsWith('.html') ? '' : '.html'));
 
         if (! existsSync(viewPath)) {
             console.warn(`Couldn't load document ${this.document.head.title}: ${viewPath}`);

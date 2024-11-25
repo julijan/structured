@@ -1,5 +1,4 @@
 import { randomString } from '../Util.js';
-import conf from '../../app/Config.js';
 import { LooseObject, RequestContext, SessionEntry } from '../Types.js';
 import { Application } from './Application.js';
 
@@ -18,7 +17,7 @@ export class Session {
         // bind the event listener to beforeRequestHandler
         this.application.on('beforeRequestHandler', async (ctx: RequestContext) => {
             if (this.enabled) {
-                const sessionCookie = ctx.cookies[conf.session.cookieName];
+                const sessionCookie = ctx.cookies[this.application.config.session.cookieName];
 
                 const invalidSessionId = sessionCookie && ! this.sessions[sessionCookie];
 
@@ -29,7 +28,12 @@ export class Session {
                     ctx.sessionId = sessionCookie;
                     if (ctx.sessionId) {
                         // refresh cookie
-                        this.application.cookies.set(ctx.response, conf.session.cookieName, ctx.sessionId, conf.session.durationSeconds);
+                        this.application.cookies.set(
+                            ctx.response,
+                            this.application.config.session.cookieName,
+                            ctx.sessionId,
+                            this.application.config.session.durationSeconds
+                        );
                         this.sessions[ctx.sessionId].lastRequest = new Date().getTime();
                     }
                 }
@@ -50,7 +54,7 @@ export class Session {
 
     private sessionInit(ctx: RequestContext): void {
         ctx.sessionId = this.generateId();
-        this.application.cookies.set(ctx.response, conf.session.cookieName, ctx.sessionId, conf.session.durationSeconds);
+        this.application.cookies.set(ctx.response, this.application.config.session.cookieName, ctx.sessionId, this.application.config.session.durationSeconds);
 
         // create and store session entry
         const sessionEntry: SessionEntry = {
@@ -63,13 +67,13 @@ export class Session {
     }
 
     private generateId(): string {
-        return randomString(conf.session.keyLength);
+        return randomString(this.application.config.session.keyLength);
     }
 
     // remove expired session entries
     private garbageCollect(): void {
         const time = new Date().getTime();
-        const sessDurationMilliseconds = conf.session.garbageCollectAfterSeconds * 1000;
+        const sessDurationMilliseconds = this.application.config.session.garbageCollectAfterSeconds * 1000;
 
         for (const sessionId in this.sessions) {
             const sess = this.sessions[sessionId];
@@ -82,7 +86,7 @@ export class Session {
         // resume garbage collection after configured interval
         setTimeout(() => {
             this.garbageCollect();
-        }, conf.session.garbageCollectIntervalSeconds * 1000);
+        }, this.application.config.session.garbageCollectIntervalSeconds * 1000);
     }
 
     // reason for sessionId being allowed as undefined|null is that RequestContext.sessionId can be undefined

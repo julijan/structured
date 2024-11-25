@@ -1,7 +1,6 @@
 import { IncomingMessage, ServerResponse } from "node:http";
 import { PostedDataDecoded, RequestBodyFile, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from "../Types.js";
 import { mergeDeep, queryStringDecode, queryStringDecodedSetValue } from "../Util.js";
-import conf from "../../app/Config.js";
 import { RequestContextData } from "../../app/Types.js";
 import { Application } from "./Application.js";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -149,7 +148,7 @@ export class Request {
 
         let uri = request.url || '/';
 
-        if (conf.url.removeTrailingSlash && uri.length > 1 && uri.endsWith('/')) {
+        if (this.app.config.url.removeTrailingSlash && uri.length > 1 && uri.endsWith('/')) {
             uri = uri.substring(0, uri.length - 1);
         }
 
@@ -252,7 +251,7 @@ export class Request {
             // handler not found, check if a static asset is requested
             let staticAsset = false;
 
-            if (conf.url.isAsset(context.request.url || '')) {
+            if (this.app.config.url.isAsset(context.request.url || '')) {
                 // static asset
                 // unless accessing /assets/ts/* go directory up to get out of build
                 const basePath = context.request.url?.startsWith('/assets/ts/') ? './' : '../';
@@ -419,7 +418,7 @@ export class Request {
         if (basePath) {
             routesPath = basePath;
         } else {
-            routesPath = path.resolve((conf.runtime === 'Node.js' ? '../build/' : './') + conf.routes.path);
+            routesPath = path.resolve((this.app.config.runtime === 'Node.js' ? '../build/' : './') + this.app.config.routes.path);
         }
         const files = readdirSync(routesPath);
 
