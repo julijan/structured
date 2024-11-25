@@ -17,7 +17,8 @@
         "rootDir": ".",
         "paths": {
             "/assets/ts/*": ["./assets/ts/*"],
-            "/assets/client-js/*": ["./system/*"]
+            "/assets/client-js/*": ["./system/*"],
+            "structured/*" : ["./*"]
         }
     },
     "include": ["./system/**/*", "./app/**/*", "./assets/ts/**/*", "index.ts"]
