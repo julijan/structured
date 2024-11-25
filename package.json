@@ -1,4 +1,6 @@
 {
+  "name": "structured",
+  "description": "Production-tested Node.js framework for creating performant server-side rendered web apps and APIs, with a sane amount of client side abstraction.",
   "type": "module",
   "version": "0.7.0",
   "scripts": {
