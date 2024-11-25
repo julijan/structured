@@ -8,6 +8,9 @@
     "startDev": "cd build && nodemon --watch '../app/**/*' --watch '../build/**/*' -e js,html,css index.js",
     "start": "cd build && node index.js"
   },
+  "bin": {
+    "structured" : "./bin/structured"
+  },
   "devDependencies": {
     "@types/mime-types": "^2.1.4",
     "@types/node": "^22.9.3"

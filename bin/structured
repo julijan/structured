@@ -1,0 +1,12 @@
+#!/usr/bin/env node
+
+// Structured init script
+// meant to be executed after installing Structured framework to set up basic boilerplate
+const path = require("path");
+
+console.log('Setting up basic Structured boilerplate...');
+const cwd = path.resolve('.');
+const projectRoot = path.dirname(require.main.filename);
+
+console.log(cwd)
+console.log(projectRoot);
