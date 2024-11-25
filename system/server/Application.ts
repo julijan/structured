@@ -14,7 +14,7 @@ import { Cookies } from './Cookies.js';
 import { RequestContextData } from '../../app/Types.js';
 
 export class Application {
-    config: StructuredConfig;
+    readonly config: StructuredConfig;
 
     server: null|Server = null;
     listening: boolean = false;
@@ -130,6 +130,41 @@ export class Application {
         }).map((res) => {
             return res.value;
         });
+    }
+
+    // load envirnment variables
+    // if this.config.envPrefix is a string, load all ENV variables starting with [envPrefix]_
+    // the method is generic, so user can define the expected return type
+    public importEnv<T extends LooseObject>(smartPrimitives: boolean = true): T {
+        const values: LooseObject = {}
+        const usePrefix = typeof this.config.envPrefix === 'string';
+        const prefixLength = usePrefix ? this.config.envPrefix.length : 0;
+        for (const key in process.env) {
+            if (! usePrefix || key.startsWith(this.config.envPrefix)) {
+                // import
+                let value: any = process.env[key];
+                const keyWithoutPrefix = key.substring(prefixLength + 1);
+    
+                if (smartPrimitives) {
+                    if (value === 'undefined') {
+                        value = undefined;
+                    } else if (value === 'null') {
+                        value = null;
+                    } else if (value === 'true') {
+                        value = true;
+                    } else if (value === 'false') {
+                        value = false;
+                    } else if (/^-?\d+$/.test(value)) {
+                        value = parseInt(value);
+                    } else if (/^\d+\.\d+$/.test(value)) {
+                        value = parseFloat(value);
+                    }
+                }
+    
+                values[keyWithoutPrefix] = value;
+            }
+        }
+        return values as T;
     }
 
     // export given fields to all components
