@@ -18,6 +18,9 @@ export class Components {
     public loadComponents(relativeToPath?: string): void {
         if (relativeToPath === undefined) {
             relativeToPath = path.resolve((this.config.runtime === 'Node.js' ? '../' : './') + this.config.components.path);
+            if (! existsSync(relativeToPath)) {
+                throw new Error(`Components path not found, expected to find:\n${relativeToPath}`);
+            }
         }
         const components = readdirSync(relativeToPath);
         

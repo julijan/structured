@@ -420,6 +420,11 @@ export class Request {
         } else {
             routesPath = path.resolve((this.app.config.runtime === 'Node.js' ? '../build/' : './') + this.app.config.routes.path);
         }
+
+        if (! existsSync(routesPath)) {
+            throw new Error(`Routes path not found, expected to find:\n${routesPath}`);
+        }
+
         const files = readdirSync(routesPath);
 
         for (let i = 0; i < files.length; i++) {
