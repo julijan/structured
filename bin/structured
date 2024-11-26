@@ -78,7 +78,7 @@ function createTsconfig() {
                 "strictNullChecks": true,
                 "strictPropertyInitialization": true,
                 "strictBindCallApply": true,
-                "moduleResolution" : "Node",
+                "moduleResolution" : "bundler",
                 "outDir": "./build",
                 "module": "ES2020",
                 "target": "ES2021",
