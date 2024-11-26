@@ -1,5 +1,6 @@
 {
-  "name": "structured",
+  "name": "structured-fw",
+  "displayName": "Structured framework",
   "description": "Production-tested Node.js framework for creating performant server-side rendered web apps and APIs, with a sane amount of client side abstraction.",
   "author": {
     "name": "Julijan Andjelic",
