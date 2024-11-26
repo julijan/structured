@@ -1,4 +1,4 @@
-import { Application } from "@structured/Application.js";
+import { Application } from "structured-fw/Application";
 import { config } from './Config.js';
 
 new Application(config);

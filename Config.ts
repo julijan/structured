@@ -1,4 +1,4 @@
-import { StructuredConfig } from '@structured/Types.js';
+import { StructuredConfig } from 'structured-fw/Types';
 
 export const config: StructuredConfig = {
     // Application.importEnv will load all env variables starting with [envPrefix]_
