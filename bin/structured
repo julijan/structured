@@ -43,9 +43,9 @@ function createTsconfig() {
         "/assets/ts/*": ["./assets/ts/*"],
         "/assets/client-js/*": ["./system/*"],
         "@structured/*": [
-            "./node_modules/structured/build/system/server/*",
-            "./node_modules/structured/build/system/client/*",
-            "./node_modules/structured/build/system/*",
+            "./node_modules/structured-fw/build/system/server/*",
+            "./node_modules/structured-fw/build/system/client/*",
+            "./node_modules/structured-fw/build/system/*",
             "./system/server/*",
             "./system/client/*",
             "./system/*",
