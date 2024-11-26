@@ -206,7 +206,7 @@ export function queryStringDecodedSetValue(obj: PostedDataDecoded | string, valu
 // loop through given object, for each key, runs callbackEach providing the key and value to it
 // this is a basic for ... in loop, but makes it more TS friendly
 // object keys are always a string according to TS, which requires type casting
-export function objectEach<T>(obj: T, callbackEach: (key: keyof T, value: T[keyof T]) => void) {
+export function objectEach<T>(obj: T, callbackEach: (key: keyof T, value: T[keyof T]) => void): void {
     for (const key in obj) {
         callbackEach(key, obj[key]);
     }
@@ -252,7 +252,7 @@ export function toSnakeCase(str: string, joinWith: string = '_'): string {
     return parts.join(joinWith);
 }
 
-export function capitalize(str: string) {
+export function capitalize(str: string): string {
     return str.substring(0, 1).toUpperCase() + str.substring(1);
 }
 
@@ -356,7 +356,7 @@ export function attributeValueEscape(str: string): string {
     return str.replaceAll('"', '&quot;');
 }
 
-export function isObject(item: any) {
+export function isObject(item: any): boolean {
     if (typeof window === 'undefined') {
         return (item && typeof item === 'object' && !Array.isArray(item)) && ! Buffer.isBuffer(item);
     }
@@ -465,7 +465,7 @@ export function equalDeep(a: LooseObject, b: LooseObject): boolean {
     return true;
 }
 
-export function mergeDeep(target: any, ...sources: Array<any>) {
+export function mergeDeep(target: any, ...sources: Array<any>): LooseObject {
     if (!sources.length) return target;
     const source = sources.shift();
 

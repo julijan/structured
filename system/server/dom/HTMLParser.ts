@@ -227,7 +227,7 @@ export class HTMLParser {
         return charCode > 47 && charCode < 58;
     }
 
-    public dom() {
+    public dom(): DOMFragment {
         return this.fragment;
     }
 

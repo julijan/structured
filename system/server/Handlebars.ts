@@ -36,7 +36,7 @@ export class Handlebars {
     }
 
     // apply all registered helpers to given Handlebars instance
-    public applyTo(handlebarsInstance: typeof HandlebarsInstance) {
+    public applyTo(handlebarsInstance: typeof HandlebarsInstance): void {
         for (const name in this.helpers) {
             handlebarsInstance.registerHelper(name, this.helpers[name]);
         }

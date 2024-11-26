@@ -30,14 +30,14 @@ export class DOMNode {
         this.selfClosing = selfClosingTags.includes(tagName);
     }
 
-    appendChild(node: DOMNode | string) {
+    appendChild(node: DOMNode | string): void {
         if (typeof node !== 'string') {
             node.parentNode = this;
         }
         this.children.push(node);
     }
 
-    setAttribute(attributeName: string, attributeValue: string | true) {
+    setAttribute(attributeName: string, attributeValue: string | true): void {
         const attributeExisting = this.attributeMap[attributeName];
 
         if (! attributeExisting) {

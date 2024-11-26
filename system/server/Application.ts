@@ -21,10 +21,10 @@ export class Application {
 
     private readonly eventEmitter: EventEmitter = new EventEmitter();
 
-    readonly cookies: Cookies = new Cookies();
-    readonly session: Session = new Session(this);
-    readonly request: Request = new Request(this);
-    readonly components: Components = new Components(this);
+    readonly cookies: Cookies;
+    readonly session: Session;
+    readonly request: Request;
+    readonly components: Components;
 
     // handlebars helpers manager
     readonly handlebars: Handlebars = new Handlebars();
@@ -35,6 +35,11 @@ export class Application {
     constructor(config: StructuredConfig) {
         this.config = config;
 
+        this.cookies = new Cookies();
+        this.session = new Session(this);
+        this.request = new Request(this);
+        this.components = new Components(this);
+
         // enable sessions
         this.session.start();
 
@@ -43,7 +48,7 @@ export class Application {
         }
     }
 
-    public async init() {
+    public async init(): Promise<void> {
 
         // max listeners per event
         this.eventEmitter.setMaxListeners(10);
@@ -110,7 +115,7 @@ export class Application {
     }
 
     // add event listener
-    public on(evt: ApplicationEvents, callback: RequestCallback|((payload?: any) => void)) {
+    public on(evt: ApplicationEvents, callback: RequestCallback|((payload?: any) => void)): void {
         this.eventEmitter.on(evt, callback);
     }
 
@@ -168,7 +173,7 @@ export class Application {
     }
 
     // export given fields to all components
-    public exportContextFields(...fields: Array<keyof RequestContextData>) {
+    public exportContextFields(...fields: Array<keyof RequestContextData>): void {
         fields.forEach((field) => {
             if (! this.exportedRequestContextData.includes(field)) {
                 this.exportedRequestContextData.push(field);

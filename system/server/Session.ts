@@ -123,7 +123,7 @@ export class Session {
     }
 
     // remove all stored data for the given session
-    public clear(sessionId: string|undefined) {
+    public clear(sessionId: string|undefined): void {
         if (sessionId === undefined) {return;}
         if (this.sessions[sessionId]) {
             this.sessions[sessionId].data = {};

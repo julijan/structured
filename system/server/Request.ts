@@ -472,7 +472,7 @@ export class Request {
         return queryStringDecode(urlEncoded);
     }
 
-    public static multipartBodyFiles(bodyRaw: string, boundary: string) {
+    public static multipartBodyFiles(bodyRaw: string, boundary: string): Record<string, RequestBodyFile> {
         let files: Record<string, RequestBodyFile> = {}
         const pairsRaw = bodyRaw.split(boundary);
         pairsRaw.map((pair) => {

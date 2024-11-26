@@ -29,7 +29,7 @@ export class DataStoreView {
         return this.store.get(this.componentId(), key);
     }
 
-    public toggle(key: string) {
+    public toggle(key: string): void {
         this.set(key, !this.get(key));
     }
 
@@ -40,7 +40,7 @@ export class DataStoreView {
 
     // import this.component.data to store
     // existing keys are skipped unless force = true
-    public import(fields?: Array<string>, force: boolean = false, triggerListeners: boolean = true) {
+    public import(fields?: Array<string>, force: boolean = false, triggerListeners: boolean = true): void {
         const fieldsImported = Array.isArray(fields) ? fields : Object.keys(this.component.getData());
         fieldsImported.forEach((field) => {
             // skip existing key, unless force = true
@@ -51,13 +51,13 @@ export class DataStoreView {
     }
 
     // clear data for owner component
-    public clear() {
+    public clear(): void {
         this.store.clear(this.componentId());
     }
 
     // clear data and unbind onChange listeners for owner component
     // mark this instance as destroyed so it no longer accepts any input
-    public destroy() {
+    public destroy(): void {
         this.store.destroy(this.componentId());
         this.destroyed = true;
     }

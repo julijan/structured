@@ -724,7 +724,7 @@ export class ClientComponent extends EventEmitter {
     // remove the DOM node and delete from parent.children effectively removing self from the tree
     // the method could be sync, but since we want to allow for potentially async user destructors
     // it is async
-    public async remove() {
+    public async remove(): Promise<void> {
         if (!this.isRoot) {
             // remove children recursively
             const children = Array.from(this.children);
@@ -876,13 +876,13 @@ export class ClientComponent extends EventEmitter {
 
     // shows a previously hidden DOM node (domNode.style.display = '')
     // if the DOM node has data-transition attributes, it will run the transition while showing the node
-    public show(domNode: HTMLElement, enableTransition: boolean = true) {
+    public show(domNode: HTMLElement, enableTransition: boolean = true): void {
         if (!enableTransition) {
             domNode.style.display = '';
             return;
         }
 
-        if (domNode.style.display !== 'none') { return false; }
+        if (domNode.style.display !== 'none') { return; }
 
         // const transitions = this.transitions.show;
         const transitions = this.transitionAttributes(domNode).show;
@@ -942,13 +942,13 @@ export class ClientComponent extends EventEmitter {
 
     // hides the given DOM node (domNode.style.display = 'none')
     // if the DOM node has data-transition attributes, it will run the transition before hiding the node
-    public hide(domNode: HTMLElement, enableTransition: boolean = true) {
+    public hide(domNode: HTMLElement, enableTransition: boolean = true): void {
         if (!enableTransition) {
             domNode.style.display = 'none';
             return;
         }
 
-        if (domNode.style.display === 'none') { return false; }
+        if (domNode.style.display === 'none') { return; }
 
         // const transitions = this.transitions.hide;
         const transitions = this.transitionAttributes(domNode).hide;
@@ -1096,7 +1096,7 @@ export class ClientComponent extends EventEmitter {
 
     // add an event listener to given DOM node
     // stores it to ClientComponent.bound so it can be unbound when needed using unbindAll
-    public bind(element: HTMLElement, event: string, callback: (e: Event) => void) {
+    public bind(element: HTMLElement, event: string, callback: (e: Event) => void): void {
         if (element instanceof HTMLElement) {
             this.bound.push({
                 element,

@@ -55,7 +55,7 @@ export class Document extends Component {
         return this.dom.innerHTML + '\n' + this.appendHTML;
     }
 
-    public initInitializers() {
+    public initInitializers(): Record<string, string> {
         const initializers: {
             [key: string] : string
         } = {};
@@ -98,7 +98,7 @@ export class Document extends Component {
 
     // generate an unique component id and store it to componentIds
     // so that each component within the document has an unique id
-    allocateId(component: Component) {
+    allocateId(component: Component): string {
         if (! this.componentIds) {
             // if auto initialized it may have not yet initialized it as an empty array
             this.componentIds = [];
@@ -149,7 +149,7 @@ export class Document extends Component {
     }
 
     // load given component into this document
-    public async loadComponent(componentName: string, data?: LooseObject) {
+    public async loadComponent(componentName: string, data?: LooseObject): Promise<void> {
         const componentEntry = this.document.application.components.getByName(componentName);
         if (componentEntry) {
             const dataString = data === undefined ? '' : Object.keys(data).reduce((prev, key) => {
