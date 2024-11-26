@@ -5,7 +5,7 @@
         "strictPropertyInitialization": true,
         "strictBindCallApply": true,
         "noUnusedLocals": true,
-        "moduleResolution" : "Node",
+        "moduleResolution" : "bundler",
         "outDir": "./build",
         "module": "ES2020",
         "target": "ES2021",
@@ -21,13 +21,9 @@
         "paths": {
             "/assets/ts/*": ["./assets/ts/*"],
             "/assets/client-js/*": ["./system/*"],
-            "@structured/*": [
-                "./node_modules/structured/build/system/server/*",
-                "./node_modules/structured/build/system/client/*",
-                "./node_modules/structured/build/system/*",
-                "./system/server/*",
-                "./system/client/*",
-                "./system/*",
+            "structured-fw/*": [
+                "./node_modules/structured/build/*",
+                "./*"
             ]
         }
     },
