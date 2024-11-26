@@ -11,6 +11,9 @@
         "target": "ES2021",
         "alwaysStrict": true,
         "allowSyntheticDefaultImports": true, // albe to do import { default as varname } from 'module'
+        "declaration": true,
+        "isolatedDeclarations": true,
+        "noImplicitReturns": true,
         "preserveSymlinks": true,
         "removeComments": true,
         "baseUrl": ".",
@@ -18,7 +21,14 @@
         "paths": {
             "/assets/ts/*": ["./assets/ts/*"],
             "/assets/client-js/*": ["./system/*"],
-            "structured/*" : ["./*"]
+            "@structured/*": [
+                "./node_modules/structured/build/system/server/*",
+                "./node_modules/structured/build/system/client/*",
+                "./node_modules/structured/build/system/*",
+                "./system/server/*",
+                "./system/client/*",
+                "./system/*",
+            ]
         }
     },
     "include": ["./system/**/*", "./app/**/*", "./assets/ts/**/*", "index.ts"]
