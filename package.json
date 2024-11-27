@@ -2,13 +2,19 @@
   "name": "structured-fw",
   "displayName": "Structured framework",
   "description": "Production-tested Node.js framework for creating performant server-side rendered web apps and APIs, with a sane amount of client side abstraction.",
+  "keywords": ["typescript", "framework", "ssr", "component"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/julijan/structured"
+  },
   "author": {
     "name": "Julijan Andjelic",
     "email": "julijan.andjelic@gmail.com"
   },
+  "license": "MIT",
   "type": "module",
   "main": "build/index",
-  "version": "0.7.7",
+  "version": "0.7.8",
   "scripts": {
     "develop": "tsc --watch",
     "startDev": "cd build && nodemon --watch '../app/**/*' --watch '../build/**/*' -e js,html,css index.js",
