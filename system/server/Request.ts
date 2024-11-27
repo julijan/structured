@@ -429,7 +429,7 @@ export class Request {
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            if (! (file.endsWith('.js') || file.endsWith('.ts'))) {
+            if (! (file.endsWith('.js') || file.endsWith('.ts')) || file.endsWith('.d.ts')) {
                 continue;
             }
             const filePath = path.resolve(routesPath + '/' + file);
