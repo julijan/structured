@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createServer, Server } from 'node:http';
 import * as path from 'node:path';
 import * as mime from 'mime-types';
-import { ApplicationEvents, LooseObject, RequestBodyArguments, RequestCallback, RequestContext, StructuredConfig } from '../Types';
+import { ApplicationEvents, LooseObject, RequestBodyArguments, RequestContext, StructuredConfig } from '../Types';
 import { Document } from './Document.js';
 import { Components } from './Components.js';
 import { Session } from './Session.js';
@@ -115,7 +115,15 @@ export class Application {
     }
 
     // add event listener
-    public on(evt: ApplicationEvents, callback: RequestCallback|((payload?: any) => void)): void {
+    public on<E extends ApplicationEvents>(
+        evt: E,
+        callback: (
+            payload:
+                E extends 'beforeRequestHandler' | 'afterRequestHandler' | 'beforeAssetAccess' | 'afterAssetAccess' | 'pageNotFound' ? RequestContext :
+                E extends 'documentCreated' ? Document :
+                undefined
+        ) => void
+    ): void {
         this.eventEmitter.on(evt, callback);
     }
 
