@@ -100,7 +100,7 @@ export class Application {
     }
 
     // start the http server
-    public start(): Promise<void> {
+    private start(): Promise<void> {
         return new Promise((resolve, reject) => {
             this.server = createServer((req, res) => {
                 this.request.handle(req, res);
