@@ -18,7 +18,7 @@ if (process.argv.length < 3) {
 
 const command = process.argv[2];
 
-function copyIfNotExists(src, dst) {
+function copyIfNotExists(src: string, dst?: string) {
     if (typeof dst !== 'string') {
         dst = src;
     }
@@ -28,7 +28,7 @@ function copyIfNotExists(src, dst) {
     }
 }
 
-function createDir(path) {
+function createDir(path: string) {
     if (! existsSync(`${projectRoot}/${path}`)) {
         console.log(`Creating directory ${projectRoot}/${path}`);
         mkdirSync(`${projectRoot}/${path}`);
@@ -98,14 +98,14 @@ function createTsconfig() {
 
 if (command === 'init') {
     console.log('Setting up a basic Structured boilerplate...');
-    copyIfNotExists('index.ts');
-    copyIfNotExists('Config.ts');
     createDir('app');
     createDir('app/routes');
     createDir('app/views');
     createDir('app/models');
     createDir('app/lib');
-
+    copyIfNotExists('index.ts');
+    copyIfNotExists('Config.ts');
+    copyIfNotExists('app/Types.ts');
     createTsconfig();
 
     console.log(`Structured initialized, you can run "tsc" to build`);
