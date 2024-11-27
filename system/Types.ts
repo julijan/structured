@@ -1,7 +1,6 @@
 import { IncomingMessage, ServerResponse } from "node:http";
 import { Application } from "./server/Application.js";
 import { symbolArrays } from "./Symbols.js";
-import { RequestContextData } from "../app/Types.js";
 import { Net } from './client/Net.js';
 import { ClientComponent } from './client/ClientComponent.js';
 import { Component } from "./server/Component.js";

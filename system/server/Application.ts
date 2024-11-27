@@ -11,7 +11,6 @@ import { toSnakeCase } from '../Util.js';
 import { Request } from './Request.js';
 import { Handlebars } from './Handlebars.js';
 import { Cookies } from './Cookies.js';
-import { RequestContextData } from '../../app/Types.js';
 
 export class Application {
     readonly config: StructuredConfig;
