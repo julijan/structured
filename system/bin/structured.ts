@@ -5,7 +5,8 @@
 import { resolve } from 'path';
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 
-const cwd = resolve(import.meta.dirname, '..');
+// we are in /build/system/bin when this runs, go up 3 levels so cwd points to project root
+const cwd = resolve(import.meta.dirname, '../../../');
 const projectRoot = resolve('.');
 
 if (process.argv.length < 3) {
