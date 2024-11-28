@@ -1,20 +1,10 @@
-import { ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject, StoreChangeCallback, StructuredClientConfig } from '../Types.js';
+import { ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject, StoreChangeCallback } from '../Types.js';
 import { attributeValueFromString, attributeValueToString, mergeDeep, objectEach, queryStringDecodedSetValue, toCamelCase } from '../Util.js';
 import { DataStoreView } from './DataStoreView.js';
 import { DataStore } from './DataStore.js';
 import { Net } from './Net.js';
 import { NetRequest } from './NetRequest.js';
 import { EventEmitter } from './EventEmitter.js';
-
-// window.initializers will always be present
-// each Document has a list of initializers used in components within it
-// and they will be output as initializers = { componentName : initializer }
-declare global {
-    interface Window {
-        initializers: Record<string, InitializerFunction | string>;
-        structuredClientConfig: StructuredClientConfig;
-    }
-}
 
 export class ClientComponent extends EventEmitter {
     readonly name: string;
