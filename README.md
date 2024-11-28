@@ -8,6 +8,9 @@ It works with Node.js and Deno runtimes. Other runtimes are not tested.
 - [Why Structured](#why-structured)
 - [Audience](#audience)
 - [Getting started](#getting-started)
+- [Key concepts](#key-concepts)
+- [Good to know](#good-to-know)
+
 
 ### Key concepts:
 * [Application](#application)
@@ -604,6 +607,38 @@ Methods:
 - `ref<T>(refName: string): T` - get a HTMLElement or ClientComponent that has attribute `ref="[refName]"`
 - `arrayRef<T>(refName: string): Array<T>` - get an array of HTMLElement or ClientComponent that have attribute `array:ref="[refName]"`
 - `add(appendTo: HTMLElement, componentName: string, data?: LooseObject)` - add `componentName` component to `appendTo` element, optionally passing `data` to the component when it's being rendered
+
+## Good to know
+- [Uing CSS frameworks](#css-frameworks)
+- [Using JS runtimes other than Node.js](#runtimes)
+
+### CSS frameworks
+We rarely write all CSS from scratch, usually we use a CSS framework to speed us up. Structured allows you to work with any CSS frameworks such as Tailwind, PostCSS or Bootstrap.
+
+Your Tailwind configuration may look something like:
+```
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./app/views/**/*.html", "./app/views/**/*.hbs"],
+  ...
+}
+```
+
+Above we just defined where all our HTML resides, which is within /app/views. That is all there is to it. From there, you can generate the CSS, for example:\
+`npx tailwindcss -i ./assets/css/src/style.css -o ./assets/css/dist.css`
+
+**Including the output CSS**\
+To include the output CSS in all pages, you can add the following to `index.ts`:
+```
+const app = new Application(config);
+
+app.on('documentCreated', (doc) => {
+    doc.head.addCSS('/assets/css/dist.css');
+});
+```
+
+### Runtimes
+Structured is tested with Node.js and Deno. Other runtimes would likely work as well. With Node.js it makes a lot of sense to install the npm package, but with Deno it makes more sense to clone the github repo and use it directly, just make sure to set `StructuredConfig`.`runtime` = `Deno` if you want to use it with Deno. With Deno you don't need to use tsc, you can directly start you application using `deno run index.ts`.
 
 ## Why Structured
 Framework was developed by someone who has been a web developer for almost 20 years (me), and did not like the path web development has taken.
