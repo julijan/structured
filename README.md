@@ -324,7 +324,7 @@ In some edge cases you may need more control of when a route is executed, in whi
 >}>('POST', '/users/create', asyc (ctx) => {
 >    ctx.body.email // string
 >    ctx.body.age // number
->    const doc = new Document(ctx, 'User', app);
+>    const doc = new Document(app, 'User', ctx);
 >    return doc; // error if we return anything but Document
 > });
 > ```
