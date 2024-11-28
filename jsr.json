@@ -20,6 +20,7 @@
         "package.lock.json",
         "tailwind.config.cjs",
         ".vscode",
+        "app/Types.ts",
         "app/views/*",
         "app/routes/*",
         "app/models/*"
