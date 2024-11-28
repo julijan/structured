@@ -24,8 +24,7 @@ export type StructuredConfig = {
         readonly cookieName: string,
         readonly keyLength: number,
         readonly durationSeconds: number,
-        readonly garbageCollectIntervalSeconds: number,
-        readonly garbageCollectAfterSeconds: number
+        readonly garbageCollectIntervalSeconds: number
     },
     http: {
         host?: string,

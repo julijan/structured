@@ -34,8 +34,7 @@ export const config: StructuredConfig = {
         cookieName: 'session',
         keyLength: 24,
         durationSeconds: 60 * 60,
-        garbageCollectIntervalSeconds: 60,
-        garbageCollectAfterSeconds: 500
+        garbageCollectIntervalSeconds: 60
     },
     http: {
         port: 9191,
