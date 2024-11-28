@@ -232,7 +232,7 @@ Route file name has no effect on how the route (request handler) behaves, the on
 ### RequestContext
 All request handlers receive a `RequestContext` as the first argument.
 ```
-type RequestContext = {
+type RequestContext<Body extends LooseObject | undefined = LooseObject> = {
     request: IncomingMessage,
     response: ServerResponse,
     args: URIArguments,
@@ -241,7 +241,7 @@ type RequestContext = {
     cookies: Record<string, string>,
 
     // POSTed data, parsed to object
-    body?: PostedDataDecoded,
+    body?: LooseObject,
 
     bodyRaw?: Buffer,
 
@@ -308,6 +308,21 @@ POST '/hello/(name)'
 
 **RegExp as URLPatter**\
 In some edge cases you may need more control of when a route is executed, in which case you can use a regular expression as URLPattern. If you use a RegExp, ctx.args will be `RegExpExecArray` so you can still capture data from the URL. This is very rarely needed because Structured router is versatile and covers almost all use cases.
+
+> [!TIP]
+> Since version 0.8.1 `Request`.`on` is a generic, accepting 0-2 generic arguments. First argument defines the request handler return type (response type) and defaults to any, second argument allows you to specify the expected (parsed) request body type, defaults to LooseObject.
+> ```
+> app.request.on<Document, {
+>   email: string,
+>   password: string,
+>   age: number
+>}>('POST', '/users/create', asyc (ctx) => {
+>    ctx.body.email // string
+>    ctx.body.age // number
+>    const doc = new Document(ctx, 'User', app);
+>    return doc; // error if we return anything but Document
+> });
+> ```
 
 ## Document
 Document does not differ much from a component, in fact, it extends Component. It has a more user-firendly API than Component. Each Document represents a web page. It has a head and body. Structured intentionally does not differentiate between a page and a Component - page is just a component that loads many other components in a desired layout. DocumentHead (each document has one at Document.head) allows adding content to `<head>` section of the output HTML page.
