@@ -1,0 +1,27 @@
+{
+    "name": "@structured/structured-fw",
+    "version": "0.8.2",
+    "license": "MIT",
+    "exports" : {
+        "./Types": "./system/Types.ts",
+        "./Symbols": "./system/Symbols.ts",
+        "./Util": "./system/Util.ts",
+        "./Application": "./system/server/Application.ts",
+        "./Document": "./system/server/Document.ts",
+        "./FormValidation": "./system/server/FormValidation.ts",
+        "./ClientComponent": "./system/client/ClientComponent.ts"
+    },
+    "exclude": [
+        "build",
+        "assets",
+        "node_modules",
+        "tsconfig.json",
+        "package.json",
+        "package.lock.json",
+        "tailwind.config.cjs",
+        ".vscode",
+        "app/views/*",
+        "app/routes/*",
+        "app/models/*"
+    ]
+}
