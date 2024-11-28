@@ -15,7 +15,7 @@ export class Request {
         this.app = app;
     }
 
-    pageNotFoundCallback: RequestCallback =  async ({ response }) => {
+    pageNotFoundCallback: RequestCallback<void> =  async ({ response }) => {
         response.statusCode = 404;
         response.write('Page not found');
         response.end();
@@ -30,10 +30,10 @@ export class Request {
     // callback.this will be the scope if scope is provided, otherwise scope is the Application instance
     // if pattern is given as array, one request handler will be created for each element of the array
     // if isStaticAsset = true, (before/after)RequestHandler event not emitted, body and GET args not parsed
-    public on(
+    public on<R extends any>(
         methods: RequestMethod|Array<RequestMethod>,
         pattern: string|RegExp|Array<string|RegExp>,
-        callback: RequestCallback,
+        callback: RequestCallback<R>,
         scope?: any,
         isStaticAsset: boolean = false
     ): void {

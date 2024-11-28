@@ -41,12 +41,12 @@ export type StructuredClientConfig = {
 
 export type RequestMethod = 'GET'|'POST'|'PUT'|'PATCH'|'DELETE';
 
-export type RequestCallback = (ctx: RequestContext) => Promise<any>
+export type RequestCallback<R extends any> = (ctx: RequestContext) => Promise<R>
 
 export type RequestHandler = {
     match: Array<URISegmentPattern>|RegExp,
     methods: Array<RequestMethod>,
-    callback: RequestCallback,
+    callback: RequestCallback<any>,
     scope: any,
         
     // if true, no (before/after)RequestHandler event is emitted, body and GET args not parsed
