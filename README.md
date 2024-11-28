@@ -98,7 +98,7 @@ new Application(config);
 
 ### Properties
 - `cookies` - Instance of Cookies, allows you to set a cookie
-- `session` - Instance of Session, utilities to manage sessions and data
+- [`session`](#session) - Instance of Session, utilities to manage sessions and data
 - `request` - Instance of Request, you will use this to add routes, but usually not directly by accessing Application.request, more on that in [routes](#route) section
 - `handlebars` - Instance of Handlebars (wrapper around Handlebars templating engine)
 - `components` - Instance of Components, this is the components registry, you should never need to use this directly
@@ -166,6 +166,39 @@ app.handlebars.loadHelpers(path.resolve('./app/Helpers.js'));
 app.exportContextFields('user');
 
 ```
+
+### Session
+Session allows you to store temporary data for the users of your web application. You don't need to create an instance of Session, you will always use the instace `Application.session`.
+
+Session data is tied to a visitor via sessionId, which is always available on `RequestContext`, which means you can interact with session data from routes and server side code of your components.
+
+**Configuration**\
+`StructuredConfig`.`session`:
+```
+{
+    // cookie name for the session cookie
+    readonly cookieName: string,
+
+    // cookie stores the session key (a random string), keyLength determines it's length (longer key = more secure)
+    readonly keyLength: number,
+
+    // sessions expire after durationSeconds of no activity
+    readonly durationSeconds: number,
+
+    // session garbage collector runs every garbageCollectIntervalSeconds
+    // removing expired sessions from the memory
+    readonly garbageCollectIntervalSeconds: number
+}
+```
+
+**Methods**
+- `setValue(sessionId: string, key: string, value: any): void` - set a session value for given sessionId
+- `getValue<T>(sessionId: string, key: string): T | null` - return a value for given `key` from session, if `key` is not set, returns `null`. It is a generic method so you can specify the expected return type
+- `removeValue(sessionId: string, key: string): void` - remove value for given `key`
+- `getClear<T>(sessionId: string, key: string): T | null` - return and clear value for given `key`
+- `clear(sessionId: string): void` - clear all data for given `sessionId`
+- `extract(sessionId: string, keys: Array<string|{ [keyInSession: string] : string }>): LooseObject` - extract given keys from session and return them as an object. Key in `keys` can be a string in which case the key will remain the same in returned object or it can be an object { keyInSession : keyInReturnedData } in which case key in returned data will be keyInReturnedData
+
 
 ## Route
 Routes are the first thing that gets executed when your application receives a request. They are a mean for the developer to dictate what code gets executed depending on the URL. In addition to that, they allow capturing parts of the URL for use within the route.
