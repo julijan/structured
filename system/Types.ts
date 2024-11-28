@@ -41,19 +41,19 @@ export type StructuredClientConfig = {
 
 export type RequestMethod = 'GET'|'POST'|'PUT'|'PATCH'|'DELETE';
 
-export type RequestCallback<R extends any> = (ctx: RequestContext) => Promise<R>
+export type RequestCallback<R extends any, Body extends LooseObject | undefined> = (ctx: RequestContext<Body>) => Promise<R>
 
 export type RequestHandler = {
     match: Array<URISegmentPattern>|RegExp,
     methods: Array<RequestMethod>,
-    callback: RequestCallback<any>,
+    callback: RequestCallback<any, LooseObject | undefined>,
     scope: any,
         
     // if true, no (before/after)RequestHandler event is emitted, body and GET args not parsed
     staticAsset: boolean
 }
 
-export type RequestContext = {
+export type RequestContext<Body extends LooseObject | undefined = LooseObject> = {
     request: IncomingMessage,
     response: ServerResponse,
     args: URIArguments,
@@ -62,7 +62,7 @@ export type RequestContext = {
     cookies: Record<string, string>,
 
     // POSTed data, parsed to object
-    body?: PostedDataDecoded,
+    body: Body,
 
     bodyRaw?: Buffer,
 

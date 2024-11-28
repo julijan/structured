@@ -1,5 +1,5 @@
 import { IncomingMessage, ServerResponse } from "node:http";
-import { PostedDataDecoded, RequestBodyFile, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from "../Types.js";
+import { LooseObject, PostedDataDecoded, RequestBodyFile, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from "../Types.js";
 import { mergeDeep, queryStringDecode, queryStringDecodedSetValue } from "../Util.js";
 import { Application } from "./Application.js";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -15,7 +15,7 @@ export class Request {
         this.app = app;
     }
 
-    pageNotFoundCallback: RequestCallback<void> =  async ({ response }) => {
+    pageNotFoundCallback: RequestCallback<void, PostedDataDecoded | undefined> =  async ({ response }) => {
         response.statusCode = 404;
         response.write('Page not found');
         response.end();
@@ -30,10 +30,10 @@ export class Request {
     // callback.this will be the scope if scope is provided, otherwise scope is the Application instance
     // if pattern is given as array, one request handler will be created for each element of the array
     // if isStaticAsset = true, (before/after)RequestHandler event not emitted, body and GET args not parsed
-    public on<R extends any>(
+    public on<R extends any, Body extends LooseObject | undefined = LooseObject>(
         methods: RequestMethod|Array<RequestMethod>,
         pattern: string|RegExp|Array<string|RegExp>,
-        callback: RequestCallback<R>,
+        callback: RequestCallback<R, Body>,
         scope?: any,
         isStaticAsset: boolean = false
     ): void {
@@ -163,7 +163,7 @@ export class Request {
         // get the best matching request handler
         const handler = this.getHandler(uri, requestMethod);
         
-        const context: RequestContext = {
+        const context: RequestContext<LooseObject | undefined> = {
             request,
             response,
             handler,
@@ -173,6 +173,7 @@ export class Request {
             // potentially falsely declared as RequestContextData
             // user will fill this out, usually on beforeRequestHandler
             data: {} as RequestContextData,
+            body: undefined,
             getArgs,
             cookies: this.app.cookies.parse(request),
             isAjax : request.headers['x-requested-with'] == 'xmlhttprequest',
@@ -347,7 +348,7 @@ export class Request {
     // parse raw request body
     // if there is a parser for received Content-Type
     // then ctx.body is populated with data: URIArgs
-    private async parseBody(ctx: Omit<RequestContext, 'data'>): Promise<void> {
+    private async parseBody(ctx: RequestContext<LooseObject | undefined>): Promise<void> {
         if (ctx.request.headers['content-type']) {
 
             ctx.bodyRaw = await this.dataRaw(ctx.request);
