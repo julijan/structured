@@ -13,7 +13,7 @@ It works with Node.js and Deno runtimes. Other runtimes are not tested.
 * [Application](#application)
 * [Route](#route)
 * [Document](#document)
-* [ClientComponent](#component) (component)
+* [Component](#component)
 
 ## Getting started
 
