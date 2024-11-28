@@ -177,7 +177,7 @@ export interface ComponentScaffold  {
 
 export type LooseObject = Record<string, any>
 
-export type ApplicationEvents = 'serverStarted'|'beforeRequestHandler'|'afterRequestHandler'|'beforeRoutes'|'afterRoutes'|'beforeComponentLoad'|'afterComponentLoad'|'documentCreated'|'beforeAssetAccess'|'afterAssetAccess'|'pageNotFound';
+export type ApplicationEvents = 'serverStarted'|'beforeRequestHandler'|'afterRequestHandler'|'beforeRoutes'|'afterRoutes'|'beforeComponentsLoad'|'afterComponentsLoaded'|'documentCreated'|'beforeAssetAccess'|'afterAssetAccess'|'pageNotFound';
 
 export type SessionEntry = {
     sessionId : string,
