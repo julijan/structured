@@ -370,7 +370,7 @@ You can now run the app and if you open /hello/world in the browser you will see
 `Hello, World!` - which came from your HelloWorld component.
 
 That was the simplest possible example, let's make it more interesting.
-Create a new file `/app/views/HelloWorld/HelloWorld.ts`:
+Create a new file `/app/views/HelloWorld/HelloWorld.ts` (server side component code):
 ```
 import { ComponentScaffold } from 'system/Types.js';
 export default class HelloWorld implements ComponentScaffold {
@@ -482,6 +482,15 @@ What we did is, we accepted the number provided by parent component, and returne
 which is now avaialble in `AnotherComponent` HTML, we assigned the received number to `parentSuggests`, while `betterNumber` is `parentSuggests + 5`, we now have these 2 available and ready to use in our HTML template.
 
 What about client side? **By default, data returned by server side code is not available in client side code** for obvious reasons, let's assume your server side code returns sensitive data such as user's password, you would not like that exposed on the client side, hence exporting data needs to be explicitly requested in the server side code. There are two ways to achieve this, setting `exportData = true` (exports all data), or `exportFields: Array<string> = [...keysToExport]` (export only given fields).
+
+> [!NOTE]
+> Whenever a component with server-side code is rendered, `getData` is automatically called and anything it returns is available in HTML. You can export all returned data to client-side code by setting `exportData = true` or you can export some of the fields by setting `exportFields = ["field1", "field2", ...]` as a direct property of the class. To access the exported data from client-side use `ClientComponent`.`getData(key: string)` which will be `this.getData(key:string)` within client side code.
+
+> [!IMPORTANT]
+> Server side `getData` will receive the following arguments:
+> - `data: LooseObject` any data passed in (either by attributes, ClientComponent.add or ClientComponent.redraw)
+> - `ctx: RequestContext` - current `RequestContext`, you will often use this to access for example ctx.data (`RequestContextData`) or ctx.sessionId to interact with session
+> - `app: Application` - your Application instance. You can use it to, for example, access the session in combination with ctx.sessionId
 
 Let's create a client side code for `AnotherComponent` and export the `betterNumber` to it, create `/app/views/AnotherComponent/AnotherComponent.client.ts`:
 ```
