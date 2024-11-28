@@ -20,6 +20,8 @@ It works with Node.js and Deno runtimes. Other runtimes are not tested.
 
 ## Getting started
 
+_Following getting started instructions are relevant for Node.js runtime, if you are using Deno skip to [runtimes](#runtimes) section._
+
 ### Initialize a Node.js project
 ```
 cd /path/to/project
@@ -611,6 +613,7 @@ Methods:
 ## Good to know
 - [Uing CSS frameworks](#css-frameworks)
 - [Using JS runtimes other than Node.js](#runtimes)
+- [Why not JSR](#jsr)
 
 ### CSS frameworks
 We rarely write all CSS from scratch, usually we use a CSS framework to speed us up. Structured allows you to work with any CSS frameworks such as Tailwind, PostCSS or Bootstrap.
@@ -638,7 +641,85 @@ app.on('documentCreated', (doc) => {
 ```
 
 ### Runtimes
-Structured is tested with Node.js and Deno. Other runtimes would likely work as well. With Node.js it makes a lot of sense to install the npm package, but with Deno it makes more sense to clone the github repo and use it directly, just make sure to set `StructuredConfig`.`runtime` = `Deno` if you want to use it with Deno. With Deno you don't need to use tsc, you can directly start you application using `deno run index.ts`.
+Structured is tested with Node.js and Deno. Other runtimes would likely work as well.
+
+To use Structured with Deno, you can:
+```
+cd /path/to/project
+deno init
+deno add npm:structured-fw
+```
+
+With Deno, we can't use the cli to create the boilerplate, so you will need to create it yourself.
+```
+mkdir app
+mkdir app/views
+mkdir app/routes
+```
+
+Create `Config.ts`:
+```
+import { StructuredConfig } from "structured-fw/Types";
+
+export const config: StructuredConfig = {
+    // Application.importEnv will load all env variables starting with [envPrefix]_
+    envPrefix: 'STRUCTURED',
+
+    // whether to call Application.init when an instance of Application is created
+    autoInit: true,
+
+    url: {
+        removeTrailingSlash: true,
+
+        // if you want to enable individual component rendering set this to URI (string)
+        // to disable component rendering set it to false
+        // setting this to false disallows the use of ClientComponent.redraw and ClientComponent.add
+        componentRender: '/componentRender',
+
+        // function that receives the requested URL and returns boolean, if true, treat as static asset
+        // if there is a registered request handler that matches this same URL, it takes precedence over this
+        isAsset: function(uri: string) {
+            return uri.indexOf('/assets/') === 0;
+        }
+    },
+    routes: {
+        path: '/app/routes'
+    },
+    components : {
+        // relative to index.ts
+        path: '/app/views',
+
+        componentNameAttribute: 'structured-component'
+    },
+    session: {
+        cookieName: 'session',
+        keyLength: 24,
+        durationSeconds: 60 * 60,
+        garbageCollectIntervalSeconds: 60
+    },
+    http: {
+        port: 9191,
+        host: '0.0.0.0',
+        // used by Document.push, can be preload or preconnect
+        linkHeaderRel : 'preload'
+    },
+    runtime: 'Deno'
+}
+```
+
+Import `Config.ts` in `main.ts` and create the Application instance:
+```
+import { Application } from 'structured-fw/Application';
+import { config } from './Config.ts';
+
+new Application(config);
+```
+
+Run application using `deno main.ts`
+
+### JSR
+It would make a lot of sense to have Structured hosted on JSR (JavaScript Registry) given Structured is a TypeScript framework, and JSR is a TypeScript-first registry, however, the issue is that Deno imposes [limitations with dynamic imports](https://docs.deno.com/deploy/api/dynamic-import/) with JSR-imported dependencies, which are required for the framework (to dynamically import your routes and components).\
+This does not stop the framework from working with Deno, but for the time being, we have to stick with good old npm.
 
 ## Why Structured
 Framework was developed by someone who has been a web developer for almost 20 years (me), and did not like the path web development has taken.
