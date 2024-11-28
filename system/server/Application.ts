@@ -59,14 +59,14 @@ export class Application {
             console.error(e.message);
         }
 
-        await this.emit('beforeComponentLoad');
+        await this.emit('beforeComponentsLoad');
         this.components.loadComponents();
-        await this.emit('afterComponentLoad');
+        await this.emit('afterComponentsLoaded', this.components);
 
 
         await this.emit('beforeRoutes');
         await this.request.loadHandlers();
-        await this.emit('afterRoutes');
+        await this.emit('afterRoutes', this.request);
 
         if (this.config.url.componentRender !== false) {
             // special request handler, executed when ClientComponent.redraw is called
@@ -106,7 +106,7 @@ export class Application {
             });
             this.server.listen(this.config.http.port, this.config.http.host || '127.0.0.1', async () => {
                 const address = (this.config.http.host !== undefined ? this.config.http.host : '') + ':' + this.config.http.port;
-                await this.emit('serverStarted');
+                await this.emit('serverStarted', this.server);
                 console.log(`Server started on ${address}`);
                 resolve();
             });
@@ -120,6 +120,8 @@ export class Application {
             payload:
                 E extends 'beforeRequestHandler' | 'afterRequestHandler' | 'beforeAssetAccess' | 'afterAssetAccess' | 'pageNotFound' ? RequestContext :
                 E extends 'documentCreated' ? Document :
+                E extends 'afterComponentsLoaded' ? Components :
+                E extends 'serverStarted' ? Server :
                 undefined
         ) => void
     ): void {

@@ -111,12 +111,12 @@ new Application(config);
 ### Methods
 - `init(): Promise<void>` - initializes application, you only need to run this if you set `autoInit = false` in config, otherwise this will be ran when you create the Application instance
 - `on(evt: ApplicationEvents, callback: RequestCallback|((payload?: any) => void))` - allows you to add event listeners for specific `ApplicationEvenets`:
-    - `serverStarted` - executed once the built-in http server is started and running. Callback receives no arguments
+    - `serverStarted` - executed once the built-in http server is started and running. Callback receives Server (exported from node:http) instance as the first argument
     - `beforeRequestHandler` - runs before any request handler (route) is executed. Callback receives `RequestContext` as the first argument. Useful for example to set `RequestContext.data: RequestContextData` (user defined data, to make it available to routes and components)
     - `afterRequestHandler` - runs after any request handler (route) is executed. Callback receives `RequestContext` as the first argument
     - `afterRoutes` - runs after all routes are loaded from `StructuredConfig.routes.path`. Callback receives no arguments
-    - `beforeComponentLoad` - runs before components are loaded from `StructuredConfig.components.path`. Callback receives no arguments
-    - `afterComponentLoad` - runs after all components are loaded from `StructuredConfig.components.path`. Callback receives no arguments
+    - `beforeComponentsLoad` - runs before components are loaded from `StructuredConfig.components.path`. Callback receives no arguments
+    - `afterComponentsLoaded` - runs after all components are loaded from `StructuredConfig.components.path`. Callback receives instance of Components as the first argument
     - `documentCreated` - runs whenever an instance of a [Document](#document) is created. Callback receives the Document instance as the first argument. You will often use this, for example if you want to include a CSS file to all pages `Document.head.addCSS(...)`
     - `beforeAssetAccess` - runs when assets are being accessed, before response is sent. Callback receives `RequestContext` as the first argument
     - `afterAssetAccess` - runs when assets are being accessed, after response is sent. Callback receives `RequestContext` as the first argument
