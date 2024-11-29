@@ -84,7 +84,7 @@ export class Application {
         // special request handler, serve the client side JS
         this.request.on('GET', /^\/assets\/client-js/, async ({ request, response }) => {
             const uri = request.url?.substring(18) as string;
-            const filePath = path.resolve('./system/', uri);
+            const filePath = path.resolve(import.meta.dirname, '..', uri);
             if (existsSync(filePath)) {
                 response.setHeader('Content-Type', 'application/javascript');
                 response.write(readFileSync(filePath));
