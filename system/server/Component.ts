@@ -3,8 +3,9 @@ import { attributeValueFromString, attributeValueToString, objectEach, toCamelCa
 import { ComponentEntry, LooseObject } from '../Types.js';
 import { DOMFragment } from './dom/DOMFragment.js';
 import { DOMNode } from './dom/DOMNode.js';
+import { EventEmitter } from '../EventEmitter.js';
 
-export class Component {
+export class Component<Events extends Record<string, any> = {'componentCreated' : Component}> extends EventEmitter<Events> {
     id: string;
     name: string;
     document: Document;
@@ -29,6 +30,8 @@ export class Component {
     isRoot: boolean;
 
     constructor(name: string, node?: DOMNode, parent?: Document|Component, autoInit: boolean = true) {
+        super();
+        const isDocument = this instanceof Document;
         this.name = name;
 
         if (name === 'root') {
@@ -43,7 +46,7 @@ export class Component {
             this.isRoot = false;
         }
 
-        if (this instanceof Document) {
+        if (isDocument) {
             // this will only happen if an instance of Document, as it extends component
             this.document = this;
         } else {
@@ -71,16 +74,20 @@ export class Component {
         } else {
             this.entry = null;
         }
+
+        if (! isDocument) {
+            this.document.emit('componentCreated', this);
+        }
     }
     
     // load component's data and fill it
     // load any nested components recursively
     public async init(html: string, data?: LooseObject): Promise<void> {
 
-        // extract data-atributes and encode non-encoded attributes
+        // extract data-attributes and encode non-encoded attributes
         this.initAttributesData();
 
-        // create component container replacng the original tag name with a div
+        // create component container replacing the original tag name with a div
         // (or whatever is set as renderTagName on ComponentEntry)
         this.dom.tagName = this.entry?.renderTagName || 'div';
 
@@ -88,7 +95,7 @@ export class Component {
         this.dom.innerHTML = html;
 
 
-        // re-apply attributes the orignal tag had
+        // re-apply attributes the original tag had
         // no need to encode values at this point
         // any non-encoded attributes got encoded earlier by initAttributesData
         this.setAttributes(this.attributesRaw, '', false);
@@ -110,7 +117,7 @@ export class Component {
             this.id = this.attributes.componentId;
         }
 
-        // export RequestContext.data fields specified in Application.exporteRequestContextData
+        // export RequestContext.data fields specified in Application.exportedRequestContextData
         const exportedContextData = this.document.application.exportedRequestContextData.reduce((prev, field) => {
             if (! this.document.ctx) {return prev;}
             if (field in this.document.ctx.data) {
@@ -295,7 +302,7 @@ export class Component {
 
             // attributes can have a data prefix eg. number:data-num="3"
             // return unprefixed attribute name
-            const attrNameUnprefixed = this.attributeUnpreffixed(attrNameRaw);
+            const attrNameUnprefixed = this.attributeUnprefixed(attrNameRaw);
 
             if (attrNameUnprefixed.indexOf('data-') === 0) {
                 // only attributes starting with data- are stored to this.attributes
@@ -353,7 +360,7 @@ export class Component {
 
     // component attributes can have a data type prefix [prefix]:data-[name]="[val]"
     // returns the prefix
-    private attributePreffix(attrName: string): string|null {
+    private attributePrefix(attrName: string): string|null {
         const index = attrName.indexOf(':');
         if (index < 0) {
             return null;
@@ -364,7 +371,7 @@ export class Component {
     // returns the user defined data type of given attribute
     // for example number:data-total returns 'number'
     private attributeDataType(attrName: string): 'string'|'number'|'object'|'boolean'|'any' {
-        const prefix = this.attributePreffix(attrName);
+        const prefix = this.attributePrefix(attrName);
 
         if (
             prefix === 'string' ||
@@ -375,13 +382,13 @@ export class Component {
             return prefix;
         }
 
-        // unrecognized attribute preffix
+        // unrecognized attribute prefix
         return 'any';
     }
 
     // removes the data-type prefix from given attribute name
     // for example number:data-total returns data-total
-    private attributeUnpreffixed(attrName: string): string {
+    private attributeUnprefixed(attrName: string): string {
         const index = attrName.indexOf(':');
         if (index < 0) {
             return attrName;

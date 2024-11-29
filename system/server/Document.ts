@@ -9,7 +9,7 @@ import { attributeValueToString, randomString } from '../Util.js';
 import path from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 
-export class Document extends Component {
+export class Document extends Component<{'componentCreated': Component}> {
 
     head: DocumentHead;
     language = 'en';
