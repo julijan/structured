@@ -347,6 +347,17 @@ app.request.on('GET', '/home', async (ctx) => {
 });
 ```
 
+> [!TIP]
+> Since version 0.8.4 Document extends EventEmitter, and "componentCreated" event is emitted whenever a component instance is created within the Document.\
+> This makes the following possible:
+> ```
+> app.on('documentCreated', (doc) => {
+>   doc.on('componentCreated', (component) => {
+>       // do something with the document or the component
+>   })    
+> })
+> ```
+
 ## Component
 A component is comprised of 1-3 files. It always must include one HTML file, while server side and client side files are optional.
 * HTML file probably requires no explanation
