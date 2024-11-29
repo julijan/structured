@@ -4,7 +4,7 @@ import { DataStoreView } from './DataStoreView.js';
 import { DataStore } from './DataStore.js';
 import { Net } from './Net.js';
 import { NetRequest } from './NetRequest.js';
-import { EventEmitter } from './EventEmitter.js';
+import { EventEmitter } from '../EventEmitter.js';
 
 export class ClientComponent extends EventEmitter {
     readonly name: string;

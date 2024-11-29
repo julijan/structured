@@ -1,4 +1,4 @@
-import { EventEmitterCallback } from "../Types.js";
+import { EventEmitterCallback } from "./Types.js";
 
 export class EventEmitter {
     protected listeners: Record<string, Array<EventEmitterCallback>> = {}
