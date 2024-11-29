@@ -629,6 +629,7 @@ Methods:
 - [Using JS runtimes other than Node.js](#runtimes)
 - [Why not JSR](#jsr)
 - [Best practices](#best-practices)
+- [Having an issue?](#issues-and-feedback)
 
 ### CSS frameworks
 We rarely write all CSS from scratch, usually we use a CSS framework to speed us up. Structured allows you to work with any CSS frameworks such as Tailwind, PostCSS or Bootstrap.
@@ -772,6 +773,9 @@ If you ran `npx structured init`, it has created /app/models for you. Structured
 > while it's true that with Structured, components take care of their own data, it does not mean that they need to contain the code to fetch said data, instead you are encouraged to keep data logic in your models, and use those models in components/routes.
 
 You can create additional code separation, for example, it would make sense to have /app/lib for code that interfaces an API, or have /app/Util.ts where you export utility functions. Structured boilerplate does not include these as not all applications will need them.
+
+### Issues and feedback
+If you have any issues with the framework or the npm package, please don't hesitate to open an issue on [github](https://github.com/julijan/structured). Feedback is also welcome!
 
 ## Why Structured
 Framework was developed by someone who has been a web developer for almost 20 years (me), and did not like the path web development has taken.
