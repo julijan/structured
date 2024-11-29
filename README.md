@@ -614,6 +614,7 @@ Methods:
 - [Uing CSS frameworks](#css-frameworks)
 - [Using JS runtimes other than Node.js](#runtimes)
 - [Why not JSR](#jsr)
+- [Best practices](#best-practices)
 
 ### CSS frameworks
 We rarely write all CSS from scratch, usually we use a CSS framework to speed us up. Structured allows you to work with any CSS frameworks such as Tailwind, PostCSS or Bootstrap.
@@ -720,6 +721,43 @@ Run application using `deno main.ts`
 ### JSR
 It would make a lot of sense to have Structured hosted on JSR (JavaScript Registry) given Structured is a TypeScript framework, and JSR is a TypeScript-first registry, however, the issue is that Deno imposes [limitations with dynamic imports](https://docs.deno.com/deploy/api/dynamic-import/) with JSR-imported dependencies, which are required for the framework (to dynamically import your routes and components).\
 This does not stop the framework from working with Deno, but for the time being, we have to stick with good old npm.
+
+### Best practices
+
+**Entry point:**\
+I suggest the following setup for your entry point:
+1) Set `autoInit = false` in your `/Config.ts`
+2) If you are using ENV variables, define a type `EnvConf` in `/app/Types.ts`
+3) In `/index.ts`, only create the Application instance and import ENV using `importEnv`, exporting both, as follows:
+    ```
+    import { EnvConf } from './app/Types.js';
+    import { Application } from 'structured-fw/Application';
+    import { config } from './Config.js';
+
+    export const app = new Application(config);
+    export const env = app.importEnv<EnvConf>();
+    ```
+4) Create `/main.ts` and import `app` and `env` from `/index.ts`, add `main.ts` to tsconfig.json include array, add any event listeners, and load helpers from within `/main.ts`. This makes sure you can use env in any imported modules in main.ts without having to use dynamic imports. You can later import `env` and `app` from `index.ts` wherever you want to use them.
+
+\
+**Component directories**\
+You should always place your components in a directory named same as your component. While this is not required, it will keep things organized. You might think your component will only have a HTML part, but at some point you may decide you want to add client/server code to it, so it's better to start out with a directory.\
+Feel free to group your components in directories and subdirectories. Structured loads all components recursively when Application is initialized, and allows you to load any existing component from any component/Document. You can even move your components to other directory later without having to worry about updating the imports.
+
+**Type definitions**\
+I suggest keeping your general type definitions in /app/Types.ts, but for more specific types you should probably create /app/types/[entity].types.ts to keep things clean easy to maintain.\
+For example:\
+`export type BooleanInt = 0 | 1;` - this is fine 
+in /app/Types.ts\
+`export type User = {email: string, password: string}` - you should probably create /app/types/users.types.ts for this one
+
+**Models**\
+If you ran `npx structured init`, it has created /app/models for you. Structured does not use this directory, but I suggest keeping your models interfacing the DB/APIs there. While Structured framework is not an MVC in a traditional sense, it's a good idea to keep your models in one place, as you will want to import the same model from many routes and components.
+
+> [!IMPORTANT]
+> while it's true that with Structured, components take care of their own data, it does not mean that they need to contain the code to fetch said data, instead you are encouraged to keep data logic in your models, and use those models in components/routes.
+
+You can create additional code separation, for example, it would make sense to have /app/lib for code that interfaces an API, or have /app/Util.ts where you export utility functions. Structured boilerplate does not include these as not all applications will need them.
 
 ## Why Structured
 Framework was developed by someone who has been a web developer for almost 20 years (me), and did not like the path web development has taken.
