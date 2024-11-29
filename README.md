@@ -639,6 +639,45 @@ Methods:
 - `add(appendTo: HTMLElement, componentName: string, data?: LooseObject): Promise<ClientComponent | null>` - add `componentName` component to `appendTo` element, optionally passing `data` to the component when it's being rendered. Returns a promise that resolves with added ClientComponent or null if something went wrong
 - `redraw(data?: LooseObject): Promise<void>` - redraw the component, optionally provide data which will be available server side
 
+### Conditionals
+You can make any DOM node within your components conditionally shown/hidden using `data-if` attribute.\
+For example:
+```
+<div data-if="showDiv"></div>
+```
+Above div will only be shown if store.showDiv = true
+
+You can also use `!` to invert the value, `!showDiv` in which case div would be shown if showDiv is false.
+
+You can also use comparison:
+```
+<div data-if="val === 1"></div>
+<div data-if="val == 1"></div>
+<div data-if="val !== 1"></div>
+<div data-if="val != 1"></div>
+<div data-if="val > 1"></div>
+<div data-if="val < 1"></div>
+<div data-if="val <= 1"></div>
+<div data-if="val >= 1"></div>
+```
+
+The right hand side of the comparison does not have to be boolean or number. It can be a string or any primitive value, but the numeric comparisons don't make sense in such case.
+
+You can also define callbacks and use them as the condition, in you ComponentName.client.ts:
+```
+import { InitializerFunction } from 'structured-fw/Types';
+export const init: InitializerFunction = async function() {
+    this.conditionalCallback('showDiv', () => {
+        // return a boolean here
+    });
+}
+```
+
+then in ComponentName.html:
+```
+<div data-if="showDiv()"></div>
+```
+
 ## Good to know
 - [Using CSS frameworks](#css-frameworks)
 - [Using JS runtimes other than Node.js](#runtimes)
