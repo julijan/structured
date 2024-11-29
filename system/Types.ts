@@ -229,4 +229,4 @@ export type ClientComponentTransition = {
 export type ClientComponentTransitionEvent = 'show' | 'hide';
 export type ClientComponentTransitions = Record<ClientComponentTransitionEvent, ClientComponentTransition>;
 
-export type EventEmitterCallback = (payload: any) => void
+export type EventEmitterCallback<T> = (payload: T) => void
