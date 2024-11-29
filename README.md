@@ -359,12 +359,13 @@ app.request.on('GET', '/home', async (ctx) => {
 > ```
 
 ## Component
-A component is comprised of 1-3 files. It always must include one HTML file, while server side and client side files are optional.
+A component is comprised of [1-3 files](#component-parts). It always must include one HTML file, while server side and client side files are optional.
 * HTML file probably requires no explanation
 * server side file, code that runs on the server and makes data available to HTML and client side code
 * client side file, code that runs on the client (in the browser)
 
-You should never need to instantiate a Component on your own. You will always load a Component representing your page into a document (using `Document.loadComponent(componentName: string)`), which will know what to do from there.
+> [!TIP]
+> You should never need to instantiate a Component on your own. You will always load a Component representing your page into a document (using `Document.loadComponent(componentName: string)`), which will know what to do from there.
 
 Example component files:
 - `/app/views/`
@@ -384,6 +385,12 @@ It is recommended, but not necessary, that you contain each component in it's ow
 - Components HTML file can have a `.hbs` extension (which allows for better Handlebars syntax highlighting)
 - Components can reside at any depth in the file structure
 
+### Component parts
+- [Component HTML](#component-html) (_ComponentName.html_)
+- [Component server-side code](#component-server-side-code) (_ComponentName.ts_)
+- [Component client-side code](#component-client-side-code) (_ComponentName.client.ts_)
+
+### Component HTML
 Let's create a HelloWorld Component `/app/views/HelloWorld/HelloWorld.html`:\
 `Hello, World!`
 
@@ -403,7 +410,12 @@ export default function(app: Application) {
 You can now run the app and if you open /hello/world in the browser you will see:\
 `Hello, World!` - which came from your HelloWorld component.
 
-That was the simplest possible example, let's make it more interesting.
+> [!TIP]
+> It is recommended to use .hbs (Handlebars) extension as you will get better syntax highlighting in most IDEs. Other than syntax highlighting there is no difference between using html or hbs extension.
+
+That was the simplest possible example, let's make it more interesting by adding some server-side code.
+
+### Component server-side code
 Create a new file `/app/views/HelloWorld/HelloWorld.ts` (server side component code):
 ```
 import { ComponentScaffold } from 'system/Types.js';
@@ -437,7 +449,15 @@ Your lucky number is [a number from 0-100]
 This demonstrates the use of a *server side component code* to make data available to HTML.
 We just generated a random number, but the data could be anything and will more often come from a database, session, or be provided by the parent component.
 
+> [!IMPORTANT]
+> Server side `getData` will receive the following arguments:
+> - `data: LooseObject` any data passed in (either by attributes, ClientComponent.add or ClientComponent.redraw)
+> - `ctx: RequestContext` - current `RequestContext`, you will often use this to access for example ctx.data (`RequestContextData`) or ctx.sessionId to interact with session
+> - `app: Application` - your Application instance. You can use it to, for example, access the session in combination with ctx.sessionId
+
 Let's make it even more interesting by adding some client side code to it.
+
+### Component client-side code
 Create `/app/views/HelloWorld/HelloWorld.client.ts`:
 ```
 import { InitializerFunction } from 'system/Types.js';
@@ -519,12 +539,6 @@ What about client side? **By default, data returned by server side code is not a
 
 > [!NOTE]
 > Whenever a component with server-side code is rendered, `getData` is automatically called and anything it returns is available in HTML. You can export all returned data to client-side code by setting `exportData = true` or you can export some of the fields by setting `exportFields = ["field1", "field2", ...]` as a direct property of the class. To access the exported data from client-side use `ClientComponent`.`getData(key: string)` which will be `this.getData(key:string)` within client side code.
-
-> [!IMPORTANT]
-> Server side `getData` will receive the following arguments:
-> - `data: LooseObject` any data passed in (either by attributes, ClientComponent.add or ClientComponent.redraw)
-> - `ctx: RequestContext` - current `RequestContext`, you will often use this to access for example ctx.data (`RequestContextData`) or ctx.sessionId to interact with session
-> - `app: Application` - your Application instance. You can use it to, for example, access the session in combination with ctx.sessionId
 
 Let's create a client side code for `AnotherComponent` and export the `betterNumber` to it, create `/app/views/AnotherComponent/AnotherComponent.client.ts`:
 ```
@@ -622,7 +636,8 @@ Methods:
 - `query(componentName: string, recursive: boolean = true): Array<ClientComponent>` - return all components with given name found within this component, if `recursive = false`, only direct children are considered
 - `ref<T>(refName: string): T` - get a HTMLElement or ClientComponent that has attribute `ref="[refName]"`
 - `arrayRef<T>(refName: string): Array<T>` - get an array of HTMLElement or ClientComponent that have attribute `array:ref="[refName]"`
-- `add(appendTo: HTMLElement, componentName: string, data?: LooseObject)` - add `componentName` component to `appendTo` element, optionally passing `data` to the component when it's being rendered
+- `add(appendTo: HTMLElement, componentName: string, data?: LooseObject): Promise<ClientComponent | null>` - add `componentName` component to `appendTo` element, optionally passing `data` to the component when it's being rendered. Returns a promise that resolves with added ClientComponent or null if something went wrong
+- `redraw(data?: LooseObject): Promise<void>` - redraw the component, optionally provide data which will be available server side
 
 ## Good to know
 - [Using CSS frameworks](#css-frameworks)
