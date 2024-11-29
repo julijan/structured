@@ -110,7 +110,7 @@ new Application(config);
 
 ### Methods
 - `init(): Promise<void>` - initializes application, you only need to run this if you set `autoInit = false` in config, otherwise this will be ran when you create the Application instance
-- `on(evt: ApplicationEvents, callback: RequestCallback|((payload?: any) => void))` - allows you to add event listeners for specific `ApplicationEvenets`:
+- `on(evt: ApplicationEvents, callback: RequestCallback|((payload?: any) => void))` - allows you to add event listeners for specific `ApplicationEvents`:
     - `serverStarted` - executed once the built-in http server is started and running. Callback receives Server (exported from node:http) instance as the first argument
     - `beforeRequestHandler` - runs before any request handler (route) is executed. Callback receives `RequestContext` as the first argument. Useful for example to set `RequestContext.data: RequestContextData` (user defined data, to make it available to routes and components)
     - `afterRequestHandler` - runs after any request handler (route) is executed. Callback receives `RequestContext` as the first argument
@@ -173,7 +173,7 @@ app.exportContextFields('user');
 ```
 
 ### Session
-Session allows you to store temporary data for the users of your web application. You don't need to create an instance of Session, you will always use the instace `Application.session`.
+Session allows you to store temporary data for the users of your web application. You don't need to create an instance of Session, you will always use the instance `Application.session`.
 
 Session data is tied to a visitor via sessionId, which is always available on `RequestContext`, which means you can interact with session data from routes and server side code of your components.
 
@@ -321,7 +321,7 @@ In some edge cases you may need more control of when a route is executed, in whi
 >   email: string,
 >   password: string,
 >   age: number
->}>('POST', '/users/create', asyc (ctx) => {
+>}>('POST', '/users/create', async (ctx) => {
 >    ctx.body.email // string
 >    ctx.body.age // number
 >    const doc = new Document(app, 'User', ctx);
@@ -330,7 +330,7 @@ In some edge cases you may need more control of when a route is executed, in whi
 > ```
 
 ## Document
-Document does not differ much from a component, in fact, it extends Component. It has a more user-firendly API than Component. Each Document represents a web page. It has a head and body. Structured intentionally does not differentiate between a page and a Component - page is just a component that loads many other components in a desired layout. DocumentHead (each document has one at Document.head) allows adding content to `<head>` section of the output HTML page.
+Document does not differ much from a component, in fact, it extends Component. It has a more user-friendly API than Component. Each Document represents a web page. It has a head and body. Structured intentionally does not differentiate between a page and a Component - page is just a component that loads many other components in a desired layout. DocumentHead (each document has one at Document.head) allows adding content to `<head>` section of the output HTML page.
 
 Creating a document:
 `const doc = new Document(app, 'HelloWorld page', ctx);`
@@ -346,7 +346,7 @@ app.request.on('GET', '/home', async (ctx) => {
 
 ## Component
 A component is comprised of 1-3 files. It always must include one HTML file, while server side and client side files are optional.
-* HTML file preobably requires no explanation
+* HTML file probably requires no explanation
 * server side file, code that runs on the server and makes data available to HTML and client side code
 * client side file, code that runs on the client (in the browser)
 
@@ -367,7 +367,7 @@ It is recommended, but not necessary, that you contain each component in it's ow
 \
 **Component rules:**
 - **Component names must be unique**
-- Components HTML file can have a `.hbs` extension (which allows for better Handlebars sytax highlighting)
+- Components HTML file can have a `.hbs` extension (which allows for better Handlebars syntax highlighting)
 - Components can reside at any depth in the file structure
 
 Let's create a HelloWorld Component `/app/views/HelloWorld/HelloWorld.html`:\
@@ -499,7 +499,7 @@ What we did is, we accepted the number provided by parent component, and returne
     betterNumber: number
 }
 ```
-which is now avaialble in `AnotherComponent` HTML, we assigned the received number to `parentSuggests`, while `betterNumber` is `parentSuggests + 5`, we now have these 2 available and ready to use in our HTML template.
+which is now available in `AnotherComponent` HTML, we assigned the received number to `parentSuggests`, while `betterNumber` is `parentSuggests + 5`, we now have these 2 available and ready to use in our HTML template.
 
 What about client side? **By default, data returned by server side code is not available in client side code** for obvious reasons, let's assume your server side code returns sensitive data such as user's password, you would not like that exposed on the client side, hence exporting data needs to be explicitly requested in the server side code. There are two ways to achieve this, setting `exportData = true` (exports all data), or `exportFields: Array<string> = [...keysToExport]` (export only given fields).
 
@@ -555,7 +555,7 @@ export const init: InitializerFunction = async function() {
 ```
 Here we accessed the `parent` and obtained it's `name`.
 
-*"But we did not send any data to the parent here"* - correct, we did not, and we won't, instead we can inform them we have some data available, or that an event they might be interested in has ocurred, and if they care, so be it:
+*"But we did not send any data to the parent here"* - correct, we did not, and we won't, instead we can inform them we have some data available, or that an event they might be interested in has occurred, and if they care, so be it:
 ```
 import { InitializerFunction } from 'system/Types.js';
 export const init: InitializerFunction = async function() {
@@ -585,7 +585,7 @@ export const init: InitializerFunction = async function() {
 }
 ```
 
-That's it. If there is `AnotherComponent` found within `HelloWorld` (which there is in our case) we are subscribing to "truth" event and capturing the payload. Payload is optional, sometimes we just want to inform anyone interested that a certain event has ocurred, without the need to pass any extra data with it. We used `this.find(componentName: string)`, this will recursively find the first instance of a component with `componentName`, optionally you can make it non-recursive by passing `false` as the second argument to `find` method in which case it will look for a direct child with given name.
+That's it. If there is `AnotherComponent` found within `HelloWorld` (which there is in our case) we are subscribing to "truth" event and capturing the payload. Payload is optional, sometimes we just want to inform anyone interested that a certain event has occurred, without the need to pass any extra data with it. We used `this.find(componentName: string)`, this will recursively find the first instance of a component with `componentName`, optionally you can make it non-recursive by passing `false` as the second argument to `find` method in which case it will look for a direct child with given name.
 
 We have only scratched the surface of what client-side code of a component is capable of. Which brings us to `this`. In client-side code of a component, `this` is the instance of a `ClientComponent`.
 
@@ -605,13 +605,13 @@ Methods:
 - `store.set(key: string, value: any)` - set data in client side data store
 - `find(componentName: string, recursive: boolean = true): ClientComponent | null` - find a child component
 - `findParent(componentName: string): ClientComponent | null` - find the first parent with given name
-- `query(componentName: string, recursive: boolean = true): Array<ClientComponent>` - return all components with given name found within this component, if `recurive = false`, only direct children are considered
+- `query(componentName: string, recursive: boolean = true): Array<ClientComponent>` - return all components with given name found within this component, if `recursive = false`, only direct children are considered
 - `ref<T>(refName: string): T` - get a HTMLElement or ClientComponent that has attribute `ref="[refName]"`
 - `arrayRef<T>(refName: string): Array<T>` - get an array of HTMLElement or ClientComponent that have attribute `array:ref="[refName]"`
 - `add(appendTo: HTMLElement, componentName: string, data?: LooseObject)` - add `componentName` component to `appendTo` element, optionally passing `data` to the component when it's being rendered
 
 ## Good to know
-- [Uing CSS frameworks](#css-frameworks)
+- [Using CSS frameworks](#css-frameworks)
 - [Using JS runtimes other than Node.js](#runtimes)
 - [Why not JSR](#jsr)
 - [Best practices](#best-practices)

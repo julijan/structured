@@ -146,7 +146,7 @@ export class Application {
         });
     }
 
-    // load envirnment variables
+    // load environment variables
     // if this.config.envPrefix is a string, load all ENV variables starting with [envPrefix]_
     // the method is generic, so user can define the expected return type
     public importEnv<T extends LooseObject>(smartPrimitives: boolean = true): T {

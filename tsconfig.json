@@ -10,7 +10,7 @@
         "module": "ES2020",
         "target": "ES2021",
         "alwaysStrict": true,
-        "allowSyntheticDefaultImports": true, // albe to do import { default as varname } from 'module'
+        "allowSyntheticDefaultImports": true, // able to do import { default as varname } from 'module'
         "declaration": true,
         "isolatedDeclarations": true,
         "noImplicitReturns": true,
