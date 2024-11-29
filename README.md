@@ -678,6 +678,19 @@ then in ComponentName.html:
 <div data-if="showDiv()"></div>
 ```
 
+**Basic animation/transitions**\
+If you use conditionals on any DOM node, you may also enable basic animations/transitions using following attributes:
+- Enable transition:
+    - `data-transition-show-slide="durationMilliseconds"` - when DOM node is shown, slide it in
+    - `data-transition-hide-slide="durationMilliseconds"` - when DOM node is hidden, slide it out
+    - `data-transition-show-fade="durationMilliseconds"` - fade DOM node in
+    - `data-transition-hide-fade="durationMilliseconds"` - fade DOM node out
+- Modify transition (slide only)
+    - `data-transform-origin-show="CSS transform origin"` - from where does the component slide in for example `0% 50%` to slide it in from mid-left
+    - `data-transform-origin-hide="CSS transform origin"` - where does the component slide out to for example `100% 100%` to slide it out to bottom-right
+    - `data-transition-axis-show="X | Y"` - slide animation axis
+    - `data-transition-axis-hide="X | Y"` - slide animation axis
+
 ## Good to know
 - [Using CSS frameworks](#css-frameworks)
 - [Using JS runtimes other than Node.js](#runtimes)
