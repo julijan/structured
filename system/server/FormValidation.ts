@@ -1,4 +1,4 @@
-import { FormValidationEntry, PostedDataDecoded, ValidationErrors, ValidationErrorsSingle, ValidationResult, ValidationRuleWithArguments, ValidatorErrorDecorator, ValidatorFunction } from '../Types';
+import { FormValidationEntry, PostedDataDecoded, ValidationErrors, ValidationErrorsSingle, ValidationResult, ValidationRuleWithArguments, ValidatorErrorDecorator, ValidatorFunction } from '../Types.js';
 
 export class FormValidation {
 

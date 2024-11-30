@@ -1,4 +1,4 @@
-import { DocumentResource } from '../Types';
+import { DocumentResource } from '../Types.js';
 
 export class DocumentHead {
 
