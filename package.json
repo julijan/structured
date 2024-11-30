@@ -14,13 +14,12 @@
   "license": "MIT",
   "type": "module",
   "main": "build/index",
-  "version": "0.8.42",
+  "version": "0.8.43",
   "scripts": {
     "develop": "tsc --watch",
     "startDev": "cd build && nodemon --watch '../app/**/*' --watch '../build/**/*' -e js,html,css index.js",
     "start": "cd build && node index.js",
-    "prepublish": "tsc",
-    "postinstall": "rm tsconfig.json"
+    "prepublish": "tsc"
   },
   "bin": {
     "structured": "./build/system/bin/structured.js"
@@ -35,6 +34,14 @@
     "mime-types": "^3.0.0",
     "ts-md5": "^1.3.1"
   },
+  "files": [
+    "build/system/*",
+    "app/Types.ts",
+    "index.ts",
+    "Config.ts",
+    "README.md",
+    "LICENSE"
+  ],
   "exports" : {
     "./Types": "./build/system/Types.js",
     "./Symbols": "./build/system/Symbols.js",
