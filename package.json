@@ -14,7 +14,7 @@
   "license": "MIT",
   "type": "module",
   "main": "build/index",
-  "version": "0.8.43",
+  "version": "0.8.44",
   "scripts": {
     "develop": "tsc --watch",
     "startDev": "cd build && nodemon --watch '../app/**/*' --watch '../build/**/*' -e js,html,css index.js",
