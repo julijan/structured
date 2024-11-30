@@ -41,6 +41,17 @@ npm install @types/node
 ### Create boilerplate
 `npx structured init`
 
+### Create a test route
+Create a file `/app/routes/Test.ts`:
+```
+import { Application } from 'structured-fw/Application';
+export default function(app: Application) {
+    app.request.on('GET', '/test', async()=> {
+        return 'Hello, World!';
+    });
+}
+```
+
 ### Compile
 `tsc`\
 This will create a directory `build` (or whatever you have in tsconfig.json as compilerOptions.outputDir)
@@ -56,6 +67,8 @@ Of course, you can use pm2 or other process managers to run it, with pm2:
 cd build
 pm2 start index.js --name="[appName]"
 ```
+
+If you followed the above steps, you should be able to access `http://localhost:9191/test` in your browser and see the output `Hello, World!`.
 
 # Key concepts
 
