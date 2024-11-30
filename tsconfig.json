@@ -5,9 +5,9 @@
         "strictPropertyInitialization": true,
         "strictBindCallApply": true,
         "noUnusedLocals": true,
-        "moduleResolution" : "bundler",
+        "moduleResolution" : "node16",
         "outDir": "./build",
-        "module": "ES2020",
+        "module": "Node16",
         "target": "ES2021",
         "alwaysStrict": true,
         "allowSyntheticDefaultImports": true, // able to do import { default as varname } from 'module'

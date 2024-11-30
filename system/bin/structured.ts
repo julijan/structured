@@ -79,9 +79,9 @@ function createTsconfig() {
                 "strictNullChecks": true,
                 "strictPropertyInitialization": true,
                 "strictBindCallApply": true,
-                "moduleResolution" : "bundler",
+                "moduleResolution" : "node16",
                 "outDir": "./build",
-                "module": "ES2020",
+                "module": "Node16",
                 "target": "ES2021",
                 "allowSyntheticDefaultImports": true, // albe to do import { default as varname } from 'module'
                 "preserveSymlinks": true,
