@@ -431,7 +431,7 @@ That was the simplest possible example, let's make it more interesting by adding
 ### Component server-side code
 Create a new file `/app/views/HelloWorld/HelloWorld.ts` (server side component code):
 ```
-import { ComponentScaffold } from 'system/Types.js';
+import { ComponentScaffold } from 'structured-fw/Types';
 export default class HelloWorld implements ComponentScaffold {
     async getData(): Promise<{
         luckyNumber: number
@@ -473,7 +473,7 @@ Let's make it even more interesting by adding some client side code to it.
 ### Component client-side code
 Create `/app/views/HelloWorld/HelloWorld.client.ts`:
 ```
-import { InitializerFunction } from 'system/Types.js';
+import { InitializerFunction } from 'structured-fw/Types';
 export const init: InitializerFunction = async function() {
     const generateNew = this.ref<HTMLButtonElement>('newNumber');
 
@@ -522,7 +522,7 @@ Parent says your lucky number is {{number}}.
 That's it. Since `AnotherComponent` has no server side code, all data passed to it is exported to HTML, hence the `number` you passed from `HelloWorld` will be readily available for use. If AnotherComponent had a server side part, the process is a bit different, it will receive it as part of the `data`, but can choose whether to make it available to the HTML, or just make use of it and return other stuff. Let's see how that works.
 Create `/app/views/AnotherComponent/AnotherComponent.ts`:
 ```
-import { ComponentScaffold } from 'system/Types.js';
+import { ComponentScaffold } from 'structured-fw/Types';
 export default class AnotherComponent implements ComponentScaffold {
     async getData(data: { number: number }): Promise<{
         parentSuggests: number,
@@ -555,7 +555,7 @@ What about client side? **By default, data returned by server side code is not a
 
 Let's create a client side code for `AnotherComponent` and export the `betterNumber` to it, create `/app/views/AnotherComponent/AnotherComponent.client.ts`:
 ```
-import { InitializerFunction } from 'system/Types.js';
+import { InitializerFunction } from 'structured-fw/Types';
 export const init: InitializerFunction = async function() {
     const betterNumber = this.getData<number>('betterNumber');
 
@@ -565,7 +565,7 @@ export const init: InitializerFunction = async function() {
 
 And let's update `AnotherComponent.ts` to export `betterNumber`:
 ```
-import { ComponentScaffold } from 'system/Types.js';
+import { ComponentScaffold } from 'structured-fw/Types';
 export default class AnotherComponent implements ComponentScaffold {
     exportFields = ['betterNumber'];
     async getData(data: { number: number }): Promise<{
@@ -587,7 +587,7 @@ This concept is wrong to start with, if we want a component to be independent, i
 
 Let's say we wanted to access the `parent` Component from `AnotherComponent`:
 ```
-import { InitializerFunction } from 'system/Types.js';
+import { InitializerFunction } from 'structured-fw/Types';
 export const init: InitializerFunction = async function() {
     const betterNumber = this.getData<number>('betterNumber');
 
@@ -598,7 +598,7 @@ Here we accessed the `parent` and obtained it's `name`.
 
 *"But we did not send any data to the parent here"* - correct, we did not, and we won't, instead we can inform them we have some data available, or that an event they might be interested in has occurred, and if they care, so be it:
 ```
-import { InitializerFunction } from 'system/Types.js';
+import { InitializerFunction } from 'structured-fw/Types';
 export const init: InitializerFunction = async function() {
     const betterNumber = this.getData<number>('betterNumber');
 
@@ -608,7 +608,7 @@ export const init: InitializerFunction = async function() {
 
 We emitted an `event` with `eventName` = "`truth`" and a `payload`, which in this case is a string, but can be of any type. If the parent cares about it (or for that matter, not necessarily the parent, but anyone in the component tree), they can subscribe to that event. Let's subscribe to the event from `HelloWorld` (`HelloWorld.client.ts`):
 ```
-import { InitializerFunction } from 'system/Types.js';
+import { InitializerFunction } from 'structured-fw/Types';
 export const init: InitializerFunction = async function() {
 
     const child = this.find('AnotherComponent'); // ClientComponent | null
