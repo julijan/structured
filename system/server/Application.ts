@@ -201,11 +201,11 @@ export class Application {
         return mime.contentType(extension);
     }
 
-    public registerPlugin(callback: (app: Application) => void): void {
+    public async registerPlugin(callback: (app: Application, ...args: Array<any>) => void | Promise<void>, ...args: Array<any>): Promise<void> {
         if (this.initialized) {
             console.warn('Plugin registered after app is initialized, some plugin features may not work.');
         }
-        callback(this);
+        await callback.apply(this, [this, ...args]);
     }
 
     // renders a component with give data and sends it as a response
