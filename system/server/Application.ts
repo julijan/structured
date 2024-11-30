@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createServer, Server } from 'node:http';
 import * as path from 'node:path';
 import * as mime from 'mime-types';
-import { ApplicationEvents, LooseObject, RequestBodyArguments, RequestContext, StructuredConfig } from '../Types';
+import { ApplicationEvents, LooseObject, RequestBodyArguments, RequestContext, StructuredConfig } from '../Types.js';
 import { Document } from './Document.js';
 import { Components } from './Components.js';
 import { Session } from './Session.js';
@@ -14,6 +14,8 @@ import { Cookies } from './Cookies.js';
 
 export class Application {
     readonly config: StructuredConfig;
+
+    private initialized: boolean = false;
 
     server: null|Server = null;
     listening: boolean = false;
@@ -48,6 +50,8 @@ export class Application {
     }
 
     public async init(): Promise<void> {
+
+        if (this.initialized) {return;}
 
         // max listeners per event
         this.eventEmitter.setMaxListeners(10);
@@ -96,6 +100,8 @@ export class Application {
         }, this, true);
 
         await this.start();
+
+        this.initialized = true;
     }
 
     // start the http server
@@ -193,6 +199,13 @@ export class Application {
     // given file extension (or file name), returns the appropriate content-type
     public contentType(extension: string): string|false {
         return mime.contentType(extension);
+    }
+
+    public registerPlugin(callback: (app: Application) => void): void {
+        if (this.initialized) {
+            console.warn('Plugin registered after app is initialized, some plugin features may not work.');
+        }
+        callback(this);
     }
 
     // renders a component with give data and sends it as a response
