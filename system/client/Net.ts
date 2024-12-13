@@ -19,23 +19,23 @@ export class Net {
         return this.request('DELETE', url, headers);
     }
 
-    public async post(url: string, data: any, headers: IncomingHttpHeaders = {}): Promise<string> {
+    private serializeData(data: any, headers: IncomingHttpHeaders): any {
         if (typeof data === 'object' && !headers['content-type'] && !(data instanceof FormData)) {
             // if data is object and no content/type header is specified default to application/json
             headers['content-type'] = 'application/json';
             // convert data to JSON
-            data = JSON.stringify(data);
+            return JSON.stringify(data);
         }
+        return data;
+    }
+
+    public async post(url: string, data: any, headers: IncomingHttpHeaders = {}): Promise<string> {
+        data = this.serializeData(data, headers);
         return await this.request('POST', url, headers, data);
     }
 
     public async put(url: string, data: any, headers: IncomingHttpHeaders = {}): Promise<string> {
-        if (typeof data === 'object' && !headers['content-type']) {
-            // if data is object and no content/type header is specified default to application/json
-            headers['content-type'] = 'application/json';
-            // convert data to JSON
-            data = JSON.stringify(data);
-        }
+        data = this.serializeData(data, headers);
         return this.request('PUT', url, headers, data);
     }
 
