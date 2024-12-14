@@ -688,6 +688,69 @@ then in ComponentName.html:
 <div data-if="showDiv()"></div>
 ```
 
+### Layout
+Prior to version 0.8.7:
+
+1) `/app/views/layout.html`
+    ```
+    ...
+    {{{layoutComponent component data attributes}}}
+    ...
+    ```
+2) `/app/routes/Test.ts`
+    ```
+    import Document from 'structured-fw/Document';
+
+    app.request.on('GET', '/test', async (ctx) => {
+        const doc = new Document(app, 'Title', ctx);
+        await doc.loadComponent('layout', {
+            component: 'ComponentName',
+            data: {
+                something: 123
+            }
+        });
+        return doc;
+    });
+    ```
+
+Version 0.8.7 introduced the `Layout` class, which allows accomplishing the above in a nicer way:
+1) `/app/views/layout.html`
+    ```
+    ...
+    <template></template>
+    ...
+    ```
+2) `/index.ts` (`app` is an instance of `Application`)
+    ```
+    export const layout = new Layout(app, 'layout');
+    ```
+3) `/app/routes/Test.ts`
+    ```
+    import { layout } from '../../index.js';
+
+    app.request.on('GET', '/test', async (ctx) => {
+        return await layout.document(ctx, 'Test', 'Conditionals', {
+            something: 123
+        });
+    });
+
+    ```
+
+While with the new approach there is an extra step where we create the instance(s) of `Layout`, it makes the route/template code cleaner (you will create your layout instance(s) only once, while you will likely use it in many routes, so adding an extra step is worth it).
+
+```
+Layout.document(
+    ctx: RequestContext,
+    title: string,
+    componentName: string,
+    data?: LooseObject
+): Promise<Document>
+```
+`Layout.document` the only method of Layout you will use, it creates an instance of Document, loads template component (provided as second argument to Layout constructor) into it and loads `componentName` component in place of `<template></template>` found within your template.
+
+> [!TIP]
+> You will often want to use a few different layouts in your web application. You can achieve that by creating and exporting multiple instances of Layout and use the appropriate one where you need it.
+
 **Basic animation/transitions**\
 If you use conditionals on any DOM node, you may also enable basic animations/transitions using following attributes:
 - Enable transition:
