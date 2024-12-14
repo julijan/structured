@@ -15,7 +15,7 @@ import { Cookies } from './Cookies.js';
 export class Application {
     readonly config: StructuredConfig;
 
-    private initialized: boolean = false;
+    initialized: boolean = false;
 
     server: null|Server = null;
     listening: boolean = false;
