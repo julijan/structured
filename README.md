@@ -5,9 +5,6 @@ Framework allows the developer to develop self-contained components which are re
 
 It works with Node.js and Deno runtimes. Other runtimes are not tested.
 
-> [!NOTE]
-> While Structured framework is in development for a couple of years and is production tested, the npm package is introduced recently and there were still issues that came up with it in the past few versions. Since version 0.8.3 all should be functional. Please update to latest version and check for updates regularly until the npm package is as stable as the framework itself. Feel free to open issues on the github page if you have any issues with the npm package or the framework. _Structured followed versioning x.y.z where z was a single digit 0-9, but since there were a couple of versions that introduced no changes to the framework and were just npm package tweaks, I decided to make an exception to the rule and allow myself to use 2 digits for such updates._
-
 - [Why Structured](#why-structured)
 - [Audience](#audience)
 - [Getting started](#getting-started)
