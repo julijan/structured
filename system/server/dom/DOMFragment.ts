@@ -2,6 +2,6 @@ import { DOMNode } from "./DOMNode.js";
 
 export class DOMFragment extends DOMNode {
     constructor() {
-        super('body');
+        super(null, 'body');
     }
 }

@@ -1,3 +1,4 @@
+import { DOMFragment } from "./DOMFragment.js";
 import { HTMLParser } from "./HTMLParser.js";
 
 type DOMNodeAttribute = { name: string, value: string | true };
@@ -15,6 +16,7 @@ export class DOMNode {
 
     tagName: string;
 
+    root: DOMFragment;
     parentNode: DOMNode | null = null;
     children: Array<DOMNode | string> = [];
 
@@ -25,7 +27,10 @@ export class DOMNode {
 
     selfClosing: boolean;
 
-    constructor(tagName: string) {
+    // root should always be a DOMFragment, except when the instance itself is DOMFragment
+    // in which case it will be null, and this is assumed to be the root
+    constructor(root: DOMFragment | null, tagName: string) {
+        this.root = root || (this as unknown as DOMFragment);
         this.tagName = tagName;
         this.selfClosing = selfClosingTags.includes(tagName);
     }

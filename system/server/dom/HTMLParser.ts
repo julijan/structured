@@ -86,7 +86,7 @@ export class HTMLParser {
                     throw this.error(`Found an empty HTML tag <>`);
                 }
                 // opening tag end, create node and switch context to new node
-                const node = new DOMNode(this.tokenCurrent);
+                const node = new DOMNode(this.fragment, this.tokenCurrent);
                 this.context.appendChild(node);
                 this.state = 'idle';
                 this.tokenCurrent = '';
@@ -104,7 +104,7 @@ export class HTMLParser {
 
                 // encountered space after opening tag name, could be a start of attribute name
                 this.state = 'attributeName';
-                const node = new DOMNode(this.tokenCurrent);
+                const node = new DOMNode(this.fragment, this.tokenCurrent);
                 this.context.appendChild(node);
                 this.tokenCurrent = '';
                 if (! node.selfClosing) {
