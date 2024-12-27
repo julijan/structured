@@ -219,18 +219,16 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
     }
 
     private async initChildren(passData?: LooseObject): Promise<void> {
-        const componentTags = this.document.application.components.componentNames;
-
-        const childNodes = this.dom.queryByTagName(...componentTags);
+        const potentialComponents = this.dom.components();
         // const promises: Array<Promise<void>> = [];
 
-        for (let i = 0; i < childNodes.length; i++) {
-            const childNode = childNodes[i];
-            const component = this.document.application.components.getByName(childNode.tagName);
+        for (let i = 0; i < potentialComponents.length; i++) {
+            const potentialComponent = potentialComponents[i];
+            const component = this.document.application.components.getByName(potentialComponent.tagName);
             if (component) {
-                const child = new Component(component.name, childNode, this, false);
+                const child = new Component(component.name, potentialComponent, this, false);
                 // promises.push(child.init(childNode.outerHTML, passData));
-                await child.init(childNode.outerHTML, passData);
+                await child.init(potentialComponent.outerHTML, passData);
                 this.children.push(child);
             }
         }
