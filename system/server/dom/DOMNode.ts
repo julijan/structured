@@ -11,6 +11,7 @@ type JSONNode = {
 }
 
 export const selfClosingTags: ReadonlyArray<string> = ['br', 'hr', 'input', 'img', 'link', 'meta', 'source', 'embed', 'path', 'area'];
+export const recognizedHTMLTags: ReadonlyArray<string> = ['body', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'b', 'i', 'a', 'em', 'strong', 'br', 'hr', 'abbr', 'address', 'bdi', 'bdo', 'blockquote', 'cite', 'code', 'del', 'dfn', 'ins', 'kbd', 'mark', 'pre', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'small', 'span', 'sub', 'sup', 'time', 'u', 'var', 'ul', 'ol', 'li', 'dl', 'dt', 'dd', 'img', 'area', 'map', 'object', 'param', 'picture', 'table', 'tr', 'td', 'th', 'caption', 'colgroup', 'col', 'form', 'input', 'label', 'select', 'option', 'textarea', 'button', 'fieldset', 'legend', 'datalist', 'output', 'iframe', 'audio', 'video', 'source', 'track', 'script', 'noscript', 'div', 'header', 'footer', 'nav', 'aside', 'article', 'section', 'main', 'canvas', 'details', 'dialog', 'embed', 'figure', 'figcaption', 'hgroup', 'meter', 'progress', 'template'];
 
 export class DOMNode {
 
@@ -20,6 +21,8 @@ export class DOMNode {
     parentNode: DOMNode | null = null;
     children: Array<DOMNode | string> = [];
 
+    isRoot: boolean;
+
     attributes: Array<DOMNodeAttribute> = []
     attributeMap: Record<string, DOMNodeAttribute> = {}
 
@@ -27,12 +30,22 @@ export class DOMNode {
 
     selfClosing: boolean;
 
+    // all DOMNodes are responsible for calling registerPotentialComponent if
+    // their tagName is not a recognized HTML tag.
+    // this is not required but should provide a big performance boost, especially in large documents
+    // as we don't have to traverse the entire DOM tree to find components in Component.initChildren
+    potentialComponentChildren: Record<string, Array<DOMNode>> = {}
+
     // root should always be a DOMFragment, except when the instance itself is DOMFragment
     // in which case it will be null, and this is assumed to be the root
     constructor(root: DOMFragment | null, tagName: string) {
-        this.root = root || (this as unknown as DOMFragment);
+        this.root = root === null ? (this as unknown as DOMFragment) : root;
+        this.isRoot = root === null;
         this.tagName = tagName;
         this.selfClosing = selfClosingTags.includes(tagName);
+        if (this.isPotentialComponent()) {
+            this.registerPotentialComponent(this);
+        }
     }
 
     appendChild(node: DOMNode | string): void {
@@ -93,6 +106,34 @@ export class DOMNode {
         }
 
         return nodes;
+    }
+
+    // returns true if tagName is not a recognized HTML tag
+    isPotentialComponent(): boolean {
+        return ! recognizedHTMLTags.includes(this.tagName.toLowerCase());
+    }
+
+    // register as potential component on parentNode
+    registerPotentialComponent(node: DOMNode): void {
+        if (this.parentNode !== null) {
+            if (this.parentNode.isRoot || this.parentNode.isPotentialComponent()) {
+                if (! (node.tagName in this.parentNode.potentialComponentChildren)) {
+                    this.parentNode.potentialComponentChildren[node.tagName] = [];
+                }
+                this.parentNode.potentialComponentChildren[node.tagName].push(node);
+            } else {
+                // parentNode is not a component/root
+                // propagate until first component is found
+                this.parentNode.registerPotentialComponent(node);
+            }
+        }
+    }
+
+    // returns an array of all child DOMNodes that are potentially a component
+    components(): Array<DOMNode> {
+        return Object.values(this.potentialComponentChildren).reduce((prev, curr) => {
+            return prev.concat(curr);
+        }, []);
     }
 
     get innerHTML(): string {
