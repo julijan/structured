@@ -11,7 +11,7 @@ type JSONNode = {
 }
 
 export const selfClosingTags: ReadonlyArray<string> = ['br', 'hr', 'input', 'img', 'link', 'meta', 'source', 'embed', 'path', 'area'];
-export const recognizedHTMLTags: ReadonlyArray<string> = ['body', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'b', 'i', 'a', 'em', 'strong', 'br', 'hr', 'abbr', 'address', 'bdi', 'bdo', 'blockquote', 'cite', 'code', 'del', 'dfn', 'ins', 'kbd', 'mark', 'pre', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'small', 'span', 'sub', 'sup', 'time', 'u', 'var', 'ul', 'ol', 'li', 'dl', 'dt', 'dd', 'img', 'area', 'map', 'object', 'param', 'picture', 'table', 'tr', 'td', 'th', 'caption', 'colgroup', 'col', 'form', 'input', 'label', 'select', 'option', 'textarea', 'button', 'fieldset', 'legend', 'datalist', 'output', 'iframe', 'audio', 'video', 'source', 'track', 'script', 'noscript', 'div', 'header', 'footer', 'nav', 'aside', 'article', 'section', 'main', 'canvas', 'details', 'dialog', 'embed', 'figure', 'figcaption', 'hgroup', 'meter', 'progress', 'template'];
+export const recognizedHTMLTags: ReadonlyArray<string> = ['body', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'b', 'i', 'a', 'em', 'strong', 'br', 'hr', 'abbr', 'address', 'bdi', 'bdo', 'blockquote', 'cite', 'code', 'del', 'dfn', 'ins', 'kbd', 'mark', 'pre', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'small', 'span', 'sub', 'sup', 'time', 'u', 'var', 'ul', 'ol', 'li', 'dl', 'dt', 'dd', 'img', 'area', 'map', 'object', 'param', 'picture', 'table', 'tr', 'td', 'th', 'caption', 'colgroup', 'col', 'form', 'input', 'label', 'select', 'option', 'textarea', 'button', 'fieldset', 'legend', 'datalist', 'output', 'iframe', 'audio', 'video', 'source', 'track', 'script', 'noscript', 'div', 'nav', 'aside', 'article', 'section', 'main', 'canvas', 'details', 'dialog', 'embed', 'figure', 'figcaption', 'hgroup', 'meter', 'progress', 'template'];
 
 export class DOMNode {
 
@@ -38,9 +38,10 @@ export class DOMNode {
 
     // root should always be a DOMFragment, except when the instance itself is DOMFragment
     // in which case it will be null, and this is assumed to be the root
-    constructor(root: DOMFragment | null, tagName: string) {
+    constructor(root: DOMFragment | null, parentNode: DOMNode | null, tagName: string) {
         this.root = root === null ? (this as unknown as DOMFragment) : root;
         this.isRoot = root === null;
+        this.parentNode = parentNode;
         this.tagName = tagName;
         this.selfClosing = selfClosingTags.includes(tagName);
         if (this.isPotentialComponent()) {
@@ -149,6 +150,7 @@ export class DOMNode {
     set innerHTML(html: string) {
         const fragment = new HTMLParser(html).dom();
         this.children = fragment.children;
+        this.potentialComponentChildren = fragment.potentialComponentChildren;
     }
 
     get outerHTML(): string {
