@@ -34,7 +34,7 @@ export class DOMNode {
     // their tagName is not a recognized HTML tag.
     // this is not required but should provide a big performance boost, especially in large documents
     // as we don't have to traverse the entire DOM tree to find components in Component.initChildren
-    potentialComponentChildren: Record<string, Array<DOMNode>> = {}
+    potentialComponentChildren: Array<DOMNode> = [];
 
     // root should always be a DOMFragment, except when the instance itself is DOMFragment
     // in which case it will be null, and this is assumed to be the root
@@ -118,10 +118,7 @@ export class DOMNode {
     registerPotentialComponent(node: DOMNode): void {
         if (this.parentNode !== null) {
             if (this.parentNode.isRoot || this.parentNode.isPotentialComponent()) {
-                if (! (node.tagName in this.parentNode.potentialComponentChildren)) {
-                    this.parentNode.potentialComponentChildren[node.tagName] = [];
-                }
-                this.parentNode.potentialComponentChildren[node.tagName].push(node);
+                this.parentNode.potentialComponentChildren.push(node);
             } else {
                 // parentNode is not a component/root
                 // propagate until first component is found
@@ -132,9 +129,7 @@ export class DOMNode {
 
     // returns an array of all child DOMNodes that are potentially a component
     components(): Array<DOMNode> {
-        return Object.values(this.potentialComponentChildren).reduce((prev, curr) => {
-            return prev.concat(curr);
-        }, []);
+        return this.potentialComponentChildren;
     }
 
     get innerHTML(): string {
