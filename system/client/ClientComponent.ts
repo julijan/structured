@@ -22,10 +22,6 @@ export class ClientComponent extends EventEmitter {
 
     private redrawRequest: XMLHttpRequest | null = null;
 
-    // optional user defined callbacks
-    onDestroy?: Function;
-    onRedraw?: Function;
-
     // callbacks bound using bind method
     private bound: Array<{
         element: HTMLElement;
@@ -256,6 +252,8 @@ export class ClientComponent extends EventEmitter {
 
         if (this.destroyed) {return;}
 
+        this.emit('beforeRedraw');
+
         // set data if provided
         if (data) {
             objectEach(data, (key, val) => {
@@ -290,11 +288,6 @@ export class ClientComponent extends EventEmitter {
 
         // mark component as not loaded
         this.loaded = false;
-
-        // if user has defined onRedraw callback, run it
-        if (typeof this.onRedraw === 'function') {
-            this.onRedraw.apply(this)
-        }
 
         // remove all bound event listeners as DOM will get replaced in the process
         this.unbindAll();
@@ -376,6 +369,8 @@ export class ClientComponent extends EventEmitter {
 
         // mark component as loaded
         this.loaded = true;
+
+        this.emit('afterRedraw');
     }
 
     // populates conditionals and conditionalClassNames
@@ -1061,10 +1056,7 @@ export class ClientComponent extends EventEmitter {
             this.redrawRequest = null;
         }
 
-        // if the user has defined a destroy callback, run it
-        if (typeof this.onDestroy === 'function') {
-            await this.onDestroy.apply(this);
-        }
+        this.emit('beforeDestroy');
 
         this.store.destroy();
 
@@ -1082,6 +1074,8 @@ export class ClientComponent extends EventEmitter {
 
         // mark destroyed
         this.destroyed = true;
+
+        this.emit('afterDestroy');
     }
 
     // add an event listener to given DOM node
