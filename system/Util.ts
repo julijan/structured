@@ -314,8 +314,9 @@ function base64ToBytes(base64: string) {
   }
   
 function bytesToBase64(bytes: Uint8Array) {
-    const binString = String.fromCodePoint(...bytes);
-    return btoa(binString);
+    return btoa(bytes.reduce((prev, curr) => {
+        return prev + String.fromCharCode(curr);
+    }, ''));
 }
 
 export function attributeValueToString(key: string, value: any): string {
