@@ -146,27 +146,22 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
             return;
         }
 
-        if (typeof this.attributes.use === 'string' && this.parent !== null) {
-            // data-use was found on component tag
-            // if parent Component.data contains it, include it with data
-            // set data-component-parent when a component uses parent data
-            // it will be needed when the component is individually rendered
-            // componentInstances[j].setAttribute('data-component-parent', parentName);
-            this.attributes = Object.assign(this.importedParentData(this.parent.data) || {}, this.attributes);
-        }
-
         // load data
+        const importedParentData = this.parent ? this.importedParentData(this.parent.data) : {};
         if (data === undefined) {
+            // prepare any data imported from parent using data-use attribute
+
             if (this.entry && this.entry.module) {
                 // component has a server side part, fetch data using getData
-                this.data = Object.assign(this.data, await this.entry.module.getData(this.attributes, this.document.ctx, this.document.application, this) || {});
+                this.data = Object.assign(this.data, await this.entry.module.getData(Object.assign(importedParentData, this.attributes), this.document.ctx, this.document.application, this) || {});
             } else {
                 // if the component has no server side part
                 // then use attributes as data
+                this.attributes = Object.assign(importedParentData, this.attributes);
                 this.data = Object.assign(exportedContextData, this.attributes);
             }
         } else {
-            this.data = Object.assign(exportedContextData, data, this.attributes);
+            this.data = Object.assign(exportedContextData, Object.assign(importedParentData, data), this.attributes);
         }
 
         // fill in before loading the components as user may output new components depending on the data
