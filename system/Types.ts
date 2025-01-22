@@ -221,6 +221,12 @@ export type StoreChangeCallback = (key: string, value: any, oldValue: any, compo
 
 export type AsteriskAny = '*';
 
+export type ClientComponentBoundEvent = {
+    element: HTMLElement;
+    event: keyof HTMLElementEventMap;
+    callback: (e: Event) => void;
+}
+
 export type ClientComponentTransition = {
     fade: false|number,
     slide: false|number

@@ -1,4 +1,4 @@
-import { ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject, StoreChangeCallback } from '../Types.js';
+import { ClientComponentBoundEvent, ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject, StoreChangeCallback } from '../Types.js';
 import { attributeValueFromString, attributeValueToString, mergeDeep, objectEach, queryStringDecodedSetValue, toCamelCase } from '../Util.js';
 import { DataStoreView } from './DataStoreView.js';
 import { DataStore } from './DataStore.js';
@@ -23,11 +23,7 @@ export class ClientComponent extends EventEmitter {
     private redrawRequest: XMLHttpRequest | null = null;
 
     // callbacks bound using bind method
-    private bound: Array<{
-        element: HTMLElement;
-        event: string;
-        callback: (e: Event) => void;
-    }> = [];
+    private bound: Array<ClientComponentBoundEvent> = [];
 
     // DOM elements within the component that have a data-if attribute
     private conditionals: Array<HTMLElement> = [];
@@ -1080,7 +1076,7 @@ export class ClientComponent extends EventEmitter {
 
     // add an event listener to given DOM node
     // stores it to ClientComponent.bound so it can be unbound when needed using unbind/unbindAll
-    public bind(element: HTMLElement, event: string | Array<string>, callback: (e: Event) => void): void {
+    public bind(element: HTMLElement, event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap>, callback: (e: Event) => void): void {
         if (Array.isArray(event)) {
             event.forEach((eventName) => {
                 this.bind(element, eventName, callback);
@@ -1098,7 +1094,7 @@ export class ClientComponent extends EventEmitter {
     }
 
     // remove event listener added using bind method
-    public unbind(element: HTMLElement, event: string | Array<string>, callback: (e: Event) => void): void {
+    public unbind(element: HTMLElement, event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap>, callback: (e: Event) => void): void {
         if (Array.isArray(event)) {
             event.forEach((eventName) => {
                 this.unbind(element, eventName, callback);
