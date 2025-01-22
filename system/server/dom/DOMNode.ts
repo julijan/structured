@@ -10,8 +10,8 @@ type JSONNode = {
     strings: Array<string>
 }
 
-export const selfClosingTags: ReadonlyArray<string> = ['br', 'hr', 'input', 'img', 'link', 'meta', 'source', 'embed', 'path', 'area'];
-export const recognizedHTMLTags: ReadonlyArray<string> = ['body', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'b', 'i', 'a', 'em', 'strong', 'br', 'hr', 'abbr', 'bdi', 'bdo', 'blockquote', 'cite', 'code', 'del', 'dfn', 'ins', 'kbd', 'mark', 'pre', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'small', 'span', 'sub', 'sup', 'time', 'u', 'var', 'ul', 'ol', 'li', 'dl', 'dt', 'dd', 'img', 'area', 'map', 'object', 'param', 'table', 'tr', 'td', 'th', 'caption', 'colgroup', 'col', 'form', 'input', 'label', 'select', 'option', 'textarea', 'button', 'fieldset', 'datalist', 'iframe', 'audio', 'video', 'source', 'track', 'script', 'noscript', 'div', 'nav', 'aside', 'canvas', 'embed', 'template'];
+export const selfClosingTags: ReadonlyArray<string> = ['br', 'wbr', 'hr', 'input', 'img', 'link', 'meta', 'source', 'embed', 'path', 'area'];
+export const recognizedHTMLTags: ReadonlyArray<string> = ['body', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'b', 'i', 'a', 'em', 'strong', 'br', 'wbr', 'hr', 'abbr', 'bdi', 'bdo', 'blockquote', 'cite', 'code', 'del', 'dfn', 'ins', 'kbd', 'mark', 'pre', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'small', 'span', 'sub', 'sup', 'time', 'u', 'var', 'ul', 'ol', 'li', 'dl', 'dt', 'dd', 'img', 'area', 'map', 'object', 'param', 'table', 'tr', 'td', 'th', 'caption', 'colgroup', 'col', 'form', 'input', 'label', 'select', 'option', 'textarea', 'button', 'fieldset', 'datalist', 'iframe', 'audio', 'video', 'source', 'track', 'script', 'noscript', 'div', 'nav', 'aside', 'canvas', 'embed', 'template'];
 
 export class DOMNode {
 
