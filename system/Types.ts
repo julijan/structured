@@ -219,8 +219,6 @@ export type InitializerFunctionContext = {
 
 export type StoreChangeCallback = (key: string, value: any, oldValue: any, componentId: string) => void
 
-export type AsteriskAny = '*';
-
 export type ClientComponentBoundEvent = {
     element: HTMLElement;
     event: keyof HTMLElementEventMap;

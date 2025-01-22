@@ -1,4 +1,4 @@
-import { AsteriskAny, StoreChangeCallback } from '../Types.js';
+import { StoreChangeCallback } from '../Types.js';
 import { equalDeep } from '../Util.js';
 import { ClientComponent } from './ClientComponent.js';
 
@@ -76,7 +76,7 @@ export class DataStore {
 
     // add callback to be called when a given key's value is changed
     // if key === '*' then it will be called when any of the key's values is changed
-    public onChange(componentId: string, key: string | AsteriskAny, callback: StoreChangeCallback): DataStore {
+    public onChange(componentId: string, key: string, callback: StoreChangeCallback): DataStore {
         if (! (componentId in this.changeListeners)) {
             this.changeListeners[componentId] = {};
         }

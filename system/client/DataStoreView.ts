@@ -1,4 +1,4 @@
-import { AsteriskAny, StoreChangeCallback } from '../Types.js';
+import { StoreChangeCallback } from '../Types.js';
 import { ClientComponent } from './ClientComponent.js';
 import { DataStore } from './DataStore.js';
 
@@ -69,7 +69,7 @@ export class DataStoreView {
 
     // add callback to be called when a given key's value is changed
     // if key === '*' then it will be called when any of the key's values is changed
-    public onChange(key: string | AsteriskAny, callback: StoreChangeCallback): DataStoreView {
+    public onChange(key: string, callback: StoreChangeCallback): DataStoreView {
         if (this.destroyed) {return this;}
         this.store.onChange(this.componentId(), key, callback);
         return this;
