@@ -144,26 +144,38 @@ export class ClientComponent extends EventEmitter {
         this.initializerExecuted = true;
     }
 
-    // parse all data-[key] attributes found on this.domNode into this.data object
-    // key converted to camelCase
+    // populates this.data with data found as data- prefixed attributes on this.domNode
+    // this data can be accessed using this.getData
+    private initData(): void {
+        objectEach(this.attributeData(this.domNode), (key, val) => {
+            this.setData(key, val, false);
+        });
+    }
+
+    // parses all data-[key] attributes found on given HTMLElement into an object
+    // keys are converted to camelCase
     // values are expected to be encoded using attributeValueToString
     // and will be decoded using attributeValueFromString
-    private initData(): void {
-        for (let i = 0; i < this.domNode.attributes.length; i++) {
-            // data-attr, convert to dataAttr and store value
-            if (/^((number|string|boolean|object|any):)?data-[^\s]+/.test(this.domNode.attributes[i].name)) {
-                const value = this.domNode.attributes[i].value;
+    private attributeData(node: HTMLElement): LooseObject {
+        const data: LooseObject = {};
+
+        for (let i = 0; i < node.attributes.length; i++) {
+            if (/^((number|string|boolean|object|any):)?data-[^\s]+/.test(node.attributes[i].name)) {
+                // data-attr, convert to dataAttr and store value
+                const value = node.attributes[i].value;
                 const attrData = attributeValueFromString(value);
 
                 if (typeof attrData === 'object') {
-                    this.setData(attrData.key, attrData.value, false);
+                    data[attrData.key] = attrData.value;
                 } else {
                     // not a valid attribute data string, assign as is (string)
-                    const key = toCamelCase(this.domNode.attributes[i].name.substring(5));
-                    this.setData(key, attrData, false);
+                    const key = toCamelCase(node.attributes[i].name.substring(5));
+                    data[key] = attrData;
                 }
             }
         }
+
+        return data;
     }
 
     // array of attribute data all the way up to root, or the first component with no dependencies (no data-use attribute)
