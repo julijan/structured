@@ -1079,7 +1079,7 @@ export class ClientComponent extends EventEmitter {
     }
 
     // add an event listener to given DOM node
-    // stores it to ClientComponent.bound so it can be unbound when needed using unbindAll
+    // stores it to ClientComponent.bound so it can be unbound when needed using unbind/unbindAll
     public bind(element: HTMLElement, event: string | Array<string>, callback: (e: Event) => void): void {
         if (Array.isArray(event)) {
             event.forEach((eventName) => {
@@ -1094,6 +1094,24 @@ export class ClientComponent extends EventEmitter {
                 callback
             });
             element.addEventListener(event, callback);
+        }
+    }
+
+    // remove event listener added using bind method
+    public unbind(element: HTMLElement, event: string | Array<string>, callback: (e: Event) => void): void {
+        if (Array.isArray(event)) {
+            event.forEach((eventName) => {
+                this.unbind(element, eventName, callback);
+            });
+            return;
+        }
+        const boundIndex = this.bound.findIndex((bound) => {
+            return bound.event === event && bound.element === element && callback === callback;
+        });
+        if (boundIndex > -1) {
+            const bound = this.bound[boundIndex];
+            bound.element.removeEventListener(bound.event, bound.callback);
+            this.bound.splice(boundIndex, 1);
         }
     }
 
