@@ -9,3 +9,4 @@ system/client/app/*.ts
 tailwind.config.cjs
 .vscode
 package-lock.json
+*.tgz
