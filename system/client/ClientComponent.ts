@@ -1,4 +1,4 @@
-import { ClientComponentBoundEvent, ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject, StoreChangeCallback } from '../Types.js';
+import { ClientComponentBoundEvent, ClientComponentEventCallback, ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject, StoreChangeCallback } from '../Types.js';
 import { attributeValueFromString, attributeValueToString, mergeDeep, objectEach, queryStringDecodedSetValue, toCamelCase } from '../Util.js';
 import { DataStoreView } from './DataStoreView.js';
 import { DataStore } from './DataStore.js';
@@ -23,7 +23,7 @@ export class ClientComponent extends EventEmitter {
     private redrawRequest: XMLHttpRequest | null = null;
 
     // callbacks bound using bind method
-    private bound: Array<ClientComponentBoundEvent> = [];
+    private bound: Array<ClientComponentBoundEvent<LooseObject | undefined>> = [];
 
     // DOM elements within the component that have a data-if attribute
     private conditionals: Array<HTMLElement> = [];
@@ -1082,7 +1082,14 @@ export class ClientComponent extends EventEmitter {
 
     // add an event listener to given DOM node
     // stores it to ClientComponent.bound so it can be unbound when needed using unbind/unbindAll
-    public bind(element: HTMLElement, event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap>, callback: (e: Event) => void): void {
+    // callback receives event as the first argument, attributeData as the second argument
+    // type of expected attribute data can be specified as generic
+    public bind<T extends LooseObject | undefined = undefined>(
+        element: HTMLElement,
+        event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap>,
+        callback: ClientComponentEventCallback<T>
+    ): void {
+
         if (Array.isArray(event)) {
             event.forEach((eventName) => {
                 this.bind(element, eventName, callback);
@@ -1090,17 +1097,28 @@ export class ClientComponent extends EventEmitter {
             return;
         }
         if (element instanceof HTMLElement) {
+            // wrap provided callback
+            // wrapper will make sure provided callback receives data (attributeData) as the second argument
+            const callbackWrapper = (e: Event) => {
+                callback.apply(this, [e, this.attributeData(element)]);
+            }
             this.bound.push({
                 element,
                 event,
-                callback
+                callback: callbackWrapper,
+                callbackOriginal: callback
             });
-            element.addEventListener(event, callback);
+            element.addEventListener(event, callbackWrapper);
         }
     }
 
     // remove event listener added using bind method
-    public unbind(element: HTMLElement, event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap>, callback: (e: Event) => void): void {
+    public unbind<T extends LooseObject | undefined = undefined>(
+        element: HTMLElement,
+        event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap>,
+        callback: ClientComponentEventCallback<T>
+    ): void {
+
         if (Array.isArray(event)) {
             event.forEach((eventName) => {
                 this.unbind(element, eventName, callback);
@@ -1108,7 +1126,7 @@ export class ClientComponent extends EventEmitter {
             return;
         }
         const boundIndex = this.bound.findIndex((bound) => {
-            return bound.event === event && bound.element === element && callback === callback;
+            return bound.event === event && bound.element === element && bound.callbackOriginal === callback;
         });
         if (boundIndex > -1) {
             const bound = this.bound[boundIndex];
