@@ -1080,7 +1080,13 @@ export class ClientComponent extends EventEmitter {
 
     // add an event listener to given DOM node
     // stores it to ClientComponent.bound so it can be unbound when needed using unbindAll
-    public bind(element: HTMLElement, event: string, callback: (e: Event) => void): void {
+    public bind(element: HTMLElement, event: string | Array<string>, callback: (e: Event) => void): void {
+        if (Array.isArray(event)) {
+            event.forEach((eventName) => {
+                this.bind(element, eventName, callback);
+            });
+            return;
+        }
         if (element instanceof HTMLElement) {
             this.bound.push({
                 element,
