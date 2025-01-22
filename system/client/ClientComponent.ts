@@ -36,12 +36,8 @@ export class ClientComponent extends EventEmitter {
         className: string
     }> = [];
 
-    private refs: {
-        [key: string]: HTMLElement | ClientComponent;
-    } = {};
-    private refsArray: {
-        [key: string]: Array<HTMLElement | ClientComponent>;
-    } = {};
+    private refs: Record<string, HTMLElement | ClientComponent> = {};
+    private refsArray: Record<string, Array<HTMLElement | ClientComponent>> = {};
 
     loaded: boolean = false;
 
@@ -50,9 +46,7 @@ export class ClientComponent extends EventEmitter {
     private initializer: InitializerFunction | null = null;
 
     // data-attr are parsed into an object
-    private data: {
-        [key: string]: any;
-    } = {};
+    private data: LooseObject = {};
 
     constructor(parent: ClientComponent | null, name: string, domNode: HTMLElement, store: DataStore, runInitializer: boolean = true) {
         super();
