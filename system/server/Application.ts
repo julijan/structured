@@ -33,6 +33,13 @@ export class Application {
     // fields from RequestContext.data to be exported for all components
     readonly exportedRequestContextData: Array<keyof RequestContextData> = [];
 
+    // not used by the framework, meant for users to store data they want to have globally available
+    // at the moment it is not type safe and should not be heavily used
+    // good use case is if you need to cache a few bits of expensive-to-compute data
+    // that you need to use globally, which does not belong to session
+    // this can be accessed from routes and component server side code
+    data: LooseObject = {}
+
     constructor(config: StructuredConfig) {
         this.config = config;
 
