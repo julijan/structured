@@ -355,14 +355,40 @@ export class Request {
 
             if (ctx.request.headers['content-type'].indexOf('urlencoded') > -1) {
                 // application/x-www-form-urlencoded
-                ctx.body = queryStringDecode(ctx.bodyRaw.toString('utf-8'));
+                const bodyRaw = ctx.bodyRaw.toString('utf-8');
+                try {
+                    ctx.body = queryStringDecode(bodyRaw);
+                } catch (e) {
+                    console.error(`Error parsing urlencoded request body for request to ${ctx.request.url}, (${e.message}).
+                    Raw data:
+                        ${bodyRaw}
+
+                    `);
+                }
             } else if (ctx.request.headers['content-type'].indexOf('multipart/form-data') > -1) {
                 // multipart/form-data
                 let boundary: RegExpExecArray|null|string = /^multipart\/form-data; boundary=(.+)$/.exec(ctx.request.headers['content-type']);
                 if (boundary) {
                     boundary = `--${boundary[1]}`;
-                    ctx.body = Request.parseBodyMultipart(ctx.bodyRaw.toString('utf-8'), boundary);
-                    ctx.files = Request.multipartBodyFiles(ctx.bodyRaw.toString('binary'), boundary);
+                    try {
+                        ctx.body = Request.parseBodyMultipart(ctx.bodyRaw.toString('utf-8'), boundary);
+                    } catch (e) {
+                        console.error(`Error parsing multipart request body for request to ${ctx.request.url}, (${e.message}).
+                        Raw data:
+                            ${ctx.bodyRaw.toString('utf-8')}
+                            
+                        `);
+                    }
+
+                    try {
+                        ctx.files = Request.multipartBodyFiles(ctx.bodyRaw.toString('binary'), boundary);
+                    } catch (e) {
+                        console.error(`Error parsing multipart request body files for request to ${ctx.request.url}, (${e.message}).
+                        Raw data:
+                            ${ctx.bodyRaw.toString('utf-8')}
+                            
+                        `);
+                    }
                 }
             } else if (ctx.request.headers['content-type'].indexOf('application/json') > -1) {
                 // application/json
