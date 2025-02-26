@@ -145,7 +145,7 @@ export class Document extends Component<{'componentCreated': Component}> {
             encoding: 'utf-8'
         }).toString();
 
-        await this.init(stripBOM(html), data);
+        await this.init(stripBOM(html).replace(/\r/g, ''), data);
         
         return true;
     }

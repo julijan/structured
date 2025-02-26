@@ -107,7 +107,7 @@ export class Components {
         const html = readFileSync(path, {
             encoding: 'utf-8'
         }).toString();
-        return this.stripComments(stripBOM(html));
+        return this.stripComments(stripBOM(html).replace(/\r/g, ''));
     }
 
     // remove all HTML comments
