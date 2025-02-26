@@ -214,6 +214,10 @@ export class HTMLParser {
         return this.html.substring(0, this.offset).split('\n').length;
     }
 
+    private lineChar(): number {
+        return this.offset % this.html.split('\n').slice(0, this.line()).length;
+    }
+
     private isLetter(charCode: number): boolean {
         const isLowerCase = charCode > 96 && charCode < 123;
         if (isLowerCase) {return true;}
@@ -232,7 +236,12 @@ export class HTMLParser {
     }
 
     private error(message: string): Error {
-        return new Error(`HTMLParser: ${message}\nLine ${this.line()}\nHTML:\n${this.html}\n`);
+        return new Error(`
+        HTMLParser: ${message}
+        Line ${this.line()}, col ${this.lineChar()}
+        Char ${this.char()}, code ${this.char().charCodeAt(0)}
+        HTML:
+        ${this.html}`);
     }
 
 }
