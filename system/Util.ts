@@ -487,3 +487,9 @@ export function mergeDeep(target: any, ...sources: Array<any>): LooseObject {
 
     return mergeDeep(target, ...sources);
 }
+
+// remove BOM char if included
+export function stripBOM(str: string): string {
+    const includesBOM = str.charCodeAt(0) === 0xFEFF;
+    return includesBOM ? str.slice(1) : str;
+}

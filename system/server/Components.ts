@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import * as path from 'node:path';
 import { ComponentEntry, StructuredConfig } from '../Types.js';
 import { Application } from './Application.js';
+import { stripBOM } from '../Util.js';
 
 export class Components {
 
@@ -103,9 +104,10 @@ export class Components {
 
     // load HTML from given path
     private loadHTML(path: string): string {
-        return this.stripComments(readFileSync(path, {
+        const html = readFileSync(path, {
             encoding: 'utf-8'
-        }).toString());
+        }).toString();
+        return this.stripComments(stripBOM(html));
     }
 
     // remove all HTML comments

@@ -5,7 +5,7 @@ import { Initializers, LooseObject, RequestContext, StructuredClientConfig } fro
 import { Application } from './Application.js';
 import { DocumentHead } from './DocumentHead.js';
 import { Component } from './Component.js';
-import { attributeValueToString, randomString } from '../Util.js';
+import { attributeValueToString, randomString, stripBOM } from '../Util.js';
 import path from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 
@@ -145,7 +145,7 @@ export class Document extends Component<{'componentCreated': Component}> {
             encoding: 'utf-8'
         }).toString();
 
-        await this.init(html, data);
+        await this.init(stripBOM(html), data);
         
         return true;
     }
