@@ -103,7 +103,9 @@ export class Components {
 
     // load HTML from given path
     private loadHTML(path: string): string {
-        return this.stripComments(readFileSync(path).toString());
+        return this.stripComments(readFileSync(path, {
+            encoding: 'utf-8'
+        }).toString());
     }
 
     // remove all HTML comments

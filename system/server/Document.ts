@@ -141,7 +141,9 @@ export class Document extends Component<{'componentCreated': Component}> {
             return false;
         }
 
-        const html = readFileSync(viewPath).toString();
+        const html = readFileSync(viewPath, {
+            encoding: 'utf-8'
+        }).toString();
 
         await this.init(html, data);
         
