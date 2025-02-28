@@ -169,7 +169,7 @@ export function queryStringDecode(queryString: string, initialValue: PostedDataD
     return initialValue;
 }
 
-// sometimes we want to use queryStringDeocde simply to parse a complex query string
+// sometimes we want to use queryStringDecode simply to parse a complex query string
 // with nested keys into an object, with intent to assign a non-primitive value to it later
 // for example decoding "obj[nested][key]" would produce { obj: { nested: { key: true } } }
 // we might want to set the "key" to something other than true, or another primitive value
@@ -339,8 +339,10 @@ export function attributeValueFromString(attributeValue: string): string|{
         
             const valObj = JSON.parse(decoded);
         
-            if (! ('value' in valObj) || ! ('key' in valObj)) {
+            if (!('key' in valObj)) {
                 // unrecognized object
+                // object encoded using attributeValueToString will always have the "key" property
+                // "value" property is also always present except when value is undefined
                 return decoded;
             }
         
@@ -406,7 +408,7 @@ export function equalDeep(a: LooseObject, b: LooseObject): boolean {
             // value type different, not same
             return false;
         } else {
-            // same type, if primitive, comapre values
+            // same type, if primitive, compare values
             if (typeA !== 'object') {
                 if (valA !== valB) {
                     return false;
@@ -415,7 +417,7 @@ export function equalDeep(a: LooseObject, b: LooseObject): boolean {
         }
 
         // values have the same type, if they were exact same they would already pass this iteration
-        // at this point primitives have been compared in the first check in the itration
+        // at this point primitives have been compared in the first check in the iteration
         // both types should be "object" at this point (object, array or null)
         // null is also an object, make sure either both are null, or none is null
         if ((valA === null && valB !== null) || (valA !== null && valB === null)) {
