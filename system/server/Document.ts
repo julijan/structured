@@ -1,13 +1,13 @@
 import { ServerResponse } from 'node:http';
-import { Md5 } from 'ts-md5';
 
 import { Initializers, LooseObject, RequestContext, StructuredClientConfig } from '../../system/Types.js';
 import { Application } from './Application.js';
 import { DocumentHead } from './DocumentHead.js';
 import { Component } from './Component.js';
-import { attributeValueToString, randomString, stripBOM } from '../Util.js';
+import { attributeValueToString, stripBOM } from '../Util.js';
 import path from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 
 export class Document extends Component<{'componentCreated': Component}> {
 
@@ -98,38 +98,8 @@ export class Document extends Component<{'componentCreated': Component}> {
 
     // generate an unique component id and store it to componentIds
     // so that each component within the document has an unique id
-    allocateId(component: Component): string {
-        if (! this.componentIds) {
-            // if auto initialized it may have not yet initialized it as an empty array
-            this.componentIds = [];
-        }
-
-        // if component has data-id then md5(ComponentName:id), otherwise md5(ComponentName:DOM path:attributes JSON string)
-        let id = Md5.hashStr(`${component.name}:${'id' in component.attributes ? component.attributes.id : `${component.path.join('/')}:${JSON.stringify(component.attributesRaw)}`}`);
-        
-        // but multiple components might render the exact same thing
-        // so in those cases travel up the tree and append the MD5 sum of the parent
-        if (this.componentIds.includes(id)) {
-            let current: Component|Document|null = component.parent;
-
-            do {
-                if (current === null || current.isRoot) {
-                    // reached root without being able to uniquely identify
-                    // resort to a random string
-                    // these components won't work as expected
-                    // they will lose access to their store (client side) whenever they or their parent is redrawn
-                    console.error(`Could not define an unique ID for component ${component.name}, path: ${component.path}`);
-                    id = randomString(16);
-                } else {
-                    id += '-' + Md5.hashStr(current.dom.outerHTML);
-                }
-                current = current?.parent || null;
-            } while(this.componentIds.includes(id));
-        }
-
-        this.componentIds.push(id);
-
-        return id;
+    allocateId(): string {
+        return randomUUID();
     }
 
     // load the view from file system

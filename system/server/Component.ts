@@ -111,7 +111,7 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
         // allocate an unique ID for this component
         // used client side to uniquely identify the component when it accesses it's storage
         if (typeof this.attributes.componentId !== 'string') {
-            this.id = this.document.allocateId(this);
+            this.id = this.document.allocateId();
             this.dom.setAttribute('data-component-id', this.id);
         } else {
             this.id = this.attributes.componentId;
