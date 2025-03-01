@@ -148,20 +148,25 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
 
         // load data
         const importedParentData = this.parent ? this.importedParentData(this.parent.data) : {};
+        const dataServerSidePart = (this.entry && this.entry.module ?
+            await this.entry.module.getData(
+                Object.assign(importedParentData, this.attributes, data || {}),
+                this.document.ctx,
+                this.document.application,
+                this
+            ) : {}) || {};
         if (data === undefined) {
-            // prepare any data imported from parent using data-use attribute
-
             if (this.entry && this.entry.module) {
                 // component has a server side part, fetch data using getData
-                this.data = Object.assign(this.data, await this.entry.module.getData(Object.assign(importedParentData, this.attributes), this.document.ctx, this.document.application, this) || {});
+                this.data = Object.assign(this.data, dataServerSidePart);
             } else {
                 // if the component has no server side part
                 // then use attributes as data
                 this.attributes = Object.assign(importedParentData, this.attributes);
-                this.data = Object.assign(exportedContextData, this.attributes);
+                this.data = Object.assign(this.data, this.attributes);
             }
         } else {
-            this.data = Object.assign(exportedContextData, Object.assign(importedParentData, data), this.attributes);
+            this.data = Object.assign(this.data, Object.assign(importedParentData, data), this.attributes, dataServerSidePart);
         }
 
         // fill in before loading the components as user may output new components depending on the data
