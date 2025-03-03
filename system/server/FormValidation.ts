@@ -7,6 +7,8 @@ export class FormValidation {
     // if true, only a single error is kept per field
     singleError: boolean = false;
 
+    customValidators: Array<string> = [];
+
     validators: {
         [name: string] : ValidatorFunction
     } = {
@@ -132,6 +134,8 @@ export class FormValidation {
         if (typeof decorator === 'function') {
             this.decorators[name] = decorator;
         }
+
+        this.customValidators.push(name);
     }
 
     public registerDecorator(name: string, decorator: ValidatorErrorDecorator): void {
@@ -154,11 +158,15 @@ export class FormValidation {
             const value = data[entry.field[0]];
             const possiblyValidDataExists = typeof value === 'string';
 
+            const usesCustomValidators = this.fieldRules[i].rules.some((rule) => {
+                return this.customValidators.includes(rule as string);
+            });
+
             // content - a non required field that is not passed or is blank
             // will pass all checks, for example rules ['numeric']
             // we expect the field to contain a numeric value, but we don't expect the field to exist in the first place
             // se all validators are skipped for content entries
-            const isContent = ! isRequired && (! possiblyValidDataExists  || value.trim().length === 0);
+            const isContent = !usesCustomValidators && !isRequired && (! possiblyValidDataExists  || value.trim().length === 0);
 
             if (! isContent) {
                 for (let j = 0; j < entry.rules.length; j++) {
