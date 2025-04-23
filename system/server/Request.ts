@@ -482,11 +482,16 @@ export class Request {
     public static parseBodyMultipart(bodyRaw: string, boundary: string): PostedDataDecoded {
         const pairsRaw = bodyRaw.split(boundary);
         const pairs = pairsRaw.map((pair) => {
-            const parts = /Content-Disposition: form-data; name="([^\r\n"]+)"\r?\n\r?\n([^$]+)/m.exec(pair);
-            if (parts) {
-                return {
-                    key: parts[1],
-                    value: parts[2]
+            const parts = pair.split(/\r?\n\r?\n/, 2).filter((part) => {return part.length > 0});
+            if (parts.length > 0) {
+                const header = parts[0];
+                const data = typeof parts[1] === 'string' ? parts[1].trim() : '';
+                const headerParts = /Content-Disposition: form-data; name="([^\r\n"]+)"/m.exec(header);
+                if (headerParts) {
+                    return {
+                        key: headerParts[1],
+                        value: data
+                    }
                 }
             }
             return null;
