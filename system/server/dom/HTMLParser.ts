@@ -131,7 +131,9 @@ export class HTMLParser {
                 }
                 // tag closed, switch context to parent of the current context
                 this.context = this.context.parentNode || this.fragment;
-                this.state = 'idle';
+                this.state = 'text';
+                this.tokenCurrent = '';
+                return true;
             }
             this.tokenCurrent += char;
         } else if (this.state === 'text') {
