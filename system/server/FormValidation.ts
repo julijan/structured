@@ -1,4 +1,4 @@
-import { FormValidationEntry, PostedDataDecoded, ValidationErrors, ValidationErrorsSingle, ValidationResult, ValidationRuleWithArguments, ValidatorErrorDecorator, ValidatorFunction } from '../Types.js';
+import { FormValidationEntry, LooseObject, PostedDataDecoded, ValidationErrors, ValidationErrorsSingle, ValidationResult, ValidationRuleWithArguments, ValidatorErrorDecorator, ValidatorFunction } from '../Types.js';
 
 export class FormValidation {
 
@@ -13,37 +13,63 @@ export class FormValidation {
         [name: string] : ValidatorFunction
     } = {
         'required' : async (data, field) => {
+            // works with all data types
+            // if field is missing or contains null, undefined or an empty string it returns false
+            // 
             if (! (field in data)) {
                 // field missing but required
                 return false;
             }
 
             const value = data[field];
-            if (typeof value !== 'string') {return false;}
 
-            // field exists, but consider empty strings non valid
-            return value.trim().length > 0;
+            if (
+                value === null ||
+                value === undefined ||
+                (typeof value === 'string' && value.trim().length === 0)
+            ) {
+                return false;
+            }
+
+            // field contains other types of data that shouldn't be considered missing
+            return true;
         },
         'number' : async (data, field) => {
-            // does not need to be a number, but rather contain only numbers
-            // eg. 14
+            // data expected to be a number or a string containing a number
             const value = data[field];
+
+            if (typeof value === 'number') {return true;}
+
             if (typeof value !== 'string') {return false;}
             return /^-?\d+$/.test(value);
         },
         'float' : async (data, field) => {
-            // 14.2
+            // numbers pass in all cases
+            // strings have to contain a decimal point
             const value = data[field];
+
+            if (typeof value === 'number') {return true;}
+
             if (typeof value !== 'string') {return false;}
             return /^-?\d+\.\d+$/.test(value);
         },
         'numeric' : async (data, field, arg, rules) => {
-            // 14 or 14.2
+            // value can be string or number, whole numbers and decimal are both accepted
             return await this.validators['number'](data, field, arg, rules) || await this.validators['float'](data, field, arg, rules);
         },
         'min' : async(data, field, arg, rules) => {
+            // value can be a number or a string
+            // contained value has to be greater or equal to arg
             const value = data[field];
-            if (typeof value !== 'string') {return false;}
+            
+            if (typeof value === 'number') {
+                return value >= arg;
+            }
+
+            if (typeof value !== 'string') {
+                return false;
+            }
+
             if (await this.validators['numeric'](data, field, arg, rules)) {
                 return parseFloat(value) >= arg;
             }
@@ -51,8 +77,18 @@ export class FormValidation {
             return false;
         },
         'max' : async(data, field, arg, rules) => {
+            // value can be a number or a string
+            // contained value has to be less or equal to arg
             const value = data[field];
-            if (typeof value !== 'string') {return false;}
+
+            if (typeof value === 'number') {
+                return value <= arg;
+            }
+
+            if (typeof value !== 'string') {
+                return false;
+            }
+
             if (await this.validators['numeric'](data, field, arg, rules)) {
                 return parseFloat(value) <= arg;
             }
@@ -142,7 +178,7 @@ export class FormValidation {
         this.decorators[name] = decorator;
     }
 
-    public async validate(data: PostedDataDecoded): Promise<ValidationResult> {
+    public async validate(data: LooseObject): Promise<ValidationResult> {
 
         const result: ValidationResult = {
             valid: true,
