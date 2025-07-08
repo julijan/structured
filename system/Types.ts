@@ -222,7 +222,7 @@ export type StoreChangeCallback = (key: string, value: any, oldValue: any, compo
 export type ClientComponentEventCallback<T> = T extends undefined ? (e: Event) => void : (e: Event, data: T) => void;
 
 export type ClientComponentBoundEvent<T extends LooseObject | undefined = undefined> = {
-    element: HTMLElement,
+    element: HTMLElement | Window,
     event: keyof HTMLElementEventMap,
     callback: (e: Event) => void,
     callbackOriginal: ClientComponentEventCallback<T>
