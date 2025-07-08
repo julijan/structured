@@ -24,7 +24,6 @@
     "develop": "tsc --watch",
     "startDev": "cd build && nodemon --watch '../app/**/*' --watch '../build/**/*' -e js,html,css index.js",
     "start": "cd build && node index.js",
-    "prepublish": "tsc",
     "pack": "tsc && npm pack",
     "publish": "tsc && npm publish"
   },
@@ -57,6 +56,7 @@
     "./Component": "./build/system/server/Component.js",
     "./Layout": "./build/system/server/Layout.js",
     "./FormValidation": "./build/system/server/FormValidation.js",
-    "./ClientComponent": "./build/system/client/ClientComponent.js"
+    "./ClientComponent": "./build/system/client/ClientComponent.js",
+    "./Net": "./build/system/client/Net.js"
   }
 }
