@@ -1085,10 +1085,18 @@ export class ClientComponent extends EventEmitter {
     // callback receives event as the first argument, attributeData as the second argument
     // type of expected attribute data can be specified as generic
     public bind<T extends LooseObject | undefined = undefined>(
-        element: HTMLElement | Window,
+        element: HTMLElement | Window | Array<HTMLElement | Window>,
         event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap>,
         callback: ClientComponentEventCallback<T>
     ): void {
+        if (Array.isArray(element)) {
+            // multiple elements given
+            // bind for each individually
+            element.forEach((el) => {
+                this.bind(el, event, callback);
+            });
+            return;
+        }
 
         if (Array.isArray(event)) {
             event.forEach((eventName) => {
