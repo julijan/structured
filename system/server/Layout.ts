@@ -43,6 +43,15 @@ export class Layout {
         }
         const component = new Component(componentName, layoutComponent[0], doc, false);
         await component.init(`<${componentName}></${componentName}>`, data);
+
+        // add sytle="display: none" to elements with data-if attribute inside <template>
+        // Component already does this on root node, however, Layout component is initialized later
+        const conditionals = component.dom.queryByHasAttribute('data-if');
+
+        for (let i = 0; i < conditionals.length; i++) {
+            conditionals[i].style.display = 'none';
+        }
+
         return doc;
     }
 }
