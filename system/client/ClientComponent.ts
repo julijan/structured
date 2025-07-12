@@ -1109,7 +1109,7 @@ export class ClientComponent extends EventEmitter {
             // wrap provided callback
             // wrapper will make sure provided callback receives data (attributeData) as the second argument
             const callbackWrapper = (e: Event) => {
-                callback.apply(this, [e, isWindow ? {} : this.attributeData(element)]);
+                callback.apply(this, [e, isWindow ? undefined : this.attributeData(element), element]);
             }
             this.bound.push({
                 element,

@@ -219,7 +219,7 @@ export type InitializerFunctionContext = {
 
 export type StoreChangeCallback = (key: string, value: any, oldValue: any, componentId: string) => void
 
-export type ClientComponentEventCallback<T> = T extends undefined ? (e: Event) => void : (e: Event, data: T) => void;
+export type ClientComponentEventCallback<T> = (e: Event, data: T, element: HTMLElement | Window) => void;
 
 export type ClientComponentBoundEvent<T extends LooseObject | undefined = undefined> = {
     element: HTMLElement | Window,
