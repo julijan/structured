@@ -148,13 +148,18 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
 
         // load data
         const importedParentData = this.parent ? this.importedParentData(this.parent.data) : {};
-        const dataServerSidePart = (this.entry && this.entry.module ?
-            await this.entry.module.getData(
-                Object.assign(importedParentData, this.attributes, data || {}),
-                this.document.ctx,
-                this.document.application,
-                this
-            ) : {}) || {};
+        let dataServerSidePart: LooseObject = {}
+        try {
+            dataServerSidePart = (this.entry && this.entry.module ?
+                await this.entry.module.getData(
+                    Object.assign(importedParentData, this.attributes, data || {}),
+                    this.document.ctx,
+                    this.document.application,
+                    this
+                ) : {}) || {};
+        } catch(e) {
+            throw new Error(`Error executing getData in component ${this.name}: ${e.message}`);
+        }
         if (data === undefined) {
             if (this.entry && this.entry.module) {
                 // component has a server side part, fetch data using getData
@@ -402,6 +407,10 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
             return;
         }
         const html = this.entry ? this.entry.html : this.dom.innerHTML;
-        this.dom.innerHTML = this.document.application.handlebars.compile(html, data);
+        try {
+            this.dom.innerHTML = this.document.application.handlebars.compile(html, data);
+        } catch(e) {
+            throw new Error(`Error compiling Handlebars template in component ${this.name}, error: ${e.message}`);
+        }
     }
 }
