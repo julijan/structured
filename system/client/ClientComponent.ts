@@ -511,10 +511,8 @@ export class ClientComponent extends EventEmitter {
                 // include current node's data into initial update data
                 const field = modelNode.getAttribute('data-model');
                 if (field) {
-                    const isCheckbox = modelNode.tagName === 'INPUT' && modelNode.type === 'checkbox';
-                    const valueRaw = isCheckbox ? modelNode.checked : modelNode.value;
-                    const value = queryStringDecodedSetValue(field, valueRaw);
-                    data = mergeDeep(data, value);
+                    const valueObject = modelData(modelNode);
+                    data = mergeDeep(data, valueObject);
                 }
             });
 
