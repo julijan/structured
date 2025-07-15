@@ -260,7 +260,7 @@ export function isAsync(fn: Function): boolean {
     return fn.constructor.name === 'AsyncFunction';
 }
 
-export function randomString(len: number): string {
+export function randomString(len: number, method: 'alphanumeric' | 'numbers' | 'letters' | 'lettersUppercase' | 'lettersLowercase' = 'alphanumeric'): string {
     const charCodes: Uint8Array = new Uint8Array(len);
     const generators = [
         // uppercase letters
@@ -277,8 +277,25 @@ export function randomString(len: number): string {
         }
     ];
 
+    const generatorsUsed: Array<() => number> = [];
+
+    if (method === 'alphanumeric') {
+        // uses all generators
+        generatorsUsed.push(...generators);
+    } else if (method === 'numbers') {
+        // only numbers
+        generatorsUsed.push(generators[2]);
+    } else if (method === 'letters') {
+        // only letters
+        generatorsUsed.push(...generators.slice(0, 2));
+    } else if (method === 'lettersLowercase') {
+        generatorsUsed.push(generators[1]);
+    } else if (method === 'lettersUppercase') {
+        generatorsUsed.push(generators[0]);
+    }
+
     for (let i = 0; i < len; i++) {
-        charCodes[i] = generators[Math.floor(Math.random() * generators.length)]();
+        charCodes[i] = generatorsUsed[Math.floor(Math.random() * generatorsUsed.length)]();
     }
 
     return String.fromCodePoint(...charCodes);
