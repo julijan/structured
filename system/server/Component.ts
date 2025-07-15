@@ -155,7 +155,7 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
                     Object.assign(importedParentData, this.attributes, data || {}),
                     this.document.ctx,
                     this.document.application,
-                    this
+                    this as Component<{componentCreated: Component}>
                 ) : {}) || {};
         } catch(e) {
             throw new Error(`Error executing getData in component ${this.name}: ${e.message}`);
@@ -231,7 +231,7 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
             const potentialComponent = potentialComponents[i];
             const component = this.document.application.components.getByName(potentialComponent.tagName);
             if (component) {
-                const child = new Component(component.name, potentialComponent, this, false);
+                const child = new Component(component.name, potentialComponent, this as Component<{componentCreated: Component}>, false);
                 // promises.push(child.init(childNode.outerHTML, passData));
                 await child.init(potentialComponent.outerHTML, passData);
                 this.children.push(child);

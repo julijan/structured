@@ -1,10 +1,10 @@
 import { EventEmitterCallback } from "./Types.js";
 
 export class EventEmitter<T extends Record<string, any> = Record<string, any>> {
-    protected listeners: Partial<Record<keyof T, Array<EventEmitterCallback<any>>>> = {}
+    protected listeners: Partial<Record<Extract<keyof T, string>, Array<EventEmitterCallback<any>>>> = {}
 
     // add event listener
-    public on<K extends keyof T>(eventName: K, callback: EventEmitterCallback<T[K]>): void {
+    public on<K extends Extract<keyof T, string>>(eventName: K, callback: EventEmitterCallback<T[K]>): void {
         if (! Array.isArray(this.listeners[eventName])) {
             this.listeners[eventName] = [];
         }
@@ -13,10 +13,10 @@ export class EventEmitter<T extends Record<string, any> = Record<string, any>> {
     }
 
     // emit event with given payload
-    public emit(eventName: keyof T, payload?: any): void {
-        if (Array.isArray(this.listeners[eventName])) {
-            this.listeners[eventName].forEach((callback) => {
-                callback(payload);
+    public emit(eventName: Extract<keyof T, string>, payload?: any): void {
+        if (Array.isArray(this.listeners[eventName]) || Array.isArray(this.listeners['*'])) {
+            (this.listeners[eventName] || []).concat(this.listeners['*'] || []).forEach((callback) => {
+                callback(payload, eventName);
             });
         }
     }
