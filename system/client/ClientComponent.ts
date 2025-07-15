@@ -460,7 +460,53 @@ export class ClientComponent extends EventEmitter {
             if (field) {
                 const isCheckbox = node.tagName === 'INPUT' && node.type === 'checkbox';
                 const valueRaw = isCheckbox ? node.checked : node.value;
-                const value = queryStringDecodedSetValue(field, valueRaw);
+                let valueCasted: string | number | boolean | null = valueRaw;
+
+                if (!isCheckbox && typeof valueRaw === 'string') {
+                    // if data-type is found on node try casting data to desired type
+                    // recognized values are string (no type casting), number and boolean
+                    // data casting not done for checkboxes, they always yield a boolean
+                    const dataType = isCheckbox ? 'boolean' : node.getAttribute('data-type') || 'string';
+
+                    // if data-nullable is found on node, empty string is considered null
+                    const nullable = node.hasAttribute('data-nullable');
+
+                    if (nullable && valueRaw.trim().length === 0) {
+                        // value is an empty string, if nullable, set value to null
+                        valueCasted = null;
+                    } else {
+                        if (dataType === 'number') {
+                            // cast to number
+
+                            if (valueRaw.trim().length === 0) {
+                                // empty string, assume 0
+                                valueCasted = 0;
+                            } else {
+                                // value not empty
+                                const num = parseFloat(valueRaw);
+    
+                                if (isNaN(num)) {
+                                    // invalid number entered, null if nullable, otherwise 0
+                                    valueCasted = nullable ? null : 0;
+                                } else {
+                                    valueCasted = num;
+                                }
+                            }
+
+                        } else if (dataType === 'boolean') {
+
+                            // "1" and "true" casted to true, otherwise false
+                            if (valueRaw === '1' || valueRaw === 'true') {
+                                valueCasted = true;
+                            } else {
+                                valueCasted = false;
+                            }
+                        }
+                    }
+
+                }
+
+                const value = queryStringDecodedSetValue(field, valueCasted);
                 return value;
             }
             return {}
