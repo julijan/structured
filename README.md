@@ -689,6 +689,51 @@ then in ComponentName.html:
 <div data-if="showDiv()"></div>
 ```
 
+### Models
+Every component client side part has it's own data store accessed by this.store. That is the primary way of storing data for your components client side, because it will survive on redraw and you can subscribe to data changes in the store using `this.store.onChange`.
+
+That being said, we need an easy way to use input fields to set values in the store, as that's often what we do when we make web apps.
+
+You can, of course, bind an even listener to the input and set the store value, that's quite easy, but we can accomplis this using `data-model` attribute.
+
+You can add data-model to any HTMLInput within your component, and it will automatically update the store on input value change.
+
+For example:
+
+Direct key:\
+`<input type="text" data-model="name">`
+
+Direct key access:\
+`this.store.get<string>('name')`
+`// returns string`
+
+Nested keys:\
+`<input type="text" data-model="user[name]">`
+
+Nested key access:\
+`this.store.get<LooseObject>('user')`
+`// returns { name: string }`
+
+
+You can nest the keys to any depth, or even make the value an array member if you end the key with `[]`, for example:
+```
+<input type="text" data-model="user[hobbies][]">
+this.store.get<LooseObject>('user')
+// returns { user: { hobbies: Array<string> } }
+```
+
+You can use two modifier attributes with `data-model`:
+- `data-type`
+- `data-nullable`
+
+`data-type` - cast value to given type. Can be one of number | boolean | string, string has no effect as HTMLInput values are already a string by default.\
+If number: if input is empty or value casts to `NaN` then `0` (unless `data-nullable` in which case `null`), othrwise the casted number (uses parseFloat so it works with decimal numbers)\
+If boolean: `"1"` and `"true"` casted to `true`, otherwise `false`\
+If string no type casting is attempted.
+
+`data-nullable` - value of this attribute is unused, as long as the attribute is present on the input, empty values will be casted to `null`. Can be used in conjunction with `data-type`
+
+
 ### Layout
 Prior to version 0.8.7:
 
