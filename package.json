@@ -55,6 +55,7 @@
     "./Document": "./build/system/server/Document.js",
     "./Component": "./build/system/server/Component.js",
     "./Layout": "./build/system/server/Layout.js",
+    "./DOMNode": "./build/system/server/dom/DOMNode.js",
     "./FormValidation": "./build/system/server/FormValidation.js",
     "./ClientComponent": "./build/system/client/ClientComponent.js",
     "./Net": "./build/system/client/Net.js"
