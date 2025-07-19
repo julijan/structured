@@ -451,74 +451,6 @@ export class ClientComponent extends EventEmitter {
             node = this.domNode;
         }
 
-        // given a HTMLInput element that has data-model attribute, returns an object with the data
-        // for example:
-        // data-model="name" may result with { name: "John" }
-        // data-model="user[name]" may result with { user: { name: "John" } }
-        const modelData = (node: HTMLInputElement): LooseObject => {
-            const field = node.getAttribute('data-model');
-            if (field) {
-                const isCheckbox = node.tagName === 'INPUT' && node.type === 'checkbox';
-                const valueRaw = isCheckbox ? node.checked : node.value;
-                let valueCasted: string | number | boolean | null = valueRaw;
-
-                if (!isCheckbox && typeof valueRaw === 'string') {
-                    // if data-type is found on node try casting data to desired type
-                    // recognized values are string (no type casting), number and boolean
-                    // data casting not done for checkboxes, they always yield a boolean
-                    const dataType = isCheckbox ? 'boolean' : node.getAttribute('data-type') || 'string';
-
-                    // if data-nullable is found on node, empty string is considered null
-                    const nullable = node.hasAttribute('data-nullable');
-
-                    if (nullable && valueRaw.trim().length === 0) {
-                        // value is an empty string, if nullable, set value to null
-                        valueCasted = null;
-                    } else {
-                        if (dataType === 'number') {
-                            // cast to number
-
-                            if (valueRaw.trim().length === 0) {
-                                // empty string, assume 0
-                                valueCasted = 0;
-                            } else {
-                                // value not empty
-                                const num = parseFloat(valueRaw);
-    
-                                if (isNaN(num)) {
-                                    // invalid number entered, null if nullable, otherwise 0
-                                    valueCasted = nullable ? null : 0;
-                                } else {
-                                    valueCasted = num;
-                                }
-                            }
-
-                        } else if (dataType === 'boolean') {
-
-                            // "1" and "true" casted to true, otherwise false
-                            if (valueRaw === '1' || valueRaw === 'true') {
-                                valueCasted = true;
-                            } else {
-                                valueCasted = false;
-                            }
-                        }
-                    }
-
-                }
-
-                const value = queryStringDecodedSetValue(field, valueCasted);
-                return value;
-            }
-            return {}
-        }
-
-        // given a loose object, sets all keys with corresponding value on current component
-        const update = (data: LooseObject) => {
-            objectEach(data, (key, val) => {
-                this.store.set(key, val);
-            });
-        }
-
         if (node.hasAttribute('data-model') && (node.tagName === 'INPUT' || node.tagName === 'SELECT' || node.tagName === 'TEXTAREA')) {
             // found a model node, store to array modelNodes
             modelNodes.push(node as HTMLInputElement);
@@ -534,6 +466,74 @@ export class ClientComponent extends EventEmitter {
 
         if (isSelf) {
             // all model nodes are now contained in modelNodes array
+
+            // given a HTMLInput element that has data-model attribute, returns an object with the data
+            // for example:
+            // data-model="name" may result with { name: "John" }
+            // data-model="user[name]" may result with { user: { name: "John" } }
+            const modelData = (node: HTMLInputElement): LooseObject => {
+                const field = node.getAttribute('data-model');
+                if (field) {
+                    const isCheckbox = node.tagName === 'INPUT' && node.type === 'checkbox';
+                    const valueRaw = isCheckbox ? node.checked : node.value;
+                    let valueCasted: string | number | boolean | null = valueRaw;
+
+                    if (!isCheckbox && typeof valueRaw === 'string') {
+                        // if data-type is found on node try casting data to desired type
+                        // recognized values are string (no type casting), number and boolean
+                        // data casting not done for checkboxes, they always yield a boolean
+                        const dataType = isCheckbox ? 'boolean' : node.getAttribute('data-type') || 'string';
+
+                        // if data-nullable is found on node, empty string is considered null
+                        const nullable = node.hasAttribute('data-nullable');
+
+                        if (nullable && valueRaw.trim().length === 0) {
+                            // value is an empty string, if nullable, set value to null
+                            valueCasted = null;
+                        } else {
+                            if (dataType === 'number') {
+                                // cast to number
+
+                                if (valueRaw.trim().length === 0) {
+                                    // empty string, assume 0
+                                    valueCasted = 0;
+                                } else {
+                                    // value not empty
+                                    const num = parseFloat(valueRaw);
+        
+                                    if (isNaN(num)) {
+                                        // invalid number entered, null if nullable, otherwise 0
+                                        valueCasted = nullable ? null : 0;
+                                    } else {
+                                        valueCasted = num;
+                                    }
+                                }
+
+                            } else if (dataType === 'boolean') {
+
+                                // "1" and "true" casted to true, otherwise false
+                                if (valueRaw === '1' || valueRaw === 'true') {
+                                    valueCasted = true;
+                                } else {
+                                    valueCasted = false;
+                                }
+                            }
+                        }
+
+                    }
+
+                    const value = queryStringDecodedSetValue(field, valueCasted);
+                    return value;
+                }
+                return {}
+            }
+
+            // given a loose object, sets all keys with corresponding value on current component
+            const update = (data: LooseObject) => {
+                objectEach(data, (key, val) => {
+                    this.store.set(key, val);
+                });
+            }
 
             // data for the initial update, we want to gather all data up in one object
             // so that nested keys don't trigger more updates than necessary
@@ -551,14 +551,19 @@ export class ClientComponent extends EventEmitter {
                             data = mergeDeep({}, data);
                         }
                     }
+
                     update(data);
                 });
 
                 // include current node's data into initial update data
                 const field = modelNode.getAttribute('data-model');
                 if (field) {
-                    const valueObject = modelData(modelNode);
-                    data = mergeDeep(data, valueObject);
+                    // don't update radio inputs, unless checked
+                    const updateModel = modelNode.type !== 'radio' || modelNode.checked;
+                    if (updateModel) {
+                        const valueObject = modelData(modelNode);
+                        data = mergeDeep(data, valueObject);
+                    }
                 }
             });
 
