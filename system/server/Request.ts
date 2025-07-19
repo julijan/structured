@@ -455,14 +455,16 @@ export class Request {
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            if (! (file.endsWith('.js') || file.endsWith('.ts')) || file.endsWith('.d.ts')) {
-                continue;
-            }
             const filePath = path.resolve(routesPath + '/' + file);
             const isDirectory = statSync(filePath).isDirectory();
             if (isDirectory) {
+                // directory
                 await this.loadHandlers(filePath);
             } else {
+                // file
+                if (! (file.endsWith('.js') || file.endsWith('.ts')) || file.endsWith('.d.ts')) {
+                    continue;
+                }
                 const fn = (await import('file:///' + filePath)).default;
                 if (typeof fn === 'function') {
                     fn(this.app);
