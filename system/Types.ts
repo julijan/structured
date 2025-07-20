@@ -134,7 +134,7 @@ export type ComponentEntry = {
         jsServer?: string,
         jsClient?: string
     },
-    hasJS: boolean,
+    hasServerPart: boolean,
     html : string,
 
     static: boolean,

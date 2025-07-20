@@ -179,7 +179,7 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
         // we want those to be found as children
         this.fillData(this.data);
 
-        if (!this.entry?.hasJS) {
+        if (!this.entry?.hasServerPart) {
             // export all data if component has no server side part
             this.setAttributes(this.data, 'data-');
         } else {

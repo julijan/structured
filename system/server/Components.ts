@@ -66,7 +66,7 @@ export class Components {
                             jsClient: hasClientJS ? jsClientPath : undefined,
                             jsServer: hasServerJS ? jsServerPath : undefined
                         },
-                        hasJS : existsSync(jsServerPath),
+                        hasServerPart : existsSync(jsServerPath),
                         html: this.loadHTML(absolutePath),
                         exportData: false,
                         static: false
