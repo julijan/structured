@@ -179,18 +179,22 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
         // we want those to be found as children
         this.fillData(this.data);
 
-        if (this.entry === null || this.entry.exportData) {
+        if (!this.entry?.hasJS) {
             // export all data if component has no server side part
             this.setAttributes(this.data, 'data-');
-        } else if (this.entry) {
-            // export specified fields if it has a server side part
+        } else {
+            // component has a server side part
             if (this.entry.exportFields) {
+                // export specified fields
                 this.setAttributes(this.entry.exportFields.reduce((prev, field) => {
                     if (this.data[field] !== undefined) {
                         prev[field] = this.data[field];
                     }
                     return prev;
                 }, {} as Record<string, any>), 'data-');
+            } else if (this.entry.exportData) {
+                // eportData = true, export all fields
+                this.setAttributes(this.data, 'data-');
             }
 
             // if attributes are present on ComponentEntry, add those to the DOM node
