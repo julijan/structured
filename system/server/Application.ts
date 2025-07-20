@@ -223,7 +223,7 @@ export class Application {
             const data: LooseObject = attributes;
             await document.loadComponent(component.name, data);
 
-            const exportedData = component.exportData ? document.data : (component.exportFields ? component.exportFields.reduce((prev, curr) => {
+            const exportedData = component.exportData ? document.children[0].data : (component.exportFields ? component.exportFields.reduce((prev, curr) => {
                 prev[curr] = document.children[0].data[curr];
                 return prev;
             }, {} as LooseObject) : {});
