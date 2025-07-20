@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import * as path from 'node:path';
-import { ComponentEntry, StructuredConfig } from '../Types.js';
+import { StructuredConfig } from '../types/structured.types.js';
+import { ComponentEntry } from "../types/component.types.js";
 import { Application } from './Application.js';
 import { stripBOM } from '../Util.js';
 

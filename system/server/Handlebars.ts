@@ -1,6 +1,6 @@
 import { HelperDelegate } from "handlebars";
 import { default as HandlebarsInstance }  from 'handlebars';
-import { LooseObject } from "../Types.js";
+import { LooseObject } from '../types/general.types.js';
 
 // handlebars helper manager
 export class Handlebars {

@@ -1,5 +1,20 @@
-import { ClientComponentBoundEvent, ClientComponentEventCallback, ClientComponentTransition, ClientComponentTransitions, InitializerFunction, LooseObject, StoreChangeCallback } from '../Types.js';
-import { attributeValueFromString, attributeValueToString, mergeDeep, objectEach, queryStringDecodedSetValue, toCamelCase } from '../Util.js';
+import { StoreChangeCallback } from '../types/store.types.js';
+import { LooseObject } from '../types/general.types.js';
+import {
+    InitializerFunction,
+    ClientComponentEventCallback,
+    ClientComponentBoundEvent,
+    ClientComponentTransition,
+    ClientComponentTransitions
+} from '../types/component.types.js';
+import {
+    attributeValueFromString,
+    attributeValueToString,
+    mergeDeep,
+    objectEach,
+    queryStringDecodedSetValue,
+    toCamelCase
+} from '../Util.js';
 import { DataStoreView } from './DataStoreView.js';
 import { DataStore } from './DataStore.js';
 import { Net } from './Net.js';

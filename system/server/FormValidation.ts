@@ -1,4 +1,14 @@
-import { FormValidationEntry, LooseObject, PostedDataDecoded, ValidationErrors, ValidationErrorsSingle, ValidationResult, ValidationRuleWithArguments, ValidatorErrorDecorator, ValidatorFunction } from '../Types.js';
+import { LooseObject } from '../types/general.types.js';
+import {
+    ValidationResult,
+    ValidationErrorsSingle,
+    ValidationErrors,
+    ValidatorErrorDecorator,
+    ValidatorFunction,
+    FormValidationEntry,
+    ValidationRuleWithArguments
+} from '../types/validation.types.js';
+import { PostedDataDecoded } from "../types/request.types.js";
 
 export class FormValidation {
 

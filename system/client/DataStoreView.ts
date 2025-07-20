@@ -1,4 +1,4 @@
-import { StoreChangeCallback } from '../Types.js';
+import { StoreChangeCallback } from '../types/store.types.js';
 import { ClientComponent } from './ClientComponent.js';
 import { DataStore } from './DataStore.js';
 

@@ -1,5 +1,5 @@
 import { IncomingMessage, ServerResponse } from "node:http";
-import { LooseObject } from "../Types.js";
+import { LooseObject } from '../types/general.types.js';
 
 export class Cookies {
 

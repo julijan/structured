@@ -1,4 +1,4 @@
-import { EventEmitterCallback } from "./Types.js";
+import { EventEmitterCallback } from './types/eventEmitter.types.js';
 
 export class EventEmitter<T extends Record<string, any> = Record<string, any>> {
     protected listeners: Partial<Record<Extract<keyof T, string>, Array<EventEmitterCallback<any>>>> = {}

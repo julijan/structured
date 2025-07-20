@@ -1,5 +1,5 @@
 import { IncomingHttpHeaders } from 'node:http';
-import { RequestMethod } from '../Types.js';
+import { RequestMethod } from "../types/request.types.js";
 
 
 export class NetRequest {

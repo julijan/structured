@@ -1,5 +1,6 @@
 import { IncomingHttpHeaders } from 'node:http';
-import { LooseObject, RequestMethod } from '../Types.js';
+import { LooseObject } from '../types/general.types.js';
+import { RequestMethod } from "../types/request.types.js";
 import { NetRequest } from './NetRequest.js';
 
 

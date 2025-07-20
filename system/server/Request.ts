@@ -1,6 +1,20 @@
 import { IncomingMessage, ServerResponse } from "node:http";
-import { LooseObject, PostedDataDecoded, RequestBodyFile, RequestCallback, RequestContext, RequestHandler, RequestMethod, URIArguments, URISegmentPattern } from "../Types.js";
-import { mergeDeep, queryStringDecode, queryStringDecodedSetValue } from "../Util.js";
+import { LooseObject } from '../types/general.types.js';
+import {
+    RequestMethod,
+    URIArguments,
+    URISegmentPattern,
+    RequestContext,
+    PostedDataDecoded,
+    RequestBodyFile,
+    RequestHandler,
+    RequestCallback,
+} from "../types/request.types.js";
+import {
+    mergeDeep,
+    queryStringDecode,
+    queryStringDecodedSetValue
+} from "../Util.js";
 import { Application } from "./Application.js";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";

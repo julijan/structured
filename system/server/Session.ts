@@ -1,5 +1,7 @@
 import { randomString } from '../Util.js';
-import { LooseObject, RequestContext, SessionEntry } from '../Types.js';
+import { LooseObject } from '../types/general.types.js';
+import { SessionEntry } from '../types/session.types.js';
+import { RequestContext } from "../types/request.types.js";
 import { Application } from './Application.js';
 
 export class Session {

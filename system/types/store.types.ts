@@ -1,0 +1,1 @@
+export type StoreChangeCallback = (key: string, value: any, oldValue: any, componentId: string) => void;

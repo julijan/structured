@@ -1,6 +1,7 @@
 import { Document } from './Document.js';
 import { attributeValueFromString, attributeValueToString, objectEach, toCamelCase } from '../Util.js';
-import { ComponentEntry, LooseObject } from '../Types.js';
+import { LooseObject } from '../types/general.types.js';
+import { ComponentEntry } from "../types/component.types.js";
 import { DOMFragment } from './dom/DOMFragment.js';
 import { DOMNode } from './dom/DOMNode.js';
 import { EventEmitter } from '../EventEmitter.js';
@@ -193,7 +194,7 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
                     return prev;
                 }, {} as Record<string, any>), 'data-');
             } else if (this.entry.exportData) {
-                // eportData = true, export all fields
+                // exportData = true, export all fields
                 this.setAttributes(this.data, 'data-');
             }
 

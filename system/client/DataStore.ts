@@ -1,4 +1,4 @@
-import { StoreChangeCallback } from '../Types.js';
+import { StoreChangeCallback } from '../types/store.types.js';
 import { equalDeep } from '../Util.js';
 import { ClientComponent } from './ClientComponent.js';
 

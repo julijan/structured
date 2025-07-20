@@ -1,4 +1,5 @@
-import { LooseObject, PostedDataDecoded } from "./Types.js";
+import { LooseObject } from './types/general.types.js';
+import { PostedDataDecoded } from "./types/request.types.js";
 
 
 // process given query string into an object

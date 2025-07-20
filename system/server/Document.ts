@@ -1,6 +1,9 @@
 import { ServerResponse } from 'node:http';
 
-import { Initializers, LooseObject, RequestContext, StructuredClientConfig } from '../../system/Types.js';
+import { StructuredClientConfig } from '../types/structured.types.js';
+import { LooseObject } from '../types/general.types.js';
+import { Initializers } from '../types/component.types.js';
+import { RequestContext } from "../types/request.types.js";
 import { Application } from './Application.js';
 import { DocumentHead } from './DocumentHead.js';
 import { Component } from './Component.js';

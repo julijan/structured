@@ -1,4 +1,5 @@
-import { LooseObject, RequestContext } from "../Types.js";
+import { LooseObject } from '../types/general.types.js';
+import { RequestContext } from "../types/request.types.js";
 import { Application } from "./Application.js";
 import { Component } from "./Component.js";
 import { Document } from "./Document.js";

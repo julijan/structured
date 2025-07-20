@@ -1,0 +1,1 @@
+export type EventEmitterCallback<T> = (payload: T, eventName: string) => void;

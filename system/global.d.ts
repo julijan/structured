@@ -1,4 +1,5 @@
-import { InitializerFunction, StructuredClientConfig } from "./Types.js";
+import { StructuredClientConfig } from './types/structured.types.ts';
+import { InitializerFunction } from './types/component.types.ts';
 
 export {}
 // window.initializers will always be present
