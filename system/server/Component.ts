@@ -137,9 +137,9 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
         // setting attributes.deferred = false, to avoid looping
         if (
             this.entry !== null &&
-            typeof this.entry.module !== 'undefined' &&
-            typeof this.entry.module.deferred === 'function' &&
-            this.entry.module.deferred(this.attributes, this.document.ctx, this.document.application) &&
+            typeof this.entry.serverPart !== 'undefined' &&
+            typeof this.entry.serverPart.deferred === 'function' &&
+            this.entry.serverPart.deferred(this.attributes, this.document.ctx, this.document.application) &&
             this.attributes.deferred !== false
         ) {
             this.setAttributes({deferred: true}, 'data-', true);
@@ -150,8 +150,8 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
         const importedParentData = this.parent ? this.importedParentData(this.parent.data) : {};
         let dataServerSidePart: LooseObject = {}
         try {
-            dataServerSidePart = (this.entry && this.entry.module ?
-                await this.entry.module.getData(
+            dataServerSidePart = (this.entry && this.entry.serverPart ?
+                await this.entry.serverPart.getData(
                     Object.assign(importedParentData, this.attributes, data || {}),
                     this.document.ctx,
                     this.document.application,
@@ -161,7 +161,7 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
             throw new Error(`Error executing getData in component ${this.name}: ${e.message}`);
         }
         if (data === undefined) {
-            if (this.entry && this.entry.module) {
+            if (this.entry && this.entry.hasServerPart) {
                 // component has a server side part, fetch data using getData
                 this.data = Object.assign(this.data, dataServerSidePart);
             } else {

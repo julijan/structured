@@ -81,13 +81,13 @@ export class Components {
                     if (hasServerJS) {
                         // load and instantiate component's module
                         const componentConstructor = await import('file:///' + entry.path.jsServer);
-                        entry.module = new componentConstructor.default();
+                        entry.serverPart = new componentConstructor.default();
 
-                        entry.renderTagName = entry.module?.tagName || 'div';
-                        entry.exportData = typeof entry.module?.exportData === 'boolean' ? entry.module.exportData : false;
-                        entry.exportFields = entry.module?.exportFields;
-                        entry.attributes = entry.module?.attributes;
-                        entry.static = typeof entry.module?.static === 'boolean' ? entry.module.static : false;
+                        entry.renderTagName = entry.serverPart?.tagName || 'div';
+                        entry.exportData = typeof entry.serverPart?.exportData === 'boolean' ? entry.serverPart.exportData : false;
+                        entry.exportFields = entry.serverPart?.exportFields;
+                        entry.attributes = entry.serverPart?.attributes;
+                        entry.static = typeof entry.serverPart?.static === 'boolean' ? entry.serverPart.static : false;
                     }
 
                     this.components[componentName.toUpperCase()] = entry;

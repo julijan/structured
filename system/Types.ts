@@ -135,12 +135,13 @@ export type ComponentEntry = {
         jsClient?: string
     },
     hasServerPart: boolean,
+
+    // component's server side part class instance
+    serverPart?: ComponentScaffold,
+
     html : string,
 
     static: boolean,
-    
-    // server side component module
-    module?: ComponentScaffold,
 
     // default is "div"
     renderTagName?: string,
