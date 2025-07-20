@@ -642,7 +642,7 @@ export class ClientComponent extends EventEmitter {
             return isTrue;
         } else {
             // expression not a method
-            const parts = /^(!)?\s*([a-zA-Z]+[a-zA-Z0-9_]*)\s*((?:==)|(?:===)|(?:!=)|(?:!==)|<|>|(?:<=)|(?:>=))?\s*([^=].+)?$/.exec(condition);
+            const parts = /^(!)?\s*([a-zA-Z0-9_]+)\s*((?:==)|(?:===)|(?:!=)|(?:!==)|<|>|(?:<=)|(?:>=))?\s?([^=]+)?$/.exec(condition);
             if (parts === null) {
                 console.error(`Could not parse condition ${condition}`);
                 return false;
