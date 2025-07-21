@@ -88,7 +88,7 @@ export class HTMLParser {
                 // opening tag end, create node and switch context to new node
                 const node = new DOMNode(this.fragment, this.context, this.tokenCurrent);
                 this.context.appendChild(node);
-                this.state = 'idle';
+                this.state = 'text';
                 this.tokenCurrent = '';
                 if (! node.selfClosing) {
                     this.context = node;
@@ -158,7 +158,7 @@ export class HTMLParser {
                 if (char === '=') {
                     this.state = 'attributeValueStart';
                 } else if (char === '>') {
-                    this.state = 'idle';
+                    this.state = 'text';
                 }
                 if (this.tokenCurrent.length > 0) {
                     if (this.attributeContext !== null && this.tokenCurrent.trim().length > 0) {
@@ -195,7 +195,7 @@ export class HTMLParser {
             this.tokenCurrent += char;
         } else if (this.state === 'attributeEnd') {
             if (char === '>') {
-                this.state = 'idle';
+                this.state = 'text';
                 return true;
             } if (char === ' ' || char === '\n') {
                 this.state = 'attributeName';
