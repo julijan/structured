@@ -13,6 +13,10 @@ export class HTMLParser {
 
     private fragment: DOMFragment = new DOMFragment();
 
+    // this is used when we determine the node is explicitly self closing
+    // prior to node being added to the tree (during tagOpen)
+    explicitSelfClosing: boolean = false;
+
     private attributeOpenQuote: '"' | "'" = '"';
     private attributeNameCurrent: string = '';
     private attributeContext: DOMNode | null = null;
@@ -63,6 +67,8 @@ export class HTMLParser {
 
             if (this.isLetter(charCode)) {
                 this.state = 'tagOpen';
+                // assume this won't be a self closing tag
+                this.explicitSelfClosing = false;
                 this.tokenCurrent = char;
                 return true;
             }
@@ -77,7 +83,8 @@ export class HTMLParser {
                 if (this.tokenCurrent.length === 0) {
                     throw this.error(`Unexpected tag closing sequence "</", expected opening tag`);
                 }
-                // ignore this one, it's a self closing tag, but we will expect to find ">" anyway
+                // mark as self closing and continue
+                this.explicitSelfClosing = true;
                 return true;
             }
 
@@ -90,7 +97,8 @@ export class HTMLParser {
                 this.context.appendChild(node);
                 this.state = 'text';
                 this.tokenCurrent = '';
-                if (! node.selfClosing) {
+                node.explicitSelfClosing = this.explicitSelfClosing;
+                if (!node.selfClosing && !node.explicitSelfClosing) {
                     this.context = node;
                 }
                 this.attributeContext = node;
@@ -107,7 +115,8 @@ export class HTMLParser {
                 const node = new DOMNode(this.fragment, this.context, this.tokenCurrent);
                 this.context.appendChild(node);
                 this.tokenCurrent = '';
-                if (! node.selfClosing) {
+                node.explicitSelfClosing = this.explicitSelfClosing;
+                if (!node.selfClosing && !node.explicitSelfClosing) {
                     this.context = node;
                 }
                 this.attributeContext = node;
@@ -126,7 +135,7 @@ export class HTMLParser {
                 return true;
             }
             if (char === '>') {
-                if (this.tokenCurrent !== this.context.tagName) {
+                if (this.tokenCurrent !== this.context.tagName && !this.attributeContext?.explicitSelfClosing) {
                     throw this.error(`Found closing tag ${this.tokenCurrent}, expected ${this.context.tagName}`);
                 }
                 // tag closed, switch context to parent of the current context
@@ -153,12 +162,23 @@ export class HTMLParser {
             }
         } else if (this.state === 'attributeName') {
             const boundsChar = char === ' ' || char === '\n' || char === '\t';
-            if (boundsChar || char === '=' || char === '>') {
+            if (boundsChar || char === '=' || char === '>' || char === '/') {
                 // end of attribute name
                 if (char === '=') {
                     this.state = 'attributeValueStart';
                 } else if (char === '>') {
                     this.state = 'text';
+                } else if (char === '/') {
+                    // this is an explicitly self closed tag
+                    // set context to parent of attributeContext and mark node as explicitSelfClosing
+                    if (this.attributeContext && this.attributeContext.parentNode) {
+                        this.context = this.attributeContext.parentNode;
+                        this.attributeContext.explicitSelfClosing = true;
+                        this.state = 'tagClose';
+                        if (this.tokenCurrent.trim().length === 0) {
+                            return true;
+                        }
+                    }
                 }
                 if (this.tokenCurrent.length > 0) {
                     if (this.attributeContext !== null && this.tokenCurrent.trim().length > 0) {
@@ -197,10 +217,21 @@ export class HTMLParser {
             if (char === '>') {
                 this.state = 'text';
                 return true;
-            } if (char === ' ' || char === '\n') {
+            }
+            
+            if (char === ' ' || char === '\n') {
                 this.state = 'attributeName';
                 return true;
-            } else if (char === '/') {
+            }
+            
+            if (char === '/') {
+                // this is an explicitly self closed tag
+                // set context to parent of attributeContext and mark node as explicitSelfClosing
+                if (this.attributeContext && this.attributeContext.parentNode) {
+                    this.context = this.attributeContext.parentNode;
+                    this.attributeContext.explicitSelfClosing = true;
+                    this.tokenCurrent = '';
+                }
                 return true;
             } else {
                 throw this.error(`Unexpected character ${char} after attribute value`);

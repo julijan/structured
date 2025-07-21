@@ -34,6 +34,7 @@ export class DOMNode {
     style: Partial<CSSStyleDeclaration> = {}
 
     selfClosing: boolean;
+    explicitSelfClosing: boolean = false;
 
     // all DOMNodes are responsible for calling registerPotentialComponent if
     // their tagName is not a recognized HTML tag.
@@ -167,7 +168,7 @@ export class DOMNode {
         }, '');
 
 
-        return `<${this.tagName}${attributes}${style.trim().length > 0 ? ` style="${style}"` : ''}>${this.selfClosing ? '' : `${this.innerHTML}</${this.tagName}>`}`;
+        return `<${this.tagName}${attributes}${style.trim().length > 0 ? ` style="${style}"` : ''}${this.explicitSelfClosing ? '/' : ''}>${this.selfClosing || this.explicitSelfClosing ? '' : `${this.innerHTML}</${this.tagName}>`}`;
     }
 
     toObject():JSONNode {
