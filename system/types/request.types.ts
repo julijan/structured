@@ -44,6 +44,8 @@ export type RequestContext<Body extends LooseObject | undefined = LooseObject> =
 
     getArgs: PostedDataDecoded;
 
+    timeStart: number,
+
     respondWith: (data: any) => void;
     redirect: (to: string, statusCode?: number) => void;
     show404: () => Promise<void>;

@@ -190,6 +190,7 @@ export class Request {
             body: undefined,
             getArgs,
             cookies: this.app.cookies.parse(request),
+            timeStart: new Date().getTime(),
             isAjax : request.headers['x-requested-with'] == 'xmlhttprequest',
             respondWith: function (data: any) {
                 if (typeof data === 'string' || Buffer.isBuffer(data)) {
