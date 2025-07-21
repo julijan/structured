@@ -168,6 +168,9 @@ export class HTMLParser {
                     this.state = 'attributeValueStart';
                 } else if (char === '>') {
                     this.state = 'text';
+                    if (this.tokenCurrent.trim().length === 0) {
+                        return true;
+                    }
                 } else if (char === '/') {
                     // this is an explicitly self closed tag
                     // set context to parent of attributeContext and mark node as explicitSelfClosing
