@@ -19,10 +19,10 @@
   "license": "MIT",
   "type": "module",
   "main": "build/index",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "scripts": {
     "develop": "tsc --watch",
-    "startDev": "cd build && nodemon --watch '../app/**/*' --watch '../build/**/*' -e js,html,css index.js",
+    "startDev": "cd build && nodemon --watch '../app/**/*' --watch '../build/**/*' -e js,html,hbs,css index.js",
     "start": "cd build && node index.js",
     "compileAndPack": "tsc && npm pack",
     "compileAndPublish": "tsc && npm publish"
