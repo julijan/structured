@@ -275,6 +275,9 @@ type RequestContext<Body extends LooseObject | undefined = LooseObject> = {
     // true if x-requested-with header is received and it equals 'xmlhttprequest'
     isAjax: boolean,
 
+    // time when request was received (unix timestamp in milliseconds)
+    timeStart: number,
+
     // URL GET arguments
     getArgs: PostedDataDecoded,
 
