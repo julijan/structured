@@ -769,9 +769,9 @@ Version 0.8.7 introduced the `Layout` class, which allows accomplishing the abov
     <template></template>
     ...
     ```
-2) `/index.ts` (`app` is an instance of `Application`)
+2) `/index.ts` (`app` is an instance of `Application`), 3rd argument is optional BCP 47 language tag
     ```
-    export const layout = new Layout(app, 'layout');
+    export const layout = new Layout(app, 'layout', 'en');
     ```
 3) `/app/routes/Test.ts`
     ```
