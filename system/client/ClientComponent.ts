@@ -958,7 +958,8 @@ export class ClientComponent extends EventEmitter {
         const onTransitionEnd = (e: any) => {
             domNode.style.opacity = '1';
             domNode.style.transition = '';
-            domNode.style.transformOrigin = 'unset';
+            domNode.style.transformOrigin = '';
+            domNode.style.transform = '';
             domNode.removeEventListener('transitionend', onTransitionEnd);
             domNode.removeEventListener('transitioncancel', onTransitionEnd);
         };
@@ -967,6 +968,24 @@ export class ClientComponent extends EventEmitter {
         domNode.addEventListener('transitioncancel', onTransitionEnd);
 
         if (transitionsActive.slide) {
+            // if specified use given transformOrigin
+            
+            const axis = this.transitionAxis(domNode, 'show');
+            let slideDirection = axis === 'X' ? 'left' : 'up';
+            const invert = domNode.hasAttribute('data-transition-slide-invert');
+            if (invert) {
+                slideDirection = slideDirection === 'left' ? 'right' : (slideDirection === 'up' ? 'down' : 'up');
+            }
+            const slideLengthMultiplier = slideDirection === 'down' || slideDirection === 'right' ? -1 : 1;
+            const slideLength = (axis === 'X' ? domNode.clientWidth : domNode.clientHeight) * 0.5 * slideLengthMultiplier * -1;
+            domNode.style.transform = `translate${axis === 'X' ? 'X' : 'Y'}(${slideLength}px)`;
+            setTimeout(() => {
+                domNode.style.transition = `transform ${transitionsActive.slide}ms linear`;
+                domNode.style.transform = `translate${axis === 'X' ? 'X' : 'Y'}(0)`;
+            }, 50);
+        }
+
+        if (transitionsActive.grow) {
 
             // if specified use given transformOrigin
             const transformOrigin = domNode.getAttribute('data-transform-origin-show') || '50% 0';
@@ -974,7 +993,7 @@ export class ClientComponent extends EventEmitter {
             domNode.style.transformOrigin = transformOrigin;
             const axis = this.transitionAxis(domNode, 'show');
             domNode.style.transform = `scale${axis}(0.01)`;
-            domNode.style.transition = `transform ${transitionsActive.slide / 1000}s`;
+            domNode.style.transition = `transform ${transitionsActive.grow}ms`;
             setTimeout(() => {
                 // domNode.style.height = height + 'px';
                 domNode.style.transform = `scale${axis}(1)`;
@@ -983,7 +1002,7 @@ export class ClientComponent extends EventEmitter {
 
         if (transitionsActive.fade) {
             domNode.style.opacity = '0';
-            domNode.style.transition = `opacity ${transitionsActive.fade / 1000}s`;
+            domNode.style.transition = `opacity ${transitionsActive.fade}ms`;
             setTimeout(() => {
                 domNode.style.opacity = '1';
             }, 100);
@@ -1032,26 +1051,39 @@ export class ClientComponent extends EventEmitter {
             domNode.addEventListener('transitioncancel', onTransitionEnd);
 
             if (transitionsActive.slide) {
-                // domNode.style.overflowY = 'hidden';
-                // domNode.style.height = domNode.clientHeight + 'px';
+                // if specified use given transformOrigin
+                domNode.style.transition = `transform ${transitionsActive.slide}ms linear`;
+                const axis = this.transitionAxis(domNode, 'hide');
+                let slideDirection = axis === 'X' ? 'left' : 'up';
+                const invert = domNode.hasAttribute('data-transition-slide-invert');
+                if (invert) {
+                    slideDirection = slideDirection === 'left' ? 'right' : (slideDirection === 'up' ? 'down' : 'up');
+                }
+                setTimeout(() => {
+                    const slideLengthMultiplier = slideDirection === 'down' || slideDirection === 'right' ? -1 : 1;
+                    const slideLength = (axis === 'X' ? domNode.clientWidth : domNode.clientHeight) * 0.5 * slideLengthMultiplier * -1;
+                    domNode.style.transform = `translate${axis === 'X' ? 'X' : 'Y'}(${slideLength}px)`;
+                }, 50);
+            }
+
+            if (transitionsActive.grow) {
                 // if specified use given transformOrigin
                 const transformOrigin = domNode.getAttribute('data-transform-origin-hide') || '50% 100%';
 
                 domNode.style.transformOrigin = transformOrigin;
-                domNode.style.transition = `transform ${transitionsActive.slide / 1000}s ease`;
+                domNode.style.transition = `transform ${transitionsActive.grow}ms ease`;
                 setTimeout(() => {
-                    // domNode.style.height = '2px';
                     const axis = this.transitionAxis(domNode, 'hide');
                     domNode.style.transform = `scale${axis}(0.01)`;
-                }, 100);
+                }, 50);
             }
 
             if (transitionsActive.fade) {
                 domNode.style.opacity = '1';
-                domNode.style.transition = `opacity ${transitionsActive.fade / 1000}s`;
+                domNode.style.transition = `opacity ${transitionsActive.fade}ms`;
                 setTimeout(() => {
                     domNode.style.opacity = '0';
-                }, 100);
+                }, 50);
             }
 
         }
@@ -1066,11 +1098,13 @@ export class ClientComponent extends EventEmitter {
         const transitions: ClientComponentTransitions = {
             show: {
                 slide: false,
-                fade: false
+                fade: false,
+                grow: false,
             },
             hide: {
                 slide: false,
-                fade: false
+                fade: false,
+                grow: false,
             }
         };
 

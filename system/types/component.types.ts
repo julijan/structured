@@ -61,6 +61,7 @@ export interface ComponentScaffold {
 export type ClientComponentTransition = {
     fade: false | number;
     slide: false | number;
+    grow: false | number;
 };
 
 export type ClientComponentTransitionEvent = 'show' | 'hide';
