@@ -7,10 +7,12 @@ import { Document } from "./Document.js";
 export class Layout {
     layoutComponent: string;
     app: Application;
+    language: string;
 
-    constructor(app: Application, layoutComponent: string) {
+    constructor(app: Application, layoutComponent: string, language: string = 'en') {
         this.app = app;
         this.layoutComponent = layoutComponent;
+        this.language = language;
 
         // make sure the layout component exists
         if (this.app.initialized) {
@@ -37,6 +39,7 @@ export class Layout {
      */
     async document(ctx: RequestContext, title: string, componentName: string, data?: LooseObject): Promise<Document> {
         const doc = new Document(this.app, title, ctx);
+        doc.language = this.language;
         await doc.loadComponent(this.layoutComponent, data);
         const layoutComponent = doc.dom.queryByTagName('template');
         if (layoutComponent.length === 0) {
