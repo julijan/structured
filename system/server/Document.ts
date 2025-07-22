@@ -106,12 +106,11 @@ export class Document extends Component<{'componentCreated': Component}> {
     }
 
     // load the view from file system
-    public async loadView(pathRelative: string, data?: LooseObject): Promise<boolean> {
+    public async loadView(pathRelative: string, data?: LooseObject): Promise<Document> {
         const viewPath = path.resolve('../' + this.application.config.components.path + '/' + pathRelative + (pathRelative.endsWith('.html') ? '' : '.html'));
 
         if (! existsSync(viewPath)) {
-            console.warn(`Couldn't load document ${this.document.head.title}: ${viewPath}`);
-            return false;
+            throw new Error(`Couldn't load document ${this.document.head.title}: ${viewPath}`);
         }
 
         const html = readFileSync(viewPath, {
@@ -120,11 +119,11 @@ export class Document extends Component<{'componentCreated': Component}> {
 
         await this.init(stripBOM(html).replace(/\r/g, ''), data);
         
-        return true;
+        return this;
     }
 
     // load given component into this document
-    public async loadComponent(componentName: string, data?: LooseObject): Promise<void> {
+    public async loadComponent(componentName: string, data?: LooseObject): Promise<Document> {
         const componentEntry = this.document.application.components.getByName(componentName);
         if (componentEntry) {
             const dataString = data === undefined ? '' : Object.keys(data).reduce((prev, key) => {
@@ -133,6 +132,7 @@ export class Document extends Component<{'componentCreated': Component}> {
             }, [] as Array<string>).join(' ');
             await this.init(`<${componentName} ${dataString}></${componentName}>`, data);
         }
+        return this;
     }
 
 }
