@@ -96,7 +96,7 @@ export class ClientComponent extends EventEmitter {
         this.initData();
         this.initModels();
         this.initConditionals();
-        await this.initChildren();
+        this.initChildren();
         this.promoteRefs();
 
         // update conditionals whenever any data in component's store has changed
@@ -126,6 +126,12 @@ export class ClientComponent extends EventEmitter {
         }
         
         this.loaded = true;
+
+        // child node instances were created at this point but init has not been executed on them
+        // this is in order to make sure parent initializer always runs before child initializer
+        for (let i = 0; i < this.children.length; i++) {
+            await this.children[i].init(true);
+        }
         
         // component emits "ready" when initialized
         // when a component emits "ready" it means it and all of it's children recursively have been initialized
@@ -229,32 +235,25 @@ export class ClientComponent extends EventEmitter {
     // instantiate a ClientComponent with them and add them to this.children
     // if callback is a function, for each instantiated child
     // callback is executed with child as first argument
-    private async initChildren(scope?: HTMLElement, callback?: (component: ClientComponent) => void): Promise<void> {
+    private initChildren(scope?: HTMLElement, callback?: (component: ClientComponent) => void): void {
         scope = scope || this.domNode;
-
-        // array of promises that are resolved when child nodes are recursively initialized
-        const childInitPromises: Array<Promise<void>> = [];
 
         for (let i = 0; i < scope.childNodes.length; i++) {
             const childNode = scope.childNodes[i];
             if (childNode.nodeType == 1) {
                 if ((childNode as HTMLElement).hasAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`)) {
                     // found a child component, add to children
-                    const component = new ClientComponent(this, (childNode as HTMLElement).getAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`) || '', childNode as HTMLElement, this.storeGlobal);
+                    const component = new ClientComponent(this, (childNode as HTMLElement).getAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`) || '', childNode as HTMLElement, this.storeGlobal, false);
                     this.children.push(component);
                     if (typeof callback === 'function') {
                         callback(component);
                     }
-                    childInitPromises.push(component.init(true));
                 } else {
                     // not a component, resume from here recursively
-                    childInitPromises.push(this.initChildren((childNode as HTMLElement), callback));
+                    this.initChildren((childNode as HTMLElement), callback);
                 }
             }
         }
-
-        // await children to be initialized
-        await Promise.all(childInitPromises);
     }
 
     // fetch from server and replace with new HTML
@@ -343,7 +342,7 @@ export class ClientComponent extends EventEmitter {
         }
 
         // init new children, restoring their store change listeners in the process
-        await this.initChildren(this.domNode, (childNew) => {
+        this.initChildren(this.domNode, (childNew) => {
             const childNewId = childNew.getData<string>('componentId');
             const existingChild = childNewId in childStoreChangeCallbacks;
             if (existingChild) {
@@ -354,17 +353,6 @@ export class ClientComponent extends EventEmitter {
                     });
                 });
             }
-
-            // idea was that existing child nodes would be initialized with isRedraw = true
-            // however after giving it some thought - probably not desirable
-            // the whole idea with isRedraw is to inform the initializer whether it's
-            // a fresh instance of ClientComponent or an existing one
-            // while child (even existing ones) are technically redrawn in this case,
-            // they do get a fresh instance of a ClientComponent, hence isRedraw = true would be misleading
-            // keeping this comment here in case in the future a need arises to inform children
-            // they were redrawn as a consequence of parent redraw
-            // if ever done, make sure to set 4th argument of initChildren to false (disabling autoInit)
-            // childNew.init(existingChild);
         });
 
         // re-init conditionals and refs
@@ -379,13 +367,18 @@ export class ClientComponent extends EventEmitter {
         // run the initializer
         if (this.initializer) {
             this.initializerExecuted = false;
-            this.runInitializer(true);
+            await this.runInitializer(true);
         }
 
         this.updateConditionals(false);
 
         // mark component as loaded
         this.loaded = true;
+
+        // run children initializers
+        for (let i = 0; i < this.children.length; i++) {
+            await this.children[i].init(true);
+        }
 
         this.emit('afterRedraw');
     }
