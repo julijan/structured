@@ -106,11 +106,6 @@ export class ClientComponent extends EventEmitter {
             await child.init(isRedraw);
         }));
 
-        // all the child components are initialized and ready at this point
-        this.emit('ready');
-        
-        this.isReady = true;
-
 
         if (!initializerExists && this.conditionals.length > 0) {
             // component has no initializer, import all exported fields
@@ -144,6 +139,10 @@ export class ClientComponent extends EventEmitter {
             this.setData('deferred', false, false);
             this.redraw();
         }
+
+        // all the child components ready and the component is ready
+        this.isReady = true;
+        this.emit('ready');
         
     }
 
