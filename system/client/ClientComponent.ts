@@ -64,59 +64,73 @@ export class ClientComponent extends EventEmitter {
         this.name = name;
         this.domNode = domNode;
         if (parent === null) {
+            // only root has no parent
+            // it becomes it's own parent
             this.isRoot = true;
             this.root = this;
             this.parent = this;
         } else {
+            // not a root component
             this.isRoot = false;
             this.root = parent.root;
             this.parent = parent;
         }
 
+        // create a DataStoreView for the current component
+        // it uses component's id to create an isolated data context within global DataStore
         this.storeGlobal = store;
         this.store = new DataStoreView(this.storeGlobal, this);
 
         if (this.isRoot) {
             // only root gets initialized by itself
-            // rest of the component tree is initialized during initChildren
-            // this is in order to be able to await the children to initialize
-            // and in extension be able to tell when all components are initialized
+            // rest of the component tree is initialized recursively starting from the bottom up
             this.init(false);
         }
     }
 
-    // initialize component and it's children recursively
+    // initialize component tree recursively
     private async init(isRedraw: boolean) {
         const initializerExists = window.initializers !== undefined && this.name in window.initializers;
-        this.reset();
-        await this.initChildren();
 
-        // ready once all children get initialized
-        // root will be the last one to be ready
+        // reset current node
+        this.reset();
+
+        // create instances of ClientComponent for direct child components
+        this.initChildren();
+
+        // component is ready once all of it's children get initialized
+        // this means that components with no children will get initialized first
+        // bubbling all the way up to root
+        // root is the last to be initialized/ready
         await Promise.all(this.children.map(async (child) => {
             await child.init(isRedraw);
         }));
 
+        // all the child components are initialized and ready at this point
         this.emit('ready');
         
         this.isReady = true;
 
-        // update conditionals as soon as component is initialized
-        if (this.conditionals.length > 0) {
-            if (! initializerExists) {
-                // component has no initializer, import all exported fields
-                this.store.import(undefined, false, false);
-            }
+
+        if (!initializerExists && this.conditionals.length > 0) {
+            // component has no initializer, import all exported fields
+            // while they won't be accessed from the store directly, as there is no initializer
+            // they might still be used as conditionals eg. in data-if
+            this.store.import(undefined, false, false);
         }
         
+        // initialize refs, data, models and conditionals
+        // promote refs to ClientComponent where ref is on a component tag
         this.initRefs();
         this.initData();
         this.initModels();
         this.promoteRefs();
         this.initConditionals();
 
+        // run initializer for current component
         await this.runInitializer(isRedraw);
 
+        // run initial updateConditionals
         // initial updateConditionals always runs with transitions disabled
         this.updateConditionals(false);
 
@@ -251,7 +265,7 @@ export class ClientComponent extends EventEmitter {
     // instantiate a ClientComponent with them and add them to this.children
     // if callback is a function, for each instantiated child
     // callback is executed with child as first argument
-    private async initChildren(scope?: HTMLElement, callback?: (component: ClientComponent) => void): Promise<void> {
+    private initChildren(scope?: HTMLElement, callback?: (component: ClientComponent) => void): void {
         scope = scope || this.domNode;
 
         for (let i = 0; i < scope.childNodes.length; i++) {
