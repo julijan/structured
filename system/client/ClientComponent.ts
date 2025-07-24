@@ -92,11 +92,11 @@ export class ClientComponent extends EventEmitter {
     // initialize component and it's children recursively
     private async init(runInitializer: boolean) {
         const initializerExists = window.initializers !== undefined && this.name in window.initializers;
+        await this.initChildren();
         this.initRefs();
         this.initData();
         this.initModels();
         this.initConditionals();
-        this.initChildren();
         this.promoteRefs();
 
         // update conditionals whenever any data in component's store has changed
@@ -130,7 +130,7 @@ export class ClientComponent extends EventEmitter {
         // child node instances were created at this point but init has not been executed on them
         // this is in order to make sure parent initializer always runs before child initializer
         for (let i = 0; i < this.children.length; i++) {
-            await this.children[i].init(true);
+            await this.children[i].runInitializer(false);
         }
         
         // component emits "ready" when initialized
@@ -242,7 +242,7 @@ export class ClientComponent extends EventEmitter {
     // instantiate a ClientComponent with them and add them to this.children
     // if callback is a function, for each instantiated child
     // callback is executed with child as first argument
-    private initChildren(scope?: HTMLElement, callback?: (component: ClientComponent) => void): void {
+    private async initChildren(scope?: HTMLElement, callback?: (component: ClientComponent) => void): Promise<void> {
         scope = scope || this.domNode;
 
         for (let i = 0; i < scope.childNodes.length; i++) {
@@ -255,6 +255,7 @@ export class ClientComponent extends EventEmitter {
                     if (typeof callback === 'function') {
                         callback(component);
                     }
+                    await component.init(false);
                 } else {
                     // not a component, resume from here recursively
                     this.initChildren((childNode as HTMLElement), callback);
@@ -349,7 +350,7 @@ export class ClientComponent extends EventEmitter {
         }
 
         // init new children, restoring their store change listeners in the process
-        this.initChildren(this.domNode, (childNew) => {
+        await this.initChildren(this.domNode, (childNew) => {
             const childNewId = childNew.getData<string>('componentId');
             const existingChild = childNewId in childStoreChangeCallbacks;
             if (existingChild) {
@@ -384,7 +385,7 @@ export class ClientComponent extends EventEmitter {
 
         // run children initializers
         for (let i = 0; i < this.children.length; i++) {
-            await this.children[i].init(true);
+            await this.children[i].runInitializer(true);
         }
 
         this.emit('afterRedraw');
