@@ -116,7 +116,9 @@ export class ClientComponent extends EventEmitter {
         this.initConditionals();
 
         await this.runInitializer(isRedraw);
-        this.updateConditionals(!isRedraw);
+
+        // initial updateConditionals always runs with transitions disabled
+        this.updateConditionals(false);
 
         // update conditionals whenever any data in component's store has changed
         this.store.onChange('*', () => {
