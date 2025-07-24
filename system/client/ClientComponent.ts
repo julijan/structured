@@ -276,7 +276,7 @@ export class ClientComponent extends EventEmitter {
     public async redraw(data?: LooseObject): Promise<void> {
 
         if (window.structuredClientConfig.componentRender === false) {
-            console.error(`Can't redraw component, component rendering URL disabled`);
+            this.error(`Can't redraw component, component rendering URL disabled`);
             return;
         }
 
@@ -622,7 +622,7 @@ export class ClientComponent extends EventEmitter {
             // extract expression parts
             const parts = /^(!?)\s*([a-zA-Z]+[a-zA-Z0-9_]*)\(([^)]*)\)$/.exec(condition);
             if (parts === null) {
-                console.error(`Could not parse condition ${condition}`);
+                this.error(`Could not parse condition ${condition}`);
                 return false;
             }
             const negated = parts[1] === '!';
@@ -631,7 +631,7 @@ export class ClientComponent extends EventEmitter {
 
             // make sure there is a registered callback with this name
             if (typeof this.conditionalCallbacks[functionName] !== 'function') {
-                console.warn(`No registered conditional callback '${functionName}'`);
+                this.warn(`No registered conditional callback '${functionName}'`);
                 return false;
             }
 
@@ -645,7 +645,7 @@ export class ClientComponent extends EventEmitter {
             // expression not a method
             const parts = /^(!)?\s*([a-zA-Z0-9_]+)\s*((?:==)|(?:===)|(?:!=)|(?:!==)|<|>|(?:<=)|(?:>=))?\s?([^=]+)?$/.exec(condition);
             if (parts === null) {
-                console.error(`Could not parse condition ${condition}`);
+                this.error(`Could not parse condition ${condition}`);
                 return false;
             }
             
@@ -849,7 +849,7 @@ export class ClientComponent extends EventEmitter {
     // returns a promise that resolves with the added component
     public async add(appendTo: string | HTMLElement, componentName: string, data?: LooseObject): Promise<ClientComponent | null> {
         if (window.structuredClientConfig.componentRender === false) {
-            console.error(`Can't add component, component rendering URL disabled`);
+            this.error(`Can't add component, component rendering URL disabled`);
             return null;
         }
 
@@ -1236,5 +1236,17 @@ export class ClientComponent extends EventEmitter {
             bound.element.removeEventListener(bound.event, bound.callback);
         });
         this.bound = [];
+    }
+
+    public log(msg: any): void {
+        console.log(this.name, msg);
+    }
+
+    public warn(msg: any): void {
+        console.warn(this.name, msg);
+    }
+
+    public error(err: any): void {
+        console.error(this.name, err);
     }
 }
