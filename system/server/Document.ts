@@ -18,6 +18,12 @@ export class Document extends Component<{'componentCreated': Component}> {
     language = 'en';
     application: Application;
 
+    // allows adding custom attributes to html tag
+    htmlTagAttributes: Record<string, string> = {};
+
+    // allows adding custom attributes to body tag
+    bodyTagAttributes: Record<string, string> = {};
+
     initializers: Initializers = {};
     initializersInitialized: boolean = false;
 
@@ -90,10 +96,13 @@ export class Document extends Component<{'componentCreated': Component}> {
             this.initClientConfig();
         }
 
+        const htmlTagAttributes = this.htmlTagAttributesString();
+        const bodyTagAttributes = this.bodyTagAttributesString();
+
         return `<!DOCTYPE html>
-        <html lang="${this.language}">
+        <html lang="${this.language}"${htmlTagAttributes.length > 0 ? ` ${htmlTagAttributes}` : ''}>
         ${this.head.toString()}
-        <body>
+        <body${bodyTagAttributes.length > 0 ? ` ${bodyTagAttributes}` : ''}>
             ${this.body()}
         </body>
         </html>`;
@@ -133,6 +142,22 @@ export class Document extends Component<{'componentCreated': Component}> {
             await this.init(`<${componentName} ${dataString}></${componentName}>`, data);
         }
         return this;
+    }
+
+    private htmlTagAttributesString(): string {
+        const parts: Array<string> = [];
+        for (const attributeName in this.htmlTagAttributes) {
+            parts.push(`${attributeName}="${this.htmlTagAttributes[attributeName]}"`);
+        }
+        return parts.join(' ');
+    }
+
+    private bodyTagAttributesString(): string {
+        const parts: Array<string> = [];
+        for (const attributeName in this.bodyTagAttributes) {
+            parts.push(`${attributeName}="${this.bodyTagAttributes[attributeName]}"`);
+        }
+        return parts.join(' ');
     }
 
 }
