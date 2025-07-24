@@ -1179,6 +1179,9 @@ export class ClientComponent extends EventEmitter {
         this.destroyed = true;
 
         this.emit('afterDestroy');
+
+        // destroy EventEmitter (unbinding all event listeners)
+        this.emitterDestroy();
     }
 
     // add an event listener to given DOM node
