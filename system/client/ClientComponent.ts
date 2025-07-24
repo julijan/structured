@@ -299,13 +299,6 @@ export class ClientComponent extends EventEmitter {
 
         this.emit('beforeRedraw');
 
-        // set data if provided
-        if (data) {
-            objectEach(data, (key, val) => {
-                this.setData(key, val, false);
-            });
-        }
-
         // abort existing redraw call, if in progress
         if (this.redrawRequest !== null) {
             this.redrawRequest.abort();
@@ -321,7 +314,7 @@ export class ClientComponent extends EventEmitter {
         this.redrawRequest = redrawRequest.xhr;
         const componentDataJSON = await redrawRequest.send(JSON.stringify({
             component: this.name,
-            attributes: this.data,
+            attributes: Object.assign(this.data, data || {}),
             unwrap: true
         }));
         // clear redraw request as the request is executed and does not need to be cancelled
