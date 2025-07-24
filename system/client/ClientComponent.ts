@@ -556,7 +556,7 @@ export class ClientComponent extends EventEmitter {
             let data: LooseObject = {}
             modelNodes.forEach((modelNode) => {
                 // on change, update component data
-                modelNode.addEventListener('input', () => {
+                this.bind(modelNode, 'input', () => {
                     let data = modelData(modelNode);
                     const key = Object.keys(data)[0];
                     if (typeof data[key] === 'object') {
@@ -567,7 +567,7 @@ export class ClientComponent extends EventEmitter {
                             data = mergeDeep({}, data);
                         }
                     }
-
+    
                     update(data);
                 });
 
