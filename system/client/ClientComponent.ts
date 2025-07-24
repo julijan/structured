@@ -54,11 +54,7 @@ export class ClientComponent extends EventEmitter {
     private refs: Record<string, HTMLElement | ClientComponent> = {};
     private refsArray: Record<string, Array<HTMLElement | ClientComponent>> = {};
 
-    loaded: boolean = false;
-
-    // callback executed each time the component is redrawn
-    // this is the ideal place for binding any event listeners within component
-    private initializer: InitializerFunction | null = null;
+    isReady: boolean = false;
 
     // data-attr are parsed into an object
     private data: LooseObject = {};
@@ -85,30 +81,25 @@ export class ClientComponent extends EventEmitter {
             // rest of the component tree is initialized during initChildren
             // this is in order to be able to await the children to initialize
             // and in extension be able to tell when all components are initialized
-            this.init(runInitializer);
+            this.init(false);
         }
     }
 
     // initialize component and it's children recursively
-    private async init(runInitializer: boolean) {
+    private async init(isRedraw: boolean) {
         const initializerExists = window.initializers !== undefined && this.name in window.initializers;
+        this.reset();
         await this.initChildren();
-        this.initRefs();
-        this.initData();
-        this.initModels();
-        this.initConditionals();
-        this.promoteRefs();
 
-        // update conditionals whenever any data in component's store has changed
-        this.store.onChange('*', () => {
-            this.updateConditionals(true);
-        });
+        // ready once all children get initialized
+        // root will be the last one to be ready
+        await Promise.all(this.children.map(async (child) => {
+            await child.init(isRedraw);
+        }));
 
-        // run initializer, if one exists for current component
-        // if autoInit = false component will not be automatically initialized
-        if (runInitializer && initializerExists) {
-            await this.runInitializer();
-        }
+        this.emit('ready');
+        
+        this.isReady = true;
 
         // update conditionals as soon as component is initialized
         if (this.conditionals.length > 0) {
@@ -116,8 +107,21 @@ export class ClientComponent extends EventEmitter {
                 // component has no initializer, import all exported fields
                 this.store.import(undefined, false, false);
             }
-            this.updateConditionals(false);
         }
+        
+        this.initRefs();
+        this.initData();
+        this.initModels();
+        this.promoteRefs();
+        this.initConditionals();
+
+        await this.runInitializer(isRedraw);
+        this.updateConditionals(!isRedraw);
+
+        // update conditionals whenever any data in component's store has changed
+        this.store.onChange('*', () => {
+            this.updateConditionals(true);
+        });
 
         // deferred component, redraw it immediately
         if (this.data.deferred === true) {
@@ -125,18 +129,20 @@ export class ClientComponent extends EventEmitter {
             this.redraw();
         }
         
-        this.loaded = true;
+    }
 
-        // child node instances were created at this point but init has not been executed on them
-        // this is in order to make sure parent initializer always runs before child initializer
-        for (let i = 0; i < this.children.length; i++) {
-            await this.children[i].runInitializer(false);
-        }
-        
-        // component emits "ready" when initialized
-        // when a component emits "ready" it means it and all of it's children recursively have been initialized
-        // if root emits "ready", that means all components in current document are initialized
-        this.emit('ready');
+    private reset() {
+        this.data = {}
+        this.isReady = false;
+        this.refs = {};
+        this.refsArray = {};
+        this.conditionalClassNames = [];
+        this.conditionalCallbacks = {};
+        this.conditionals = [];
+        this.redrawRequest = null;
+        this.initializerExecuted = false;
+        this.bound = [];
+        this.children = [];
     }
 
     // set initializer callback and execute it
@@ -164,8 +170,7 @@ export class ClientComponent extends EventEmitter {
             }
 
             if (initializerFunction) {
-                this.initializer = initializerFunction;
-                await this.initializer.apply(this, [{
+                await initializerFunction.apply(this, [{
                     net: this.net,
                     isRedraw
                 }]);
@@ -257,7 +262,6 @@ export class ClientComponent extends EventEmitter {
                     if (typeof callback === 'function') {
                         callback(component);
                     }
-                    await component.init(false);
                 } else {
                     // not a component, resume from here recursively
                     this.initChildren((childNode as HTMLElement), callback);
@@ -313,7 +317,7 @@ export class ClientComponent extends EventEmitter {
         if (componentDataJSON.length === 0) { return; }
 
         // mark component as not loaded
-        this.loaded = false;
+        this.isReady = false;
 
         // remove all bound event listeners as DOM will get replaced in the process
         this.unbindAll();
@@ -324,10 +328,12 @@ export class ClientComponent extends EventEmitter {
         // any store change listeners will be lost, before destroying each child
         // keep a copy of the store change listeners, which we'll use later to restore those listeners
         const childStoreChangeCallbacks: Record<string, Record<string, Array<StoreChangeCallback>>> = {}
-        Array.from(this.children).forEach((child) => {
+        const childrenOld = Array.from(this.children);
+        for (let i = 0; i < childrenOld.length; i++) {
+            const child = childrenOld[i];
             childStoreChangeCallbacks[child.getData<string>('componentId')] = child.store.onChangeCallbacks();
-            child.remove();
-        });
+            await child.remove();
+        }
 
         const componentData: {
             html: string;
@@ -351,8 +357,10 @@ export class ClientComponent extends EventEmitter {
             }
         }
 
-        // init new children, restoring their store change listeners in the process
-        await this.initChildren(this.domNode, (childNew) => {
+        await this.init(true);
+
+        for (let i = 0; i < this.children.length; i++) {
+            const childNew = this.children[i];
             const childNewId = childNew.getData<string>('componentId');
             const existingChild = childNewId in childStoreChangeCallbacks;
             if (existingChild) {
@@ -363,31 +371,6 @@ export class ClientComponent extends EventEmitter {
                     });
                 });
             }
-        });
-
-        // re-init conditionals and refs
-        this.refs = {};
-        this.refsArray = {};
-        this.conditionals = [];
-        this.initRefs();
-        this.initModels();
-        this.initConditionals();
-        this.promoteRefs();
-
-        // run the initializer
-        if (this.initializer) {
-            this.initializerExecuted = false;
-            await this.runInitializer(true);
-        }
-
-        this.updateConditionals(false);
-
-        // mark component as loaded
-        this.loaded = true;
-
-        // run children initializers
-        for (let i = 0; i < this.children.length; i++) {
-            await this.children[i].runInitializer(true);
         }
 
         this.emit('afterRedraw');
@@ -913,7 +896,7 @@ export class ClientComponent extends EventEmitter {
         // create an instance of ClientComponent for the added component and add it to this.children
         const component = new ClientComponent(this, componentName, componentNode, this.storeGlobal);
         this.children.push(component);
-        await component.init(true);
+        await component.init(false);
 
         // add the component's DOM node to container
         container.appendChild(componentNode);
@@ -1172,7 +1155,6 @@ export class ClientComponent extends EventEmitter {
         this.conditionalCallbacks = {};
         this.refs = {};
         this.refsArray = {};
-        this.initializer = null;
         this.data = {};
 
         // mark destroyed
