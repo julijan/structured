@@ -151,10 +151,12 @@ export class ClientComponent extends EventEmitter {
                 // @ts-ignore
                 initializerFunction = new AsyncFunction(`
                     const init = ${initializer};
-                    try {
-                        await init.apply(this, [...arguments]);
-                    } catch(e) {
-                        console.error('Error in component ${this.name}: ' + e.message);
+                    if (!this.destroyed) {
+                        try {
+                            await init.apply(this, [...arguments]);
+                        } catch(e) {
+                            console.error('Error in component ${this.name}: ' + e.message, this);
+                        }
                     }
                 `) as InitializerFunction;
             } else {
