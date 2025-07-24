@@ -149,7 +149,14 @@ export class ClientComponent extends EventEmitter {
                 // create an async function using AsyncFunction constructor
                 const AsyncFunction = async function () {}.constructor;
                 // @ts-ignore
-                initializerFunction = new AsyncFunction('const init = ' + initializer + '; await init.apply(this, [...arguments]);') as InitializerFunction;
+                initializerFunction = new AsyncFunction(`
+                    const init = ${initializer};
+                    try {
+                        await init.apply(this, [...arguments]);
+                    } catch(e) {
+                        console.error('Error in component ${this.name}: ' + e.message);
+                    }
+                `) as InitializerFunction;
             } else {
                 initializerFunction = initializer;
             }
