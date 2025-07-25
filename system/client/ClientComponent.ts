@@ -1,7 +1,6 @@
 import { StoreChangeCallback } from '../types/store.types.js';
 import { LooseObject } from '../types/general.types.js';
 import {
-    InitializerFunction,
     ClientComponentEventCallback,
     ClientComponentBoundEvent,
     ClientComponentTransition,
@@ -16,10 +15,10 @@ import {
     toCamelCase
 } from '../Util.js';
 import { DataStoreView } from './DataStoreView.js';
-import { DataStore } from './DataStore.js';
 import { Net } from './Net.js';
 import { NetRequest } from './NetRequest.js';
 import { EventEmitter } from '../EventEmitter.js';
+import { App } from './App.js';
 
 export class ClientComponent extends EventEmitter {
     readonly name: string;
@@ -29,7 +28,7 @@ export class ClientComponent extends EventEmitter {
     readonly isRoot: boolean;
     readonly root: ClientComponent;
     store: DataStoreView;
-    private storeGlobal: DataStore;
+    private app: App;
     readonly net: Net = new Net();
     private initializerExecuted: boolean = false;
 
@@ -59,7 +58,7 @@ export class ClientComponent extends EventEmitter {
     // data-attr are parsed into an object
     private data: LooseObject = {};
 
-    constructor(parent: ClientComponent | null, name: string, domNode: HTMLElement, store: DataStore, runInitializer: boolean = true) {
+    constructor(parent: ClientComponent | null, name: string, domNode: HTMLElement, app: App) {
         super();
         this.name = name;
         this.domNode = domNode;
@@ -78,8 +77,8 @@ export class ClientComponent extends EventEmitter {
 
         // create a DataStoreView for the current component
         // it uses component's id to create an isolated data context within global DataStore
-        this.storeGlobal = store;
-        this.store = new DataStoreView(this.storeGlobal, this);
+        this.app = app;
+        this.store = new DataStoreView(this.app.store, this);
 
         if (this.isRoot) {
             // only root gets initialized by itself
@@ -90,7 +89,7 @@ export class ClientComponent extends EventEmitter {
 
     // initialize component tree recursively
     private async init(isRedraw: boolean) {
-        const initializerExists = window.initializers !== undefined && this.name in window.initializers;
+        const initializerExists = this.app.hasInitializer(this.name);
 
         // reset current node
         this.reset();
@@ -162,34 +161,13 @@ export class ClientComponent extends EventEmitter {
 
     // set initializer callback and execute it
     private async runInitializer(isRedraw: boolean = false) {
-        const initializer = window.initializers[this.name];
-        if (! initializer) {return;}
-        if (! this.initializerExecuted && ! this.destroyed) {
-            let initializerFunction: InitializerFunction | null = null;
-            if (typeof initializer === 'string') {
-                // create an async function using AsyncFunction constructor
-                const AsyncFunction = async function () {}.constructor;
-                // @ts-ignore
-                initializerFunction = new AsyncFunction(`
-                    const init = ${initializer};
-                    if (!this.destroyed) {
-                        try {
-                            await init.apply(this, [...arguments]);
-                        } catch(e) {
-                            console.error('Error in component ${this.name}: ' + e.message, this);
-                        }
-                    }
-                `) as InitializerFunction;
-            } else {
-                initializerFunction = initializer;
-            }
-
-            if (initializerFunction) {
-                await initializerFunction.apply(this, [{
-                    net: this.net,
-                    isRedraw
-                }]);
-            }
+        if (!this.initializerExecuted && !this.destroyed) {
+            const initializer = this.app.getInitializer(this.name);
+            if (initializer === null) {return;}
+            await initializer.apply(this, [{
+                net: this.net,
+                isRedraw
+            }]);
         }
         this.initializerExecuted = true;
     }
@@ -272,7 +250,7 @@ export class ClientComponent extends EventEmitter {
             if (childNode.nodeType == 1) {
                 if ((childNode as HTMLElement).hasAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`)) {
                     // found a child component, add to children
-                    const component = new ClientComponent(this, (childNode as HTMLElement).getAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`) || '', childNode as HTMLElement, this.storeGlobal, false);
+                    const component = new ClientComponent(this, (childNode as HTMLElement).getAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`) || '', childNode as HTMLElement, this.app);
                     this.children.push(component);
                     if (typeof callback === 'function') {
                         callback(component);
@@ -352,11 +330,9 @@ export class ClientComponent extends EventEmitter {
         // populate this.domNode with new HTML
         this.domNode.innerHTML = componentData.html;
 
-        // add any new initializers to global initializers list
-        for (const key in componentData.initializers) {
-            if (!window.initializers[key]) {
-                window.initializers[key] = componentData.initializers[key];
-            }
+        // register any new initializers returned
+        for (const componentName in componentData.initializers) {
+            this.app.registerInitializer(componentName, componentData.initializers[componentName]);
         }
 
         await this.init(true);
@@ -888,10 +864,8 @@ export class ClientComponent extends EventEmitter {
         // if the current document did not include the added component (or components loaded within it)
         // it's initializer will not be present in window.initializers
         // add any missing initializers to global initializers list
-        for (let key in res.initializers) {
-            if (!window.initializers[key]) {
-                window.initializers[key] = res.initializers[key];
-            }
+        for (let componentName in res.initializers) {
+            this.app.registerInitializer(componentName, res.initializers[componentName]);
         }
 
         // create a temporary container to load the returned HTML into
@@ -902,7 +876,7 @@ export class ClientComponent extends EventEmitter {
         const componentNode = tmpContainer.firstChild as HTMLElement;
 
         // create an instance of ClientComponent for the added component and add it to this.children
-        const component = new ClientComponent(this, componentName, componentNode, this.storeGlobal);
+        const component = new ClientComponent(this, componentName, componentNode, this.app);
         this.children.push(component);
         await component.init(false);
 
