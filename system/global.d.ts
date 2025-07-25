@@ -7,7 +7,7 @@ export {}
 // and they will be output as initializers = { componentName : initializer }
 declare global {
     interface Window {
-        initializers: Record<string, InitializerFunction | string>;
+        initializers: Record<string, string>;
         structuredClientConfig: StructuredClientConfig;
     }
 }
