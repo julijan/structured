@@ -18,7 +18,7 @@ import { DataStoreView } from './DataStoreView.js';
 import { Net } from './Net.js';
 import { NetRequest } from './NetRequest.js';
 import { EventEmitter } from '../EventEmitter.js';
-import { App } from './App.js';
+import { ClientApplication } from './ClientApplication.js';
 
 export class ClientComponent extends EventEmitter {
     readonly name: string;
@@ -28,7 +28,7 @@ export class ClientComponent extends EventEmitter {
     readonly isRoot: boolean;
     readonly root: ClientComponent;
     store: DataStoreView;
-    private app: App;
+    private app: ClientApplication;
     readonly net: Net = new Net();
     private initializerExecuted: boolean = false;
 
@@ -58,7 +58,7 @@ export class ClientComponent extends EventEmitter {
     // data-attr are parsed into an object
     private data: LooseObject = {};
 
-    constructor(parent: ClientComponent | null, name: string, domNode: HTMLElement, app: App) {
+    constructor(parent: ClientComponent | null, name: string, domNode: HTMLElement, app: ClientApplication) {
         super();
         this.name = name;
         this.domNode = domNode;

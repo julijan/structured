@@ -1,9 +1,9 @@
-import { App } from './App.js';
+import { ClientApplication } from './ClientApplication.js';
 import { Net } from './Net.js';
 
 export class Client {
-    Components : App = new App();
+    Components : ClientApplication = new ClientApplication();
     Net : Net = new Net();
 }
 
-new App();
+new ClientApplication();

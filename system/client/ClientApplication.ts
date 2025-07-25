@@ -2,7 +2,7 @@ import { DataStore } from './DataStore.js';
 import { ClientComponent } from './ClientComponent.js';
 import { InitializerFunction } from '../types/component.types.js';
 
-export class App {
+export class ClientApplication {
     root: ClientComponent;
     store: DataStore = new DataStore();
     initializers: Record<string, InitializerFunction> = {}
