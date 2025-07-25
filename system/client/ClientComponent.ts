@@ -352,12 +352,6 @@ export class ClientComponent extends EventEmitter {
         // populate this.domNode with new HTML
         this.domNode.innerHTML = componentData.html;
 
-        // apply new data received from the server as it may have changed
-        // only exported data is included here
-        objectEach(componentData.data, (key, val) => {
-            this.setData(key, val, false);
-        });
-
         // add any new initializers to global initializers list
         for (const key in componentData.initializers) {
             if (!window.initializers[key]) {
@@ -366,6 +360,12 @@ export class ClientComponent extends EventEmitter {
         }
 
         await this.init(true);
+
+        // apply new data received from the server as it may have changed
+        // only exported data is included here
+        objectEach(componentData.data, (key, val) => {
+            this.setData(key, val, false);
+        });
 
         for (let i = 0; i < this.children.length; i++) {
             const childNew = this.children[i];
