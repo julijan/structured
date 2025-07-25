@@ -2,8 +2,8 @@ import { ClientComponent } from "../client/ClientComponent.js";
 import { Net } from "../client/Net.js";
 import { Application } from "../server/Application.js";
 import { Component } from "../server/Component.js";
-import { LooseObject } from './general.types.js';
-import { RequestContext, RequestBodyArguments } from "./request.types.js";
+import { KeysOfUnion, LooseObject } from './general.types.js';
+import { RequestContext } from "./request.types.js";
 
 export type ComponentEntry = {
     name: string;
@@ -32,7 +32,7 @@ export type ComponentEntry = {
     exportData: boolean;
 
     // selectively export data to ClientComponent
-    exportFields?: Array<string>;
+    exportFields?: ReadonlyArray<string>;
 
     // attributes added to rendered DOM node
     attributes?: Record<string, string>;
@@ -41,20 +41,22 @@ export type ComponentEntry = {
     initializer?: InitializerFunction;
 };
 
-export interface ComponentScaffold {
+export interface ComponentScaffold<T extends LooseObject = LooseObject, K extends KeysOfUnion<T> = KeysOfUnion<T>> {
     // rendered tag name (default is "div")
     tagName?: string;
 
+    // export all data if true
     exportData?: boolean;
+
     // selectively export data
-    exportFields?: Array<string>;
+    exportFields?: ReadonlyArray<K>;
 
     static?: boolean;
     deferred?: (data: Record<string, any>, ctx: RequestContext | undefined, app: Application) => boolean;
 
     attributes?: Record<string, string>;
 
-    getData: (this: ComponentScaffold, data: RequestBodyArguments | LooseObject, ctx: undefined | RequestContext, app: Application, component: Component) => Promise<LooseObject | null>;
+    getData: (this: ComponentScaffold, data: LooseObject, ctx: undefined | RequestContext, app: Application, component: Component) => Promise<T | void>;
     [key: string]: any;
 }
 
