@@ -1189,26 +1189,34 @@ export class ClientComponent extends EventEmitter {
         callback: ClientComponentEventCallback<T> | EventEmitterCallback<T>
     ): void {
         
+        // multiple elements given
+        // bind for each individually
+        if (Array.isArray(element)) {
+            element.forEach((el) => {
+                this.bind(
+                    el as HTMLElement | Window,
+                    event as keyof HTMLElementEventMap,
+                    callback as ClientComponentEventCallback<T>
+                );
+            });
+            return;
+        }
+        
+        // event given as array
+        if (Array.isArray(event)) {
+            event.forEach((eventName) => {
+                this.bind(
+                    element as HTMLElement | Window,
+                    eventName,
+                    callback as ClientComponentEventCallback<T>
+                );
+            });
+            return;
+        }
+
         if (element instanceof HTMLElement || element instanceof Window) {
 
             const cb = callback as ClientComponentEventCallback<T>;
-            
-            // multiple elements given
-            // bind for each individually
-            if (Array.isArray(element)) {
-                element.forEach((el) => {
-                    this.bind(el, event as keyof HTMLElementEventMap, cb);
-                });
-                return;
-            }
-            
-            // event given as array
-            if (Array.isArray(event)) {
-                event.forEach((eventName) => {
-                    this.bind(element, eventName, cb);
-                });
-                return;
-            }
 
             // wrap provided callback
             // wrapper will make sure provided callback receives data (attributeData) as the second argument
