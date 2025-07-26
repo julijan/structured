@@ -36,7 +36,7 @@ export class ClientComponent extends EventEmitter {
     // these are stored in components DataStoreView and survive redraw
     // callbacks passed to EventEmitter.on should be defined in fn
     // EventEmitter.on prevents binding same callback multiple times,
-    public readonly fn: Record<string, () => any | undefined>;
+    public readonly fn: Record<string, (...args: Array<any>) => any | undefined>;
 
     destroyed: boolean = false;
 
@@ -49,7 +49,7 @@ export class ClientComponent extends EventEmitter {
     private conditionals: Array<HTMLElement> = [];
 
     // available for use in data-if and data-classname-[className]
-    private conditionalCallbacks: Record<string, (args?: any) => boolean> = {};
+    private conditionalCallbacks: Record<string, (args?: any) => any> = {};
 
     private conditionalClassNames: Array<{
         element: HTMLElement,
@@ -92,19 +92,19 @@ export class ClientComponent extends EventEmitter {
         // b) if the fuction is not defined, return a function that console.warn's about missing function
         const self = this;
         this.fn = new Proxy(this.store, {
-            set(target, key: string, val: () => any) {
+            set(target, key: string, val: (args?: any) => any) {
                 const fnKey = `fn_${key}`;
                 if (target.has(fnKey)) {return true;}
                 target.set(fnKey, val);
                 return true;
             },
 
-            get(target, key: string): () => any {
-                return target.get<() => any>(`fn_${key}`) || (() => {
+            get(target, key: string): (args?: any) => any {
+                return target.get<(args?: any) => any>(`fn_${key}`) || (() => {
                     self.warn(`Function ${key} not defined`);
                 });
             },
-        }) as unknown as Record<string, () => any>;
+        }) as unknown as Record<string, (args?: any) => any>;
 
         if (this.isRoot) {
             // only root gets initialized by itself
