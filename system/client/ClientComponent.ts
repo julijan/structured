@@ -322,6 +322,11 @@ export class ClientComponent extends EventEmitter {
             this.redrawRequest = null;
         }
 
+        // remove event listeners bound to self
+        // these have been attached in initializer of this component
+        // and will get re-bound once initializer is called after redraw
+        this.unbindOwn();
+
         // request a component to be re-rendered on the server
         // unwrap = true so that component container is excluded
         // this component already has it's own container and we only care about what changed within it
@@ -1272,6 +1277,17 @@ export class ClientComponent extends EventEmitter {
                 this.bound.splice(boundIndex, 1);
             }
         }
+    }
+
+    // remove all listeners bound to self
+    // such event listeners have been bound by initializer of this component
+    // used on redraw because such events will get bound again
+    private unbindOwn() {
+        this.bound.forEach((bound) => {
+            if (bound.element === this) {
+                this.unbind(bound.element, bound.event, bound.callback);
+            }
+        });
     }
 
     // remove all bound event listeners using ClientComponent.bind
