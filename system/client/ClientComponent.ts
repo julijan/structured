@@ -157,7 +157,6 @@ export class ClientComponent extends EventEmitter {
         // promote refs to ClientComponent where ref is on a component tag
         this.initRefs();
         this.initModels();
-        this.promoteRefs();
         this.initConditionals();
 
         // run initializer for current component
@@ -459,6 +458,8 @@ export class ClientComponent extends EventEmitter {
                 this.initRefs(child as HTMLElement);
             }
         });
+
+        this.promoteRefs();
     }
 
     // make inputs with data-model="field" work
