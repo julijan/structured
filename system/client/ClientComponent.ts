@@ -120,11 +120,19 @@ export class ClientComponent extends EventEmitter {
     }
 
     // initialize component tree recursively
-    private async init(isRedraw: boolean) {
+    private async init(isRedraw: boolean, data: LooseObject = {}) {
         const initializerExists = this.app.hasInitializer(this.name);
 
         // reset current node
         this.reset();
+
+        // load data from attributes
+        this.initData();
+
+        // apply given data
+        objectEach(data, (key, val) => {
+            this.setData(key, val, false);
+        });
 
         // create instances of ClientComponent for direct child components
         this.initChildren();
@@ -148,7 +156,6 @@ export class ClientComponent extends EventEmitter {
         // initialize refs, data, models and conditionals
         // promote refs to ClientComponent where ref is on a component tag
         this.initRefs();
-        this.initData();
         this.initModels();
         this.promoteRefs();
         this.initConditionals();
@@ -367,13 +374,7 @@ export class ClientComponent extends EventEmitter {
             this.app.registerInitializer(componentName, componentData.initializers[componentName]);
         }
 
-        await this.init(true);
-
-        // apply new data received from the server as it may have changed
-        // only exported data is included here
-        objectEach(componentData.data, (key, val) => {
-            this.setData(key, val, false);
-        });
+        await this.init(true, componentData.data);
 
         for (let i = 0; i < this.children.length; i++) {
             const childNew = this.children[i];
@@ -910,7 +911,7 @@ export class ClientComponent extends EventEmitter {
         // create an instance of ClientComponent for the added component and add it to this.children
         const component = new ClientComponent(this, componentName, componentNode, this.app);
         this.children.push(component);
-        await component.init(false);
+        await component.init(false, res.data);
 
         // add the component's DOM node to container
         container.appendChild(componentNode);
