@@ -1,1 +1,1 @@
-export type EventEmitterCallback<T> = (payload: T, eventName: string) => void;
+export type EventEmitterCallback<T> = (payload: T, eventName: string) => void | Promise<void>;

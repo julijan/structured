@@ -20,12 +20,13 @@ export class EventEmitter<T extends Record<string, any> = Record<string, any>> {
     }
 
     // emit event with given payload
-    public emit(eventName: Extract<keyof T, string>, payload?: any): void {
+    public async emit(eventName: Extract<keyof T, string>, payload?: any): Promise<void> {
         if (this.destroyed) {return;}
         if (Array.isArray(this.listeners[eventName]) || Array.isArray(this.listeners['*'])) {
-            (this.listeners[eventName] || []).concat(this.listeners['*'] || []).forEach((callback) => {
-                callback(payload, eventName);
-            });
+            const listeners = (this.listeners[eventName] || []).concat(this.listeners['*'] || []);
+            for (let i = 0; i < listeners.length; i++) {
+                await listeners[i](payload, eventName);
+            }
         }
     }
 
