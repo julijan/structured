@@ -34,8 +34,14 @@ export class ClientComponent extends EventEmitter {
 
     // user defined component functions
     // these are stored in components DataStoreView and survive redraw
-    // callbacks passed to EventEmitter.on should be defined in fn
-    // EventEmitter.on prevents binding same callback multiple times,
+    // should be used when adding EventEmitter callbacks to self or components not nested within current component
+    // in order to prevent same callback to be bound when the component is redrawn
+    // not necessary for components nested within this component as those will get destroyed in the process
+    // example bad:
+    // this.on('beforeRedraw', () => {...}) // this will get bound on every redraw and will fire multiple times
+    // example good
+    // this.fn.beforeRedraw = () => {...}
+    // this.on('beforeRedraw', this.fn.beforeRedraw)
     public readonly fn: Record<string, (...args: Array<any>) => any | undefined>;
 
     destroyed: boolean = false;
