@@ -357,7 +357,7 @@ export class ClientComponent extends EventEmitter {
         for (let i = 0; i < childrenOld.length; i++) {
             const child = childrenOld[i];
             childStoreChangeCallbacks[child.getData<string>('componentId')] = child.store.onChangeCallbacks();
-            await child.remove();
+            await child.destroy();
         }
 
         const componentData: {
@@ -777,29 +777,6 @@ export class ClientComponent extends EventEmitter {
         });
     }
 
-    // remove the DOM node and delete from parent.children effectively removing self from the tree
-    // the method could be sync, but since we want to allow for potentially async user destructors
-    // it is async
-    public async remove(): Promise<void> {
-        if (!this.isRoot) {
-            // remove children recursively
-            const children = Array.from(this.children);
-            for (let i = 0; i < children.length; i++) {
-                await children[i].remove();
-            }
-
-            // remove from parent's children array
-            if (this.parent) {
-                this.parent.children.splice(this.parent.children.indexOf(this), 1);
-            }
-
-            // remove DOM node
-            this.domNode.parentElement?.removeChild(this.domNode);
-            await this.destroy();
-
-        }
-    }
-
     // travel up the tree until a parent with given parentName is found
     // if no such parent is found returns null
     public parentFind(parentName: string): ClientComponent | null {
@@ -1161,6 +1138,20 @@ export class ClientComponent extends EventEmitter {
 
         await this.emit('beforeDestroy');
 
+        // remove DOM node
+        this.domNode.parentElement?.removeChild(this.domNode);
+
+        // remove children recursively
+        const children = Array.from(this.children);
+        for (let i = 0; i < children.length; i++) {
+            await children[i].destroy();
+        }
+
+        // remove from parent's children array
+        if (this.parent) {
+            this.parent.children.splice(this.parent.children.indexOf(this), 1);
+        }
+
         this.store.destroy();
 
         // remove all event listeners attached to DOM elements
@@ -1176,6 +1167,11 @@ export class ClientComponent extends EventEmitter {
 
         // destroy EventEmitter (unbinding all event listeners)
         this.emitterDestroy();
+    }
+
+    // removing is same as destroying the component
+    public async remove(): Promise<void> {
+        await this.destroy();
     }
 
     // add an event listener to given DOM node or ClientComponent
