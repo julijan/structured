@@ -32,6 +32,12 @@ export class ClientComponent extends EventEmitter {
     readonly net: Net = new Net();
     private initializerExecuted: boolean = false;
 
+    // user defined component functions
+    // these are stored in components DataStoreView and survive redraw
+    // callbacks passed to EventEmitter.on should be defined in fn
+    // EventEmitter.on prevents binding same callback multiple times,
+    public readonly fn: Record<string, () => any | undefined>;
+
     destroyed: boolean = false;
 
     private redrawRequest: XMLHttpRequest | null = null;
@@ -79,6 +85,26 @@ export class ClientComponent extends EventEmitter {
         // it uses component's id to create an isolated data context within global DataStore
         this.app = app;
         this.store = new DataStoreView(this.app.store, this);
+
+        // initialize the proxy for fn (user defined component functions)
+        // proxy is there to:
+        // a) prvent assigning the same function multiple times (which would defeat the point on fn)
+        // b) if the fuction is not defined, return a function that console.warn's about missing function
+        const self = this;
+        this.fn = new Proxy(this.store, {
+            set(target, key: string, val: () => any) {
+                const fnKey = `fn_${key}`;
+                if (target.has(fnKey)) {return true;}
+                target.set(fnKey, val);
+                return true;
+            },
+
+            get(target, key: string): () => any {
+                return target.get<() => any>(`fn_${key}`) || (() => {
+                    self.warn(`Function ${key} not defined`);
+                });
+            },
+        }) as unknown as Record<string, () => any>;
 
         if (this.isRoot) {
             // only root gets initialized by itself
