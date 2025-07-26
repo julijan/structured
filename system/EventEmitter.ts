@@ -11,6 +11,11 @@ export class EventEmitter<T extends Record<string, any> = Record<string, any>> {
             this.listeners[eventName] = [];
         }
 
+        if (this.listeners[eventName].indexOf(callback) > -1) {
+            // don't bind the same callback multiple times
+            return;
+        }
+
         this.listeners[eventName].push(callback);
     }
 
