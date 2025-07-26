@@ -32,14 +32,9 @@ export class EventEmitter<T extends Record<string, any> = Record<string, any>> {
     // remove event listener
     public off(eventName: keyof T, callback: EventEmitterCallback<any>): void {
         if (Array.isArray(this.listeners[eventName])) {
-            while (true) {
-                const index = this.listeners[eventName].indexOf(callback);
-                if (index > -1) {
-                    this.listeners[eventName].splice(index, 1);
-                } else {
-                    // callback not found, all removed
-                    break;
-                }
+            const index = this.listeners[eventName].indexOf(callback);
+            if (index > -1) {
+                this.listeners[eventName].splice(index, 1);
             }
         }
     }
