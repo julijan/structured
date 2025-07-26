@@ -38,6 +38,10 @@ export class DataStoreView {
         return Object.keys(this.store.get(this.componentId()) || {});
     }
 
+    public has(key: string): boolean {
+        return this.keys().includes(key);
+    }
+
     // import this.component.data to store
     // existing keys are skipped unless force = true
     public import(fields?: Array<string>, force: boolean = false, triggerListeners: boolean = true): void {
