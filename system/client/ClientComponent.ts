@@ -314,7 +314,7 @@ export class ClientComponent extends EventEmitter {
 
         if (this.destroyed) {return;}
 
-        this.emit('beforeRedraw');
+        await this.emit('beforeRedraw');
 
         // abort existing redraw call, if in progress
         if (this.redrawRequest !== null) {
@@ -390,7 +390,7 @@ export class ClientComponent extends EventEmitter {
             }
         }
 
-        this.emit('afterRedraw');
+        await this.emit('afterRedraw');
     }
 
     // populates conditionals and conditionalClassNames
@@ -1159,7 +1159,7 @@ export class ClientComponent extends EventEmitter {
             this.redrawRequest = null;
         }
 
-        this.emit('beforeDestroy');
+        await this.emit('beforeDestroy');
 
         this.store.destroy();
 
@@ -1172,7 +1172,7 @@ export class ClientComponent extends EventEmitter {
         // mark destroyed
         this.destroyed = true;
 
-        this.emit('afterDestroy');
+        await this.emit('afterDestroy');
 
         // destroy EventEmitter (unbinding all event listeners)
         this.emitterDestroy();
