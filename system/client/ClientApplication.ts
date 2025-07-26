@@ -35,8 +35,8 @@ export class ClientApplication {
         const AsyncFunction = async function () {}.constructor;
         // @ts-ignore
         const initializerFunction = new AsyncFunction(`
-            const init = ${initializerFunctionString};
             if (!this.destroyed) {
+                const init = ${initializerFunctionString};
                 try {
                     await init.apply(this, [...arguments]);
                 } catch(e) {
