@@ -35,7 +35,7 @@ export class DataStoreView {
 
     public keys(): Array<string> {
         if (this.destroyed) {return [];}
-        return Object.keys(this.store.get(this.componentId()));
+        return Object.keys(this.store.get(this.componentId()) || {});
     }
 
     // import this.component.data to store
