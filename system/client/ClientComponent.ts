@@ -19,6 +19,7 @@ import { Net } from './Net.js';
 import { NetRequest } from './NetRequest.js';
 import { EventEmitter } from '../EventEmitter.js';
 import { ClientApplication } from './ClientApplication.js';
+import { EventEmitterCallback } from '../types/eventEmitter.types.js';
 
 export class ClientComponent extends EventEmitter {
     readonly name: string;
@@ -49,7 +50,7 @@ export class ClientComponent extends EventEmitter {
     private redrawRequest: XMLHttpRequest | null = null;
 
     // callbacks bound using bind method
-    private bound: Array<ClientComponentBoundEvent<LooseObject | undefined>> = [];
+    private bound: Array<ClientComponentBoundEvent<LooseObject | undefined, HTMLElement | Window | ClientComponent>> = [];
 
     // DOM elements within the component that have a data-if attribute
     private conditionals: Array<HTMLElement> = [];
@@ -1177,52 +1178,76 @@ export class ClientComponent extends EventEmitter {
         this.emitterDestroy();
     }
 
-    // add an event listener to given DOM node
+    // add an event listener to given DOM node or ClientComponent
     // stores it to ClientComponent.bound so it can be unbound when needed using unbind/unbindAll
-    // callback receives event as the first argument, attributeData as the second argument
-    // type of expected attribute data can be specified as generic
+    // callback receives:
+    // if element is a ClientComponent (payload: T, eventName: string)
+    // if not a ClientComponent (e: Event, eventData: T, element: HTMLElement | Window)
+    // this should be used instead of "addEventListener" and "on" methods
+    // because that makes sure any event listeners bound are cleaned up when the component is destroyed
+    public bind<T extends any>(element: ClientComponent, event: string, callback: EventEmitterCallback<T>): void
+    public bind<T extends LooseObject | undefined>(element: HTMLElement | Window | Array<HTMLElement | Window>, event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap>, callback: ClientComponentEventCallback<T>): void
     public bind<T extends LooseObject | undefined = undefined>(
-        element: HTMLElement | Window | Array<HTMLElement | Window>,
-        event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap>,
-        callback: ClientComponentEventCallback<T>
+        element: HTMLElement | Window | Array<HTMLElement | Window> | ClientComponent,
+        event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap> | string,
+        callback: ClientComponentEventCallback<T> | EventEmitterCallback<T>
     ): void {
-        if (Array.isArray(element)) {
+        
+        if (element instanceof HTMLElement || element instanceof Window) {
+
+            const cb = callback as ClientComponentEventCallback<T>;
+            
             // multiple elements given
             // bind for each individually
-            element.forEach((el) => {
-                this.bind(el, event, callback);
-            });
-            return;
-        }
+            if (Array.isArray(element)) {
+                element.forEach((el) => {
+                    this.bind(el, event as keyof HTMLElementEventMap, cb);
+                });
+                return;
+            }
+            
+            // event given as array
+            if (Array.isArray(event)) {
+                event.forEach((eventName) => {
+                    this.bind(element, eventName, cb);
+                });
+                return;
+            }
 
-        if (Array.isArray(event)) {
-            event.forEach((eventName) => {
-                this.bind(element, eventName, callback);
-            });
-            return;
-        }
-        const isWindow = element instanceof Window;
-        if (element instanceof HTMLElement || isWindow) {
             // wrap provided callback
             // wrapper will make sure provided callback receives data (attributeData) as the second argument
             const callbackWrapper = (e: Event) => {
-                callback.apply(this, [e, isWindow ? undefined : this.attributeData(element), element]);
+                cb.apply(this, [
+                    e,
+                    element instanceof Window ? undefined : this.attributeData(element),
+                    element
+                ]);
             }
             this.bound.push({
                 element,
-                event,
+                event: event as keyof HTMLElementEventMap,
                 callback: callbackWrapper,
                 callbackOriginal: callback
             });
             element.addEventListener(event, callbackWrapper);
+        } else if (element instanceof ClientComponent) {
+            // binding to ClientComponent
+            const cb = callback as EventEmitterCallback<T>;
+            this.bound.push({
+                element,
+                event: event as keyof HTMLElementEventMap,
+                callback: cb,
+                callbackOriginal: cb
+            });
+            element.on(event as string, cb);
         }
     }
 
     // remove event listener added using bind method
     public unbind<T extends LooseObject | undefined = undefined>(
-        element: HTMLElement,
+        element: HTMLElement | Window | ClientComponent,
         event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap>,
-        callback: ClientComponentEventCallback<T>
+        callback: ClientComponentEventCallback<T> | EventEmitterCallback<T>
     ): void {
 
         if (Array.isArray(event)) {
@@ -1236,15 +1261,19 @@ export class ClientComponent extends EventEmitter {
         });
         if (boundIndex > -1) {
             const bound = this.bound[boundIndex];
-            bound.element.removeEventListener(bound.event, bound.callback);
-            this.bound.splice(boundIndex, 1);
+            if (bound.element instanceof ClientComponent) {
+                bound.element.off(bound.event, bound.callback);
+            } else {
+                bound.element.removeEventListener(bound.event, bound.callback as EventListenerOrEventListenerObject);
+                this.bound.splice(boundIndex, 1);
+            }
         }
     }
 
     // remove all bound event listeners using ClientComponent.bind
     private unbindAll() {
         this.bound.forEach((bound) => {
-            bound.element.removeEventListener(bound.event, bound.callback);
+            this.unbind(bound.element, bound.event, bound.callbackOriginal);
         });
         this.bound = [];
     }

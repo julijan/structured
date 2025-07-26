@@ -2,6 +2,7 @@ import { ClientComponent } from "../client/ClientComponent.js";
 import { Net } from "../client/Net.js";
 import { Application } from "../server/Application.js";
 import { Component } from "../server/Component.js";
+import { EventEmitterCallback } from "./eventEmitter.types.js";
 import { KeysOfUnion, LooseObject } from './general.types.js';
 import { RequestContext } from "./request.types.js";
 
@@ -70,11 +71,11 @@ export type ClientComponentTransitionEvent = 'show' | 'hide';
 
 export type ClientComponentTransitions = Record<ClientComponentTransitionEvent, ClientComponentTransition>;
 
-export type ClientComponentBoundEvent<T extends LooseObject | undefined = undefined> = {
-    element: HTMLElement | Window;
+export type ClientComponentBoundEvent<T extends LooseObject | undefined, E extends HTMLElement | Window | ClientComponent> = {
+    element: E;
     event: keyof HTMLElementEventMap;
-    callback: (e: Event) => void;
-    callbackOriginal: ClientComponentEventCallback<T>;
+    callback: E extends ClientComponent ? EventEmitterCallback<T> : (e: Event) => void;
+    callbackOriginal: E extends ClientComponent ? EventEmitterCallback<T> : ClientComponentEventCallback<T>;
 };
 
 export type ClientComponentEventCallback<T> = (e: Event, data: T, element: HTMLElement | Window) => void;
