@@ -1166,12 +1166,7 @@ export class ClientComponent extends EventEmitter {
         this.unbindAll();
 
         // clean up and free memory
-        this.conditionals = [];
-        this.conditionalClassNames = [];
-        this.conditionalCallbacks = {};
-        this.refs = {};
-        this.refsArray = {};
-        this.data = {};
+        this.reset();
 
         // mark destroyed
         this.destroyed = true;
