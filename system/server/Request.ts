@@ -29,7 +29,7 @@ export class Request {
         this.app = app;
     }
 
-    pageNotFoundCallback: RequestCallback<void, PostedDataDecoded | undefined> =  async ({ response }) => {
+    pageNotFoundCallback: RequestCallback<void | Document, LooseObject> =  async ({ response }) => {
         response.statusCode = 404;
         response.write('Page not found');
         response.end();
@@ -211,7 +211,11 @@ export class Request {
                 this.redirect(response, to, statusCode);
             },
             show404: async() => {
-                await this.pageNotFoundCallback.apply(this.app, [context]);
+                const res = await this.pageNotFoundCallback.apply(this.app, [context]);
+                if (res instanceof Document) {
+                    // pageNotFoundCallback returned a Document, send it as a response
+                    context.respondWith(res);
+                }
                 this.app.emit('pageNotFound', context);
             }
         }
