@@ -89,6 +89,10 @@ export class Components {
                         entry.exportFields = entry.serverPart?.exportFields;
                         entry.attributes = entry.serverPart?.attributes;
                         entry.static = typeof entry.serverPart?.static === 'boolean' ? entry.serverPart.static : false;
+                    } else {
+                        // component has no server part
+                        // such components export all data
+                        entry.exportData = true;
                     }
 
                     this.components[componentName.toUpperCase()] = entry;
