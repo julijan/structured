@@ -33,7 +33,7 @@ export class Document extends Component<{'componentCreated': Component}> {
 
     appendHTML: string = '';
 
-    constructor(app: Application, title: string, ctx?: RequestContext) {
+    constructor(app: Application, title: string, ctx?: RequestContext<any>) {
         super('root');
         this.application = app;
         this.ctx = ctx;
