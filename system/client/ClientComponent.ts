@@ -189,13 +189,13 @@ export class ClientComponent extends EventEmitter {
         this.isReady = false;
         this.refs = {};
         this.refsArray = {};
-        this.conditionalClassNames = [];
+        this.conditionalClassNames.length = 0;
         this.conditionalCallbacks = {};
-        this.conditionals = [];
+        this.conditionals.length = 0;
         this.redrawRequest = null;
         this.initializerExecuted = false;
-        this.bound = [];
-        this.children = [];
+        this.bound.length = 0;
+        this.children.length = 0;
     }
 
     // set initializer callback and execute it
@@ -1143,14 +1143,15 @@ export class ClientComponent extends EventEmitter {
 
         await this.emit('beforeDestroy');
 
-        // remove DOM node
-        this.domNode.parentElement?.removeChild(this.domNode);
-
         // remove children recursively
         const children = Array.from(this.children);
         for (let i = 0; i < children.length; i++) {
             await children[i].destroy();
         }
+
+        // remove DOM node
+        this.domNode.parentElement?.removeChild(this.domNode);
+        this.domNode.innerHTML = '';
 
         // remove from parent's children array
         if (this.parent) {
