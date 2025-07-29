@@ -211,12 +211,17 @@ export class Request {
                 this.redirect(response, to, statusCode);
             },
             show404: async() => {
+                // emit pageNotFound before running the callback
+                // to allow user to modify RequestContext.data if needed
+                this.app.emit('pageNotFound', context);
+
+                // run pageNotFoundCallback callback
                 const res = await this.pageNotFoundCallback.apply(this.app, [context]);
+
+                // if pageNotFoundCallback returned a Document, send it as a response
                 if (res instanceof Document) {
-                    // pageNotFoundCallback returned a Document, send it as a response
                     context.respondWith(res);
                 }
-                this.app.emit('pageNotFound', context);
             }
         }
 
