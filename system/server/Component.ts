@@ -35,6 +35,9 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
         const isDocument = this instanceof Document;
         this.name = name;
 
+        // emitter is immediately ready to receive events
+        this.emitterReady();
+
         if (name === 'root') {
             this.dom = new DOMFragment();
             this.path.push('');
