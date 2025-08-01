@@ -202,27 +202,30 @@ export class ClientComponent extends EventEmitter {
 
     // run initializer for current component, if one exists and recursively run children initializers
     private async runInitializer(isRedraw: boolean = false) {
-        if (!this.initializerExecuted && !this.destroyed) {
-            const initializer = this.app.getInitializer(this.name);
-            if (initializer !== null) {
-                // run own initializer, if one exists
-                await initializer.apply(this, [{
-                    net: this.net,
-                    isRedraw
-                }]);
+        if (this.destroyed || this.initializerExecuted) {return;}
+        const initializer = this.app.getInitializer(this.name);
+        if (initializer !== null) {
+            // run own initializer, if one exists
+            await initializer.apply(this, [{
+                net: this.net,
+                isRedraw
+            }]);
 
-                // run initial updateConditionals
-                // initial updateConditionals always runs with transitions disabled
-                this.updateConditionals(false);
-            }
-
-            // run children initializers
-            for (let i = 0; i < this.children.length; i++) {
-                await this.children[i].runInitializer(isRedraw);
-            }
-            this.emit('initializerExecuted');
+            // run initial updateConditionals
+            // initial updateConditionals always runs with transitions disabled
+            this.updateConditionals(false);
         }
+
+        // EventEmitter ready to receive events once it's initializer is executed
+        await this.emitterReady();
+
+        // run children initializers
+        for (let i = 0; i < this.children.length; i++) {
+            await this.children[i].runInitializer(isRedraw);
+        }
+
         this.initializerExecuted = true;
+        this.emit('initializerExecuted');
     }
 
     // populates this.data with data found as data- prefixed attributes on this.domNode
