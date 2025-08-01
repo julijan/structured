@@ -121,7 +121,9 @@ export class ClientComponent extends EventEmitter {
     }
 
     // initialize component tree recursively
-    private async init(isRedraw: boolean, data: LooseObject = {}) {
+    // components are initialized bottom-to-top (components without children first, root last)
+    // initializer functions are executed top-to-bottom (root first, components without children last)
+    private async init(isRedraw: boolean, data: LooseObject = {}, isRedrawRoot: boolean = false) {
         const initializerExists = this.app.hasInitializer(this.name);
 
         // reset current node
@@ -160,13 +162,6 @@ export class ClientComponent extends EventEmitter {
         this.initModels();
         this.initConditionals();
 
-        // run initializer for current component
-        await this.runInitializer(isRedraw);
-
-        // run initial updateConditionals
-        // initial updateConditionals always runs with transitions disabled
-        this.updateConditionals(false);
-
         // update conditionals whenever any data in component's store has changed
         this.store.onChange('*', () => {
             this.updateConditionals(true);
@@ -180,8 +175,15 @@ export class ClientComponent extends EventEmitter {
 
         // all the child components ready and the component is ready
         this.isReady = true;
+
+        if (this.isRoot || isRedrawRoot) {
+            // run initializer
+            // directly executed on root or redrawRoot only
+            // runInitializer will recursively call initializers on children
+            await this.runInitializer(isRedraw);
+        }
+
         this.emit('ready');
-        
     }
 
     private reset() {
@@ -198,15 +200,27 @@ export class ClientComponent extends EventEmitter {
         this.children.length = 0;
     }
 
-    // set initializer callback and execute it
+    // run initializer for current component, if one exists and recursively run children initializers
     private async runInitializer(isRedraw: boolean = false) {
         if (!this.initializerExecuted && !this.destroyed) {
             const initializer = this.app.getInitializer(this.name);
-            if (initializer === null) {return;}
-            await initializer.apply(this, [{
-                net: this.net,
-                isRedraw
-            }]);
+            if (initializer !== null) {
+                // run own initializer, if one exists
+                await initializer.apply(this, [{
+                    net: this.net,
+                    isRedraw
+                }]);
+
+                // run initial updateConditionals
+                // initial updateConditionals always runs with transitions disabled
+                this.updateConditionals(false);
+            }
+
+            // run children initializers
+            for (let i = 0; i < this.children.length; i++) {
+                await this.children[i].runInitializer(isRedraw);
+            }
+            this.emit('initializerExecuted');
         }
         this.initializerExecuted = true;
     }
@@ -379,7 +393,7 @@ export class ClientComponent extends EventEmitter {
             this.app.registerInitializer(componentName, componentData.initializers[componentName]);
         }
 
-        await this.init(true, componentData.data);
+        await this.init(true, componentData.data, true);
 
         for (let i = 0; i < this.children.length; i++) {
             const childNew = this.children[i];
@@ -895,7 +909,7 @@ export class ClientComponent extends EventEmitter {
         // create an instance of ClientComponent for the added component and add it to this.children
         const component = new ClientComponent(this, componentName, componentNode, this.app);
         this.children.push(component);
-        await component.init(false, res.data);
+        await component.init(false, res.data, true);
 
         // add the component's DOM node to container
         container.appendChild(componentNode);
