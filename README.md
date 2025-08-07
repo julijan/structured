@@ -51,7 +51,7 @@ export default function(app: Application) {
 
 ### Compile
 `tsc`\
-This will create a directory `build` (or whatever you have in tsconfig.json as compilerOptions.outputDir)
+This will create a directory `build` (which can be changed in tsconfig.json, compilerOptions.outputDir)
 
 ### Run
 ```
@@ -115,11 +115,11 @@ new Application(config);
 ```
 
 ### Properties
-- `cookies` - Instance of Cookies, allows you to set a cookie
-- [`session`](#session) - Instance of Session, utilities to manage sessions and data
-- `request` - Instance of Request, you will use this to add routes, but usually not directly by accessing Application.request, more on that in [routes](#route) section
-- `handlebars` - Instance of Handlebars (wrapper around Handlebars templating engine)
-- `components` - Instance of Components, this is the components registry, you should never need to use this directly
+- `cookies` - Instance of `Cookies`, allows you to set a cookie
+- [`session`](#session) - Instance of `Session`, utilities to manage sessions and data
+- `request` - Instance of `Request`, you will use this to add routes, which is usually done in routes files, more on that in [routes](#route) section
+- `handlebars` - Instance of `Handlebars` (wrapper around Handlebars templating engine)
+- `components` - Instance of `Components`, this is the components registry, you should never need to use this directly
 
 ### Methods
 - `init(): Promise<void>` - initializes application, you only need to run this if you set `autoInit = false` in config, otherwise this will be ran when you create the Application instance
@@ -188,7 +188,7 @@ app.exportContextFields('user');
 ### Session
 Session allows you to store temporary data for the users of your web application. You don't need to create an instance of Session, you will always use the instance `Application.session`.
 
-Session data is tied to a visitor via sessionId, which is always available on `RequestContext`, which means you can interact with session data from routes and server side code of your components.
+Session data is tied to a visitor via sessionId, which is always available on `RequestContext`, which means you can interact with session data from routes and server side part of your components.
 
 **Configuration**\
 `StructuredConfig`.`session`:
@@ -247,8 +247,16 @@ export default function(app: Application) {
 
 Route file name has no effect on how the route (request handler) behaves, the only purpose of splitting your routes in separate files is making your code more maintainable.
 
+> [!TIP]
+> You can, and should, define the output/input types for your routes.
+> ```
+> app.request.on<OutputType, InputType>(...)
+> ```
+> This allows TypeScript to validate that you are returning the desired type in all return paths and makes interaction with received (POST, PUT) data easier.
+
 ### RequestContext
-All request handlers receive a `RequestContext` as the first argument.
+RequestContext is created for every received request. It contains all the data related to the request, as well as data you include in `RequestContextData`.
+All request handlers receive a `RequestContext` as the first argument. Your component server side part also receives `RequestContext` as the second argument.
 ```
 type RequestContext<Body extends LooseObject | undefined = LooseObject> = {
     request: IncomingMessage,
@@ -306,12 +314,13 @@ Capture group in URL pattern is (name) in above example. It makes data available
 ```
 app.request.on('GET', '/greet/(userId:num)', async (ctx) => {
     const userId = ctx.args.userId as number;
+
     // fetch user from DB
     const user = await userModel.get(userId);
     return `Hello, ${user.name}!`;
 });
 ```
-It is safe to cast `ctx.args.userId` as `number` in above example because the route would not get executed if the second segment of the URL is not a numeric value, and in case :num modifier is used, URL-provided value is parsed to a number and you don't need to parseInt manually.
+It is safe to cast `ctx.args.userId` as `number` in above example because the route would not get executed if the second segment of the URL is not a numeric value, and in case :num modifier is used, URL-provided value is parsed to a number.
 
 
 **Doing more with less code**\
@@ -346,13 +355,15 @@ In some edge cases you may need more control of when a route is executed, in whi
 > ```
 
 ## Document
-Document does not differ much from a component, in fact, it extends Component. It has a more user-friendly API than Component. Each Document represents a web page. It has a head and body. Structured intentionally does not differentiate between a page and a Component - page is just a component that loads many other components in a desired layout. DocumentHead (each document has one at Document.head) allows adding content to `<head>` section of the output HTML page.
+Document does not differ much from a component, in fact, it extends Component. It has a more user-friendly API than Component. Each Document represents a web page. It has a head and body. Structured intentionally does not differentiate between a page and a Component - page is just a component that loads many other components in a desired layout. `DocumentHead` (each document has one at Document.head) allows adding content to `<head>` section of the output HTML page.
 
 Creating a document:
 `const doc = new Document(app, 'HelloWorld page', ctx);`
 
 Send document as a response:
 ```
+import { Document } from 'structured-fw/Document';
+
 app.request.on('GET', '/home', async (ctx) => {
     const doc = new Document(app, 'Home', ctx);
     await doc.loadComponent('Home');
@@ -373,7 +384,7 @@ app.request.on('GET', '/home', async (ctx) => {
 
 ## Component
 A component is comprised of [1-3 files](#component-parts). It always must include one HTML file, while server side and client side files are optional.
-* HTML file probably requires no explanation
+* HTML file requires no explanation
 * server side file, code that runs on the server and makes data available to HTML and client side code
 * client side file, code that runs on the client (in the browser)
 
@@ -404,11 +415,13 @@ It is recommended, but not necessary, that you contain each component in it's ow
 - [Component client-side code](#component-client-side-code) (_ComponentName.client.ts_)
 
 ### Component HTML
-Let's create a HelloWorld Component `/app/views/HelloWorld/HelloWorld.html`:\
+Let's create a HelloWorld Component `/app/views/HelloWorld/HelloWorld.html` with contents:\
 `Hello, World!`
 
 Let's load this Component into a Document and send it as a response `/app/routes/HelloWorld.ts`:
 ```
+import { Document } from 'structured-fw/Document';
+
 export default function(app: Application) {
     app.request.on('GET', '/hello/world', async (ctx) => {
         const doc = new Document(app, 'Hello, World! From a Component', ctx);
@@ -466,7 +479,7 @@ We just generated a random number, but the data could be anything and will more 
 > Server side `getData` will receive the following arguments:
 > - `data: LooseObject` any data passed in (either by attributes, ClientComponent.add or ClientComponent.redraw)
 > - `ctx: RequestContext` - current `RequestContext`, you will often use this to access for example ctx.data (`RequestContextData`) or ctx.sessionId to interact with session
-> - `app: Application` - your Application instance. You can use it to, for example, access the session in combination with ctx.sessionId
+> - `app: Application` - `Application` instance. You can use it to, for example, access the session in combination with ctx.sessionId
 
 Let's make it even more interesting by adding some client side code to it.
 
@@ -551,7 +564,7 @@ which is now available in `AnotherComponent` HTML, we assigned the received numb
 What about client side? **By default, data returned by server side code is not available in client side code** for obvious reasons, let's assume your server side code returns sensitive data such as user's password, you would not like that exposed on the client side, hence exporting data needs to be explicitly requested in the server side code. There are two ways to achieve this, setting `exportData = true` (exports all data), or `exportFields: Array<string> = [...keysToExport]` (export only given fields).
 
 > [!NOTE]
-> Whenever a component with server-side code is rendered, `getData` is automatically called and anything it returns is available in HTML. You can export all returned data to client-side code by setting `exportData = true` or you can export some of the fields by setting `exportFields = ["field1", "field2", ...]` as a direct property of the class. To access the exported data from client-side use `ClientComponent`.`getData(key: string)` which will be `this.getData(key:string)` within client side code.
+> Whenever a component with server-side code is rendered, `getData` is automatically called and anything it returns is available in HTML. You can export all returned data to client-side code by setting `exportData = true` or you can export some of the fields by setting `exportFields = ["field1", "field2", ...] as const` as a direct property of the class. To access the exported data from client-side use `ClientComponent`.`getData(key: string)` which will be `this.getData(key:string)` within client side part.
 
 Let's create a client side code for `AnotherComponent` and export the `betterNumber` to it, create `/app/views/AnotherComponent/AnotherComponent.client.ts`:
 ```
@@ -567,7 +580,7 @@ And let's update `AnotherComponent.ts` to export `betterNumber`:
 ```
 import { ComponentScaffold } from 'structured-fw/Types';
 export default class AnotherComponent implements ComponentScaffold {
-    exportFields = ['betterNumber'];
+    exportFields = ['betterNumber'] as const;
     async getData(data: { number: number }): Promise<{
         parentSuggests: number,
         betterNumber: number
@@ -580,7 +593,7 @@ export default class AnotherComponent implements ComponentScaffold {
 }
 ```
 
-The only change is we added `exportFields = ['betterNumber'];`, that's all there is to it, better number is now available to component's client side code, again, any type of data can be exported and type of data is preserved in the process.
+The only change is we added `exportFields = ['betterNumber'] as const;`, that's all there is to it, better number is now available to component's client side part, again, any type of data can be exported and type of data is preserved in the process.
 
 **What about passing data from children to parent?**\
 This concept is wrong to start with, if we want a component to be independent, it should not assume it's parent to exist, or behave in any specific way. That being said, components can access each other, and communicate, even from child to parent (only in client side code).
@@ -628,7 +641,11 @@ export const init: InitializerFunction = async function() {
 
 That's it. If there is `AnotherComponent` found within `HelloWorld` (which there is in our case) we are subscribing to "truth" event and capturing the payload. Payload is optional, sometimes we just want to inform anyone interested that a certain event has occurred, without the need to pass any extra data with it. We used `this.find(componentName: string)`, this will recursively find the first instance of a component with `componentName`, optionally you can make it non-recursive by passing `false` as the second argument to `find` method in which case it will look for a direct child with given name.
 
-We have only scratched the surface of what client-side code of a component is capable of. Which brings us to `this`. In client-side code of a component, `this` is the instance of a `ClientComponent`.
+> [!IMPORTANT]
+> To bind an event listener, in example above, we used `child.on`, while this works, direct use of `child.on` is discouraged, it is highly recommended to use `this.bind<PayloadType>(child, eventName, callback)` _(possible since v1.1.5)_. Using `.bind` makes sure event listener is re-bound on component redraw, using `.on` will bind the same event listener every time the listener component is redrawn.
+
+
+We have only scratched the surface of what client-side part of a component is capable of. Which brings us to `this`. In client-side code of a component, `this` is the instance of a `ClientComponent`.
 
 I won't list all of it's properties here, but a few notable mentions are:
 
@@ -647,7 +664,11 @@ Methods:
 - `find(componentName: string, recursive: boolean = true): ClientComponent | null` - find a child component
 - `findParent(componentName: string): ClientComponent | null` - find the first parent with given name
 - `query(componentName: string, recursive: boolean = true): Array<ClientComponent>` - return all components with given name found within this component, if `recursive = false`, only direct children are considered
-- `bind<T extends LooseObject | undefined = undefined>(element: HTMLElement | Window | Array<HTMLElement | Window>, eventName: string | Array<string>, callback: (e: Event, data: T) => void): void` - adds event listener(s) to given element(s). This is preferred over addEventListener because when the component is redrawn/removed, the event listeners added using bind method are automatically restored/removed. Callback receives event as the first argument. Any "data-" prefixed attributes found on `element` are parsed into an object and provided as second argument to callback (you can specify data using attr helper if you want to pass in something other than a string). Third argument provided to callback is the `element`. The method is generic, allowing you to specify expected data type received as the second argument.
+- `bind<T extends LooseObject | undefined = undefined>`(\
+	`element: HTMLElement | Window | Array<HTMLElement | Window> | ClientComponent`,\
+    `event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap> | string`,\
+    `callback: ClientComponentEventCallback<T> | EventEmitterCallback<T>`\
+    ): `void` - adds event listener(s) to given HTML element(s) / components. This is preferred over `HTMLElement`.`.addEventListener` / `ClientComponent`.`on` because when the component is redrawn/removed, the event listeners added using bind method are automatically restored/removed. Callback receives event as the first argument. Any "data-" prefixed attributes found on `element` are parsed into an object and provided as second argument to callback (you can specify data using attr helper if you want to pass in something other than a string). Third argument provided to callback is the `element`. The method is generic, allowing you to specify expected data type received as the second argument.
 - `ref<T>(refName: string): T` - get a HTMLElement or ClientComponent that has attribute `ref="[refName]"`
 - `arrayRef<T>(refName: string): Array<T>` - get an array of HTMLElement or ClientComponent that have attribute `array:ref="[refName]"`
 - `add(appendTo: HTMLElement, componentName: string, data?: LooseObject): Promise<ClientComponent | null>` - add `componentName` component to `appendTo` element, optionally passing `data` to the component when it's being rendered. Returns a promise that resolves with added ClientComponent or null if something went wrong
@@ -730,7 +751,7 @@ You can use two modifier attributes with `data-model`:
 - `data-nullable`
 
 `data-type` - cast value to given type. Can be one of number | boolean | string, string has no effect as HTMLInput values are already a string by default.\
-If number: if input is empty or value casts to `NaN` then `0` (unless `data-nullable` in which case `null`), othrwise the casted number (uses parseFloat so it works with decimal numbers)\
+If number: if input is empty or value casts to `NaN` then `0` (unless `data-nullable` in which case `null`), otherwise the casted number (uses parseFloat so it works with decimal numbers)\
 If boolean: `"1"` and `"true"` casted to `true`, otherwise `false`\
 If string no type casting is attempted.
 
