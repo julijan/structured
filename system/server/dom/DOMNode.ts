@@ -62,6 +62,11 @@ export class DOMNode {
         this.children.push(node);
     }
 
+    getAttribute(attrName: string): string | true | null {
+        if (!this.hasAttribute(attrName)) {return null;}
+        return this.attributeMap[attrName].value;
+    }
+
     setAttribute(attributeName: string, attributeValue: string | true): void {
         const attributeExisting = this.attributeMap[attributeName];
 
