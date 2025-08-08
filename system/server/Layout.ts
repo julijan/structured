@@ -48,12 +48,19 @@ export class Layout {
         const component = new Component(componentName, layoutComponent[0], doc, false);
         await component.init(`<${componentName}></${componentName}>`, data);
 
-        // add sytle="display: none" to elements with data-if attribute inside <template>
+        // add class structured-hidden to elements with data-if attribute inside <template>
         // Component already does this on root node, however, Layout component is initialized later
         const conditionals = component.dom.queryByHasAttribute('data-if');
 
         for (let i = 0; i < conditionals.length; i++) {
-            conditionals[i].style.display = 'none';
+            const className = conditionals[i].getAttribute('class');
+            if (typeof className === 'string') {
+                // append class
+                conditionals[i].setAttribute('class', `${className} structured-hidden`);
+            } else {
+                // add class
+                conditionals[i].setAttribute('class', 'structured-hidden');
+            }
         }
 
         return doc;

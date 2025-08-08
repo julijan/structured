@@ -209,14 +209,21 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
         
         await this.initChildren();
 
-        // add style display = none to all data-if's
+        // add class structured-hidden to all data-if's
         // this will prevent twitching client side
         // (otherwise elements that should be hidden might appear for a brief second)
         if (this.isRoot) {
             const dataIf = this.dom.queryByHasAttribute('data-if');
 
             for (let i = 0; i < dataIf.length; i++) {
-                dataIf[i].style.display = 'none';
+                const className = dataIf[i].getAttribute('class');
+                if (typeof className === 'string') {
+                    // append class
+                    dataIf[i].setAttribute('class', `${className} structured-hidden`);
+                } else {
+                    // add class
+                    dataIf[i].setAttribute('class', 'structured-hidden');
+                }
             }
         }
     }

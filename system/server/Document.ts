@@ -44,6 +44,16 @@ export class Document extends Component<{'componentCreated': Component}> {
         // for routes starting with /assets/client-js/
         this.head.addJS('/assets/client-js/client/Client.js', 0, { type: 'module' });
 
+        // define class .structured-hidden
+        // ClientComponent uses this class to hide conditionals
+        this.head.add(`
+        <style>
+            .structured-hidden {
+                display: none !important;
+            }
+        </style>    
+        `);
+        
         this.application.emit('documentCreated', this);
     }
 

@@ -774,10 +774,8 @@ export class ClientComponent extends EventEmitter {
                 const show = this.execCondition(condition);
 
                 if (show === true) {
-                    // node.style.display = '';
                     this.show(node, enableTransition);
                 } else {
-                    // node.style.display = 'none';
                     this.hide(node, enableTransition);
                 }
             }
@@ -927,15 +925,15 @@ export class ClientComponent extends EventEmitter {
         return this.data[key] as T;
     }
 
-    // shows a previously hidden DOM node (domNode.style.display = '')
+    // shows a previously hidden DOM node
     // if the DOM node has data-transition attributes, it will run the transition while showing the node
     public show(domNode: HTMLElement, enableTransition: boolean = true): void {
         if (!enableTransition) {
-            domNode.style.display = '';
+            domNode.classList.remove('structured-hidden');
             return;
         }
 
-        if (domNode.style.display !== 'none') { return; }
+        if (!domNode.classList.contains('structured-hidden')) { return; }
 
         // const transitions = this.transitions.show;
         const transitions = this.transitionAttributes(domNode).show;
@@ -950,12 +948,11 @@ export class ClientComponent extends EventEmitter {
             [key in keyof ClientComponentTransition]: false | number;
         });
 
+        domNode.classList.remove('structured-hidden');
+
         if (Object.keys(transitionsActive).length === 0) {
-            domNode.style.display = '';
             return;
         }
-
-        domNode.style.display = '';
 
         const onTransitionEnd = (e: any) => {
             domNode.style.opacity = '1';
@@ -1012,15 +1009,15 @@ export class ClientComponent extends EventEmitter {
 
     }
 
-    // hides the given DOM node (domNode.style.display = 'none')
+    // hides the given DOM node
     // if the DOM node has data-transition attributes, it will run the transition before hiding the node
     public hide(domNode: HTMLElement, enableTransition: boolean = true): void {
         if (!enableTransition) {
-            domNode.style.display = 'none';
+            domNode.classList.add('structured-hidden');
             return;
         }
 
-        if (domNode.style.display === 'none') { return; }
+        if (domNode.classList.contains('structured-hidden')) { return; }
 
         // const transitions = this.transitions.hide;
         const transitions = this.transitionAttributes(domNode).hide;
@@ -1037,11 +1034,11 @@ export class ClientComponent extends EventEmitter {
 
         if (Object.keys(transitionsActive).length === 0) {
             // no transitions
-            domNode.style.display = 'none';
+            domNode.classList.add('structured-hidden');
         } else {
 
             const onTransitionEnd = (e: any) => {
-                domNode.style.display = 'none';
+                domNode.classList.add('structured-hidden');
                 domNode.style.opacity = '1';
                 domNode.style.transition = '';
                 domNode.style.transformOrigin = 'unset';
