@@ -215,6 +215,8 @@ export class Request {
                 // to allow user to modify RequestContext.data if needed
                 this.app.emit('pageNotFound', context);
 
+                response.statusCode = 404;
+
                 // run pageNotFoundCallback callback
                 const res = await this.pageNotFoundCallback.apply(this.app, [context]);
 
