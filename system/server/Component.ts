@@ -1,12 +1,12 @@
 import { Document } from './Document.js';
 import { attributeValueFromString, attributeValueToString, objectEach, toCamelCase } from '../Util.js';
 import { LooseObject } from '../types/general.types.js';
-import { ComponentEntry } from "../types/component.types.js";
+import { ComponentEntry, ComponentEvents } from "../types/component.types.js";
 import { DOMFragment } from './dom/DOMFragment.js';
 import { DOMNode } from './dom/DOMNode.js';
 import { EventEmitter } from '../EventEmitter.js';
 
-export class Component<Events extends Record<string, any> = {'componentCreated' : Component}> extends EventEmitter<Events> {
+export class Component<Events extends Record<string, any> = ComponentEvents> extends EventEmitter<Events> {
     id: string;
     name: string;
     document: Document;
@@ -159,7 +159,7 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
                     Object.assign(importedParentData, this.attributes, data || {}),
                     this.document.ctx,
                     this.document.application,
-                    this as Component<{componentCreated: Component}>
+                    this as Component
                 ) : {}) || {};
         } catch(e) {
             throw new Error(`Error executing getData in component ${this.name}: ${e.message}`);
@@ -226,6 +226,8 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
                 }
             }
         }
+
+        await this.emit('ready' as Extract<keyof Events, string>);
     }
 
     public setAttributes(attributes: Record<string, any>, prefix: string = '', encode: boolean = true): void {
@@ -246,7 +248,7 @@ export class Component<Events extends Record<string, any> = {'componentCreated' 
             const potentialComponent = potentialComponents[i];
             const component = this.document.application.components.getByName(potentialComponent.tagName);
             if (component) {
-                const child = new Component(component.name, potentialComponent, this as Component<{componentCreated: Component}>, false);
+                const child = new Component(component.name, potentialComponent, this as Component, false);
                 // promises.push(child.init(childNode.outerHTML, passData));
                 await child.init(potentialComponent.outerHTML, passData);
                 this.children.push(child);

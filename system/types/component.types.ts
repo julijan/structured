@@ -61,6 +61,12 @@ export interface ComponentScaffold<T extends LooseObject = LooseObject, K extend
     [key: string]: any;
 }
 
+// event -> payload
+export type ComponentEvents = {
+    componentCreated : Component,
+    ready: undefined,
+}
+
 export type ClientComponentTransition = {
     fade: false | number;
     slide: false | number;
