@@ -12,7 +12,7 @@ import path from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 
-export class Document extends Component<{'componentCreated': Component}> {
+export class Document extends Component<{'componentCreated': Component, 'beforeRender': void}> {
 
     head: DocumentHead;
     language = 'en';
@@ -100,6 +100,7 @@ export class Document extends Component<{'componentCreated': Component}> {
     }
 
     public toString(): string {
+        this.emit('beforeRender');
 
         if (! this.initializersInitialized) {
             this.initInitializers();
