@@ -154,7 +154,7 @@ export class Request {
 
     // handle a request
     // checks whether there is a registered handler for the URL
-    // if not then it tries to serve a static asset if path is allowd by Config.assets.allow
+    // if not then it tries to serve a static asset if path is allowed by Config.assets.allow
     // if it's not allowed or the asset does not exits, 404 callback is executed
     public async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
         const requestMethod = request.method as RequestMethod;
@@ -192,14 +192,14 @@ export class Request {
             cookies: this.app.cookies.parse(request),
             timeStart: new Date().getTime(),
             isAjax : request.headers['x-requested-with'] == 'xmlhttprequest',
-            respondWith: function (data: any) {
+            respondWith: async function (data: any) {
                 if (typeof data === 'string' || Buffer.isBuffer(data)) {
                     response.write(data);
                 } else if (typeof data === 'number') {
                     response.write(data.toString());
                 } else if (data instanceof Document) {
                     response.setHeader('Content-Type', 'text/html');
-                    response.write(data.toString());
+                    response.write(await data.toString());
                 } else if (data === undefined || data === null) {
                     response.write('');
                 } else {
@@ -222,7 +222,7 @@ export class Request {
 
                 // if pageNotFoundCallback returned a Document, send it as a response
                 if (res instanceof Document) {
-                    context.respondWith(res);
+                    await context.respondWith(res);
                 }
             }
         }
@@ -264,7 +264,7 @@ export class Request {
                 if (! context.response.headersSent) {
                     // if the response was not sent from the request handler
                     // respond with whatever the handler has returned
-                    context.respondWith(response);
+                    await context.respondWith(response);
                 }
             } catch(e) {
                 console.log('Error executing request handler ', e, handler.callback.toString());

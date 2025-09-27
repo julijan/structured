@@ -99,8 +99,8 @@ export class Document extends Component<{'componentCreated': Component, 'beforeR
         this.head.add(clientConfString);
     }
 
-    public toString(): string {
-        this.emit('beforeRender');
+    public async toString(): Promise<string> {
+        await this.emit('beforeRender');
 
         if (! this.initializersInitialized) {
             this.initInitializers();

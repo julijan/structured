@@ -290,7 +290,7 @@ type RequestContext<Body extends LooseObject | undefined = LooseObject> = {
     getArgs: PostedDataDecoded,
 
     // send given data as a response
-    respondWith: (data: any) => void,
+    respondWith: (data: any) => Promise<void>,
 
     // redirect to given url, with given statusCode
     redirect: (to: string, statusCode?: number) => void,

@@ -231,7 +231,7 @@ export class Application {
                 return prev;
             }, {} as LooseObject) : {});
 
-            ctx.respondWith({
+            await ctx.respondWith({
                 html: document.children[0].dom[unwrap ? 'innerHTML' : 'outerHTML'],
                 initializers: document.initInitializers(),
                 data: exportedData
