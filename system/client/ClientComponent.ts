@@ -206,10 +206,14 @@ export class ClientComponent extends EventEmitter {
         const initializer = this.app.getInitializer(this.name);
         if (initializer !== null) {
             // run own initializer, if one exists
-            await initializer.apply(this, [{
-                net: this.net,
-                isRedraw
-            }]);
+            try {
+                await initializer.apply(this, [{
+                    net: this.net,
+                    isRedraw
+                }]);
+            } catch (e) {
+                this.error(`Initializer error: ${e.stack}`);
+            }
 
             // run initial updateConditionals
             // initial updateConditionals always runs with transitions disabled
