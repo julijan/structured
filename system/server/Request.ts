@@ -20,6 +20,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { Buffer } from "node:buffer";
 import { Document } from "./Document.js";
+import zlib from "node:zlib";
 
 export class Request {
 
@@ -192,19 +193,17 @@ export class Request {
             cookies: this.app.cookies.parse(request),
             timeStart: new Date().getTime(),
             isAjax : request.headers['x-requested-with'] == 'xmlhttprequest',
-            respondWith: async function (data: any) {
+            respondWith: async (data: any) => {
                 if (typeof data === 'string' || Buffer.isBuffer(data)) {
-                    response.write(data);
+                    this.sendResponse(request, response, data, 'text/plain; charset=utf-8');
                 } else if (typeof data === 'number') {
-                    response.write(data.toString());
+                    this.sendResponse(request, response, data.toString(), 'text/plain; charset=utf-8');
                 } else if (data instanceof Document) {
-                    response.setHeader('Content-Type', 'text/html');
-                    response.write(await data.toString());
+                    this.sendResponse(request, response, await data.toString(), 'text/html; charset=utf-8');
                 } else if (data === undefined || data === null) {
-                    response.write('');
+                    this.sendResponse(request, response, '', 'text/plain; charset=utf-8');
                 } else {
-                    response.setHeader('Content-Type', 'application/json');
-                    response.write(JSON.stringify(data, null, 4));
+                    this.sendResponse(request, response, JSON.stringify(data, null, 4), 'application/json; charset=utf-8');
                 }
             },
             redirect: (to: string, statusCode: number = 302) => {
@@ -285,13 +284,14 @@ export class Request {
                 if (existsSync(assetPath)) {
                     await this.app.emit('beforeAssetAccess', context);
                     const extension = (context.request.url || '').split('.').pop();
+                    let contentType = 'application/javascript';
                     if (extension) {
-                        const contentType = this.app.contentType(extension);
-                        if (contentType) {
-                            response.setHeader('Content-Type',  contentType);
+                        const typeByExtension = this.app.contentType(extension);
+                        if (typeByExtension) {
+                            contentType = typeByExtension;
                         }
                     }
-                    response.write(readFileSync(assetPath));
+                    this.sendResponse(request, response, readFileSync(assetPath), contentType);
                     staticAsset = true;
                     await this.app.emit('afterAssetAccess', context);
                 }
@@ -557,5 +557,49 @@ export class Request {
             return null;
         })
         return files;
+    }
+
+    private sendResponse(
+        request: IncomingMessage,
+        response: ServerResponse,
+        buffer: string | Buffer,
+        contentType: string
+    ): void {
+
+        // content type might be text/javascript; charset=utf-8
+        // we only care about mime type when deciding whether to gzip
+        const mimeType = contentType.split(';')[0];
+        
+        const gzipResponse =    this.app.config.gzip.enabled &&
+                                this.app.config.gzip.types.includes(mimeType) &&
+                                request.headers['accept-encoding']?.includes('gzip') &&
+                                buffer.length >= this.app.config.gzip.minSize;
+
+
+        if (!response.hasHeader('Content-Type')) {
+            // only set given content type header if Content-Type header is not already set
+            response.setHeader('Content-Type', contentType);
+        }
+
+        // convert to UTF8 Buffer to get correct length
+        if (typeof buffer === 'string') {
+            buffer = Buffer.from(buffer, 'utf-8');
+        }
+
+        if (gzipResponse) {
+            // gzip response
+            response.setHeader('Content-Encoding', 'gzip');
+    
+            const compressed = zlib.gzipSync(buffer, {
+                level: this.app.config.gzip.compressionLevel
+            });
+
+            response.setHeader('Content-Length', compressed.length);
+            response.write(compressed);
+        } else {
+            // no gzip
+            response.setHeader('Content-Length', buffer.length);
+            response.write(buffer);
+        }
     }
 }

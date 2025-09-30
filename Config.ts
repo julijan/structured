@@ -42,5 +42,19 @@ export const config: StructuredConfig = {
         // used by Document.push, can be preload or preconnect
         linkHeaderRel : 'preload'
     },
+    gzip: {
+        enabled: true, // whether to enable response gzip compression
+        // compress only listed types
+        types: [
+            'text/html',
+            'text/xml',
+            'text/plain',
+            'text/css',
+            'application/javascript',
+            'application/json'
+        ],
+        minSize: 10240, // compress only if response is at least minSize bytes
+        compressionLevel: 4, // higher value = greater compression, slower
+    },
     runtime: 'Node.js'
 }
