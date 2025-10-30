@@ -1,2 +1,4 @@
 import { ClientApplication } from './ClientApplication.js';
-new ClientApplication();
+window.addEventListener('load', () => {
+	new ClientApplication();
+});
