@@ -180,10 +180,21 @@ export class ClientComponent extends EventEmitter {
             // run initializer
             // directly executed on root or redrawRoot only
             // runInitializer will recursively call initializers on children
-            await this.runInitializer(isRedraw);
+            // root/redrawRoot becomes ready once all initializers within it were executed
+            this.on('initializerExecuted', () => {
+                this.emit('ready');
+            });
+
+            // requestAnimationFrame ensures the initializer is executed on next repaint
+            // making sure all elements were painted when the initializer gets executed
+            // this prevents issues such as clientWidth being 0 because element is not fully painted yet
+            requestAnimationFrame(() => {
+                this.runInitializer(isRedraw);
+            });
+        } else {
+            this.emit('ready');
         }
 
-        this.emit('ready');
     }
 
     private reset() {
