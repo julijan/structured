@@ -8,11 +8,13 @@ export class Layout {
     layoutComponent: string;
     app: Application;
     language: string;
+    attributes: Record<string, string>;
 
-    constructor(app: Application, layoutComponent: string, language: string = 'en') {
+    constructor(app: Application, layoutComponent: string, language: string = 'en', attributes?: Record<string, string>) {
         this.app = app;
         this.layoutComponent = layoutComponent;
         this.language = language;
+        this.attributes = attributes || {};
 
         // make sure the layout component exists
         if (this.app.initialized) {
@@ -37,7 +39,7 @@ export class Layout {
      * @param data Optional data made available both to template and the loaded component
      * @returns Promise<Document>
      */
-    async document(ctx: RequestContext, title: string, componentName: string, data?: LooseObject): Promise<Document> {
+    async document(ctx: RequestContext, title: string, componentName: string, data?: LooseObject, attributes?: Record<string, string>): Promise<Document> {
         const doc = new Document(this.app, title, ctx);
         doc.language = this.language;
         await doc.loadComponent(this.layoutComponent, data);
@@ -47,6 +49,16 @@ export class Layout {
         }
         const component = new Component(componentName, layoutComponent[0], doc, false);
         await component.init(`<${componentName}></${componentName}>`, data);
+
+        if (doc.children.length > 0) {
+            // combine layout-wide attributes with document specific ones provided to this method
+            const attributesObject = {
+                ...this.attributes,
+                ...(attributes || {})
+            }
+            // apply combined attributes to first child of the document (layoutComponent)
+            doc.children[0].setAttributes(attributesObject, '', false);
+        }
 
         // add class structured-hidden to elements with data-if attribute inside <template>
         // Component already does this on root node, however, Layout component is initialized later
