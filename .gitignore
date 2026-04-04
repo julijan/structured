@@ -10,3 +10,4 @@ tailwind.config.cjs
 .vscode
 package-lock.json
 *.tgz
+.npmrc
