@@ -48,7 +48,7 @@ export class HTMLParser {
         const charCode = char.charCodeAt(0);
 
         if (this.state === 'idle') {
-            if (char === ' ') {return true;}
+            if (this.isWordBreak(char)) {return true;}
             if (char === '<') {
                 this.state = 'tagStart';
                 this.tokenCurrent = '';
@@ -105,7 +105,7 @@ export class HTMLParser {
                 return true;
             }
 
-            if (char === ' ') {
+            if (this.isWordBreak(char)) {
                 if (this.tokenCurrent.length === 0) {
                     return true;
                 }
@@ -265,6 +265,10 @@ export class HTMLParser {
 
     private isNumber(charCode: number): boolean {
         return charCode > 47 && charCode < 58;
+    }
+
+    private isWordBreak(char: string): boolean {
+        return char === ' ' || char === '\n' || char === '\t';
     }
 
     public dom(): DOMFragment {
