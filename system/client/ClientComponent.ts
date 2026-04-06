@@ -181,7 +181,7 @@ export class ClientComponent extends EventEmitter {
             // directly executed on root or redrawRoot only
             // runInitializer will recursively call initializers on children
             // root/redrawRoot becomes ready once all initializers within it were executed
-            this.on('initializerExecuted', async () => {
+            this.bind(this, 'initializerExecuted', async () => {
                 this.emit('ready');
 
                 if (isRedraw) {
