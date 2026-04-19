@@ -76,14 +76,14 @@ export type ClientComponentTransitionEvent = 'show' | 'hide';
 
 export type ClientComponentTransitions = Record<ClientComponentTransitionEvent, ClientComponentTransition>;
 
-export type ClientComponentBoundEvent<T extends LooseObject | undefined, E extends HTMLElement | Window | ClientComponent> = {
-    element: E;
+export type ClientComponentBoundEvent<Data extends LooseObject | undefined, Element extends HTMLElement | Window | ClientComponent, Evt extends Event = Event> = {
+    element: Element;
     event: keyof HTMLElementEventMap;
-    callback: E extends ClientComponent ? EventEmitterCallback<T> : (e: Event) => void;
-    callbackOriginal: E extends ClientComponent ? EventEmitterCallback<T> : ClientComponentEventCallback<T>;
+    callback: Element extends ClientComponent ? EventEmitterCallback<Data> : (e: Event) => void;
+    callbackOriginal: Element extends ClientComponent ? EventEmitterCallback<Data> : ClientComponentEventCallback<Data, Evt>;
 };
 
-export type ClientComponentEventCallback<T> = (e: Event, data: T, element: HTMLElement | Window) => void;
+export type ClientComponentEventCallback<T, E extends Event = Event> = (e: E, data: T, element: HTMLElement | Window) => void;
 
 // client side component initializer function
 export type InitializerFunction = (this: ClientComponent, ctx: InitializerFunctionContext) => Promise<void>;

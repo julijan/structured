@@ -1219,11 +1219,11 @@ export class ClientComponent extends EventEmitter {
     // this should be used instead of "addEventListener" and "on" methods
     // because that makes sure any event listeners bound are cleaned up when the component is destroyed
     public bind<T extends any>(element: ClientComponent, event: string, callback: EventEmitterCallback<T>): void
-    public bind<T extends LooseObject | undefined>(element: HTMLElement | Window | Array<HTMLElement | Window>, event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap>, callback: ClientComponentEventCallback<T>): void
-    public bind<T extends LooseObject | undefined = undefined>(
+    public bind<T extends LooseObject | undefined, Evt extends Event = Event>(element: HTMLElement | Window | Array<HTMLElement | Window>, event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap>, callback: ClientComponentEventCallback<T, Evt>): void
+    public bind<T extends LooseObject | undefined = undefined, Evt extends Event = Event>(
         element: HTMLElement | Window | Array<HTMLElement | Window> | ClientComponent,
         event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap> | string,
-        callback: ClientComponentEventCallback<T> | EventEmitterCallback<T>
+        callback: ClientComponentEventCallback<T, Evt> | EventEmitterCallback<T>
     ): void {
         
         // multiple elements given
@@ -1233,7 +1233,7 @@ export class ClientComponent extends EventEmitter {
                 this.bind(
                     el as HTMLElement | Window,
                     event as keyof HTMLElementEventMap,
-                    callback as ClientComponentEventCallback<T>
+                    callback as ClientComponentEventCallback<T, Evt>
                 );
             });
             return;
