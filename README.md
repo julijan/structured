@@ -444,13 +444,23 @@ That was the simplest possible example, let's make it more interesting by adding
 ### Component server-side code
 Create a new file `/app/views/HelloWorld/HelloWorld.ts` (server side component code):
 ```
-import { ComponentScaffold } from 'structured-fw/Types';
-export default class HelloWorld implements ComponentScaffold {
-    async getData(): Promise<{
-        luckyNumber: number
-    }> {
+import { Application } from 'structured-fw/Application';
+import { ComponentScaffold, RequestContext } from 'structured-fw/Types';
+
+type ComponentInput = {
+    name: string,
+}
+
+type ComponentOutput = {
+    greetName: string,
+    luckyNumber: number,
+}
+
+export default class HelloWorld implements ComponentScaffold<ComponentInput, ComponentOutput> {
+    async getData(data: ComponentInput, ctx: RequestContext, app: Application): Promise<ComponentOutput> {
         return {
-            luckyNumber: this.num()
+            greetName: data.name,
+            luckyNumber: this.num(),
         }
     }
 
@@ -462,7 +472,7 @@ export default class HelloWorld implements ComponentScaffold {
 
 Update `HelloWorld.html`:
 ```
-Hello, World!<br>
+Hello, {{greetName}}!<br>
 Your lucky number is {{luckyNumber}}
 ```
 
