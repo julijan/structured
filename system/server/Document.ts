@@ -29,11 +29,11 @@ export class Document extends Component<{'componentCreated': Component, 'beforeR
 
     componentIds: Array<string> = [];
 
-    ctx: undefined|RequestContext;
+    ctx: RequestContext;
 
     appendHTML: string = '';
 
-    constructor(app: Application, title: string, ctx?: RequestContext<any>) {
+    constructor(app: Application, title: string, ctx: RequestContext<any>) {
         super('root');
         this.application = app;
         this.ctx = ctx;

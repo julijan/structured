@@ -53,12 +53,11 @@ export interface ComponentScaffold<T extends LooseObject = LooseObject, K extend
     exportFields?: ReadonlyArray<K>;
 
     static?: boolean;
-    deferred?: (data: Record<string, any>, ctx: RequestContext | undefined, app: Application) => boolean;
+    deferred?: (data: Record<string, any>, ctx: RequestContext, app: Application) => boolean;
 
     attributes?: Record<string, string>;
 
-    getData: (this: ComponentScaffold, data: LooseObject, ctx: undefined | RequestContext, app: Application, component: Component) => Promise<T | void>;
-    [key: string]: any;
+    getData: (this: ComponentScaffold, data: LooseObject, ctx: RequestContext, app: Application, component: Component) => Promise<T | void>;
 }
 
 // event -> payload
