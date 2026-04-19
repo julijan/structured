@@ -42,7 +42,7 @@ export type ComponentEntry = {
     initializer?: InitializerFunction;
 };
 
-export interface ComponentScaffold<T extends LooseObject = LooseObject, K extends KeysOfUnion<T> = KeysOfUnion<T>> {
+export interface ComponentScaffold<I extends LooseObject = LooseObject, O extends LooseObject = LooseObject, K extends KeysOfUnion<O> = KeysOfUnion<O>> {
     // rendered tag name (default is "div")
     tagName?: string;
 
@@ -57,7 +57,7 @@ export interface ComponentScaffold<T extends LooseObject = LooseObject, K extend
 
     attributes?: Record<string, string>;
 
-    getData: (this: ComponentScaffold, data: LooseObject, ctx: RequestContext, app: Application, component: Component) => Promise<T | void>;
+    getData: (this: ComponentScaffold<I, O>, data: I, ctx: RequestContext, app: Application, component: Component) => Promise<O | void>;
 }
 
 // event -> payload
