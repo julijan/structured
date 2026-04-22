@@ -242,6 +242,15 @@ export class Application {
         return false;
     }
 
+    // return application root directory or given URI within it 
+    public directory(uri?: string): string {
+        const dir = path.resolve('../');
+        if (typeof uri === 'string') {
+            return path.resolve(dir, uri.startsWith('/') ? uri.substring(1) : uri);
+        }
+        return dir;
+    }
+
     public memoryUsage(): NodeJS.MemoryUsage {
         return process.memoryUsage();
     }
