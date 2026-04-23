@@ -265,44 +265,66 @@ Route file name has no effect on how the route (request handler) behaves, the on
 RequestContext is created for every received request. It contains all the data related to the request, as well as data you include in `RequestContextData`.
 All request handlers receive a `RequestContext` as the first argument. Your component server side part also receives `RequestContext` as the second argument.
 ```
-type RequestContext<Body extends LooseObject | undefined = LooseObject> = {
-    request: IncomingMessage,
-    response: ServerResponse,
-    args: URIArguments,
-    handler: null|RequestHandler,
+class RequestContext<Body extends LooseObject | undefined = LooseObject> = {
+    app: Application;
+    uri: string;
 
-    cookies: Record<string, string>,
+    request: IncomingMessage;
+    response: ServerResponse;
+
+    // captured URI arguments
+    // for example if the requested URI was /users/8 and the pattern was /users/(userId:num)
+    // args will be { userId: 8 }
+    args: URIArguments;
+
+    // request cookies parsed into an object
+    cookies: Record<string, string>;
 
     // POSTed data, parsed to object
-    body?: LooseObject,
+    body?: LooseObject;
 
-    bodyRaw?: Buffer,
+    bodyRaw?: Buffer;
 
     // files extracted from request body
-    files?: Record<string, RequestBodyRecordValue>,
+    files?: Record<string, RequestBodyRecordValue>;
 
     // user defined data
-    data: RequestContextData,
+    data: RequestContextData;
 
-    // if session is started and user has visited any page
-    sessionId?: string,
+    // defined if session is started and user has visited any page
+    sessionId?: string;
 
-    // true if x-requested-with header is received and it equals 'xmlhttprequest'
-    isAjax: boolean,
+    // true if x-requested-with header value is 'xmlhttprequest'
+    isAjax: () => boolean;
 
     // time when request was received (unix timestamp in milliseconds)
-    timeStart: number,
+    timeStart: number;
 
-    // URL GET arguments
-    getArgs: PostedDataDecoded,
+    // URL GET arguments, for example if the URI isss /users?id=8
+    // getArgs would be { id: '8' }
+    getArgs: PostedDataDecoded;
+
+    // create a Document and load given component
+    createDocument: (title: string, component: string, data?: LooseObject) => Promise<Document>;
+
+    // create a Document using provided layout
+    layoutDocument: layoutDocument(
+        layout: Layout,
+        title: string,
+        component: string,
+        data?: LooseObject,
+        attributes?: Record<string, string>
+    ) => Promise<Document>;
 
     // send given data as a response
-    respondWith: (data: any) => Promise<void>,
+    respondWith: (data: any) => Promise<void>;
 
-    // redirect to given url, with given statusCode
-    redirect: (to: string, statusCode?: number) => void,
+    // redirect to given URI, with given statusCode (default 302)
+    redirect: (to: string, statusCode?: number) => void;
 
-    // show a 404 page
+    // show a 404 page and send a 404 status code
+    // by default it will be a page with content "Page not found"
+    // to change this you can set app.request.pageNotFoundCallback to a function that returns a Document
     show404: () => Promise<void>
 }
 ```
@@ -378,6 +400,15 @@ app.request.on('GET', '/home', async (ctx) => {
 });
 ```
 
+Above code could be simplified using RequestContext.createDocument method as:
+```
+app.request.on('GET', '/home', async (ctx) => {
+    return await ctx.createDocument('Home', 'Home');
+});
+```
+
+Much shorter, but slightly confusing due to bad example (both arguments being 'Home'). First argument is the document title, second argument is the name of the component you want to load.
+
 > [!TIP]
 > Since version 0.8.4 Document extends EventEmitter, and "componentCreated" event is emitted whenever a component instance is created within the Document.\
 > This makes the following possible:
@@ -452,7 +483,8 @@ That was the simplest possible example, let's make it more interesting by adding
 Create a new file `/app/views/HelloWorld/HelloWorld.ts` (server side component code):
 ```
 import { Application } from 'structured-fw/Application';
-import { ComponentScaffold, RequestContext } from 'structured-fw/Types';
+import { ComponentScaffold } from 'structured-fw/Types';
+import { RequestContext } from 'structured-fw/RequestContext';
 
 type ComponentInput = {
     name: string,
