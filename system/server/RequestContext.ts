@@ -5,7 +5,7 @@ import zlib from "node:zlib";
 import { mergeDeep, queryStringDecode, queryStringDecodedSetValue } from "../Util.js";
 import { Document } from "./Document.js";
 import path from "node:path";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, ReadStream } from "node:fs";
 import { Layout } from "./Layout.js";
 
 export class RequestContext<Body extends LooseObject | undefined = LooseObject> {
@@ -16,7 +16,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 
     private readonly pageNotFoundCallback: RequestCallback<void | Document, LooseObject | undefined>;
     private readonly handler: RequestHandler | null;
-    
+
 	readonly request: IncomingMessage;
 	readonly response: ServerResponse;
 	args: URIArguments = {};
@@ -44,6 +44,9 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 	getArgs: PostedDataDecoded = {};
 
 	readonly timeStart: number;
+
+    // only true if ReadStream instace is sent as a response
+    private streamingData: boolean = false;
 
 	constructor(
 		app: Application,
@@ -94,7 +97,14 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 			this.sendResponse(await data.toString(), 'text/html; charset=utf-8');
 		} else if (data === undefined || data === null) {
 			this.sendResponse('', 'text/plain; charset=utf-8');
-		} else {
+		}  else if (data instanceof ReadStream) {
+            this.streamingData = true;
+            data.once('end', () => {
+                // streaming complete, end the response
+                this.response.end();
+            });
+            data.pipe(this.response);
+        } else {
 			this.sendResponse(JSON.stringify(data, null, 4), 'application/json; charset=utf-8');
 		}
 	}
@@ -432,8 +442,11 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 
         }
 
-        // end the response
-        this.response.end();
+        // end the response, unless ReadStream is being used as the response source
+        // in such case, response.end will get called once the streaming is complete
+        if (!this.streamingData) {
+            this.response.end();
+        }
     }
 
 	// true if x-requested-with header is received and it equals 'xmlhttprequest'
