@@ -137,6 +137,12 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
         }
     }
 
+	public async createDocument(title: string, component: string, data?: LooseObject): Promise<Document> {
+		const doc = new Document(this.app, title, this);
+		await doc.loadComponent(component, data);
+		return doc;
+	}
+
 	public async show404(): Promise<void> {
 		// emit pageNotFound before running the callback
 		// to allow user to modify RequestContext.data if needed
