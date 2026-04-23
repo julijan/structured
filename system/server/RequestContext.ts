@@ -10,16 +10,17 @@ import { Layout } from "./Layout.js";
 
 export class RequestContext<Body extends LooseObject | undefined = LooseObject> {
 
-	app: Application;
+	readonly app: Application;
 
 	uri: string;
 
-    pageNotFoundCallback: RequestCallback<void | Document, LooseObject | undefined>;
-
-	request: IncomingMessage;
-	response: ServerResponse;
+    private readonly pageNotFoundCallback: RequestCallback<void | Document, LooseObject | undefined>;
+    private readonly handler: RequestHandler | null;
+    
+	readonly request: IncomingMessage;
+	readonly response: ServerResponse;
 	args: URIArguments = {};
-	handler: RequestHandler | null;
+	
 
 	cookies: Record<string, string> = {};
 
@@ -42,7 +43,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 
 	getArgs: PostedDataDecoded = {};
 
-	timeStart: number;
+	readonly timeStart: number;
 
 	constructor(
 		app: Application,
