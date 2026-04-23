@@ -39,7 +39,7 @@ export class Layout {
      * @param data Optional data made available both to template and the loaded component
      * @returns Promise<Document>
      */
-    async document(ctx: RequestContext, title: string, componentName: string, data?: LooseObject, attributes?: Record<string, string>): Promise<Document> {
+    async document(ctx: RequestContext<any>, title: string, componentName: string, data?: LooseObject, attributes?: Record<string, string>): Promise<Document> {
         const doc = new Document(this.app, title, ctx);
         doc.language = this.language;
         await doc.loadComponent(this.layoutComponent, data);
