@@ -6,6 +6,7 @@ import { mergeDeep, queryStringDecode, queryStringDecodedSetValue } from "../Uti
 import { Document } from "./Document.js";
 import path from "node:path";
 import { existsSync, readFileSync } from "node:fs";
+import { Layout } from "./Layout.js";
 
 export class RequestContext<Body extends LooseObject | undefined = LooseObject> {
 
@@ -142,6 +143,17 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 		await doc.loadComponent(component, data);
 		return doc;
 	}
+
+    // creates a Document using provided layout
+    public async layoutDocument(
+        layout: Layout,
+        title: string,
+        component: string,
+        data?: LooseObject,
+        attributes?: Record<string, string>
+    ): Promise<Document> {
+        return await layout.document(this, title, component, data, attributes);
+    }
 
 	public async show404(): Promise<void> {
 		// emit pageNotFound before running the callback
