@@ -29,6 +29,13 @@ npm init -y
 npm install @types/node
 ```
 
+## Set type to "module" in package.json
+```
+...
+  "type": "module",
+...
+```
+
 *If you have TypeScript installed globally then you can skip the following*\
 `npm install --save-dev typescript`
 
