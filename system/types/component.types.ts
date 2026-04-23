@@ -2,9 +2,9 @@ import { ClientComponent } from "../client/ClientComponent.js";
 import { Net } from "../client/Net.js";
 import { Application } from "../server/Application.js";
 import { Component } from "../server/Component.js";
+import { RequestContext } from "../server/RequestContext.js";
 import { EventEmitterCallback } from "./eventEmitter.types.js";
 import { KeysOfUnion, LooseObject } from './general.types.js';
-import { RequestContext } from "./request.types.js";
 
 export type ComponentEntry = {
     name: string;

@@ -6,7 +6,7 @@ import * as mime from 'mime-types';
 import { ApplicationEvents } from '../types/application.types.js';
 import { StructuredConfig } from '../types/structured.types.js';
 import { LooseObject } from '../types/general.types.js';
-import { RequestContext, RequestBodyArguments } from "../types/request.types.js";
+import { RequestBodyArguments } from "../types/request.types.js";
 import { Document } from './Document.js';
 import { Components } from './Components.js';
 import { Session } from './Session.js';
@@ -14,6 +14,7 @@ import { toSnakeCase } from '../Util.js';
 import { Request } from './Request.js';
 import { Handlebars } from './Handlebars.js';
 import { Cookies } from './Cookies.js';
+import { RequestContext } from './RequestContext.js';
 
 export class Application {
     readonly config: StructuredConfig;

@@ -1,8 +1,8 @@
 import { LooseObject } from '../types/general.types.js';
-import { RequestContext } from "../types/request.types.js";
 import { Application } from "./Application.js";
 import { Component } from "./Component.js";
 import { Document } from "./Document.js";
+import { RequestContext } from './RequestContext.js';
 
 export class Layout {
     layoutComponent: string;
