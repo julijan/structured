@@ -11,6 +11,7 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { RequestContext } from "./RequestContext.js";
 import { Document } from "./Document.js";
+import { StructuredError } from "../StructuredError.js";
 
 export class Request {
 
@@ -166,13 +167,24 @@ export class Request {
         const handler = this.getHandler(uri, requestMethod);
 
         // initialize RequestContext, which will handle the request
-        new RequestContext(
-            this.app,
-            request,
-            response,
-            handler,
-            this.pageNotFoundCallback
-        );
+        try {
+            const ctx = new RequestContext(
+                this.app,
+                request,
+                response,
+                handler,
+                this.pageNotFoundCallback
+            );
+            await ctx.exec();
+        } catch(e) {
+            if (e instanceof StructuredError) {
+                // all errors that end up here should be an instance of StructuredError
+                e.log();
+            } else {
+                // if error is not an instance of StructuredError, re-throw it
+                throw e;
+            }
+        }
     }
 
     // allows easy access to URI segments

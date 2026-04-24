@@ -7,8 +7,12 @@ import { Document } from "./Document.js";
 import path from "node:path";
 import { existsSync, readFileSync, ReadStream } from "node:fs";
 import { Layout } from "./Layout.js";
+import { StructuredError } from "../StructuredError.js";
 
 export class RequestContext<Body extends LooseObject | undefined = LooseObject> {
+
+    private executionStartedAt: number | null = null;
+    private executionCompletedAt: number | null = null;
 
 	readonly app: Application;
 
@@ -69,23 +73,32 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 		this.body = undefined as Body;
 
 		this.pageNotFoundCallback = pageNotFoundCallback;
-
-        this.exec();
 	}
 
-    private async exec(): Promise<void> {
-		this.initGetArgs();
-		this.parseCookies();
+    public async exec(): Promise<void> {
+        if (this.executionStartedAt !== null) {
+            // prevent executing more than once
+            return;
+        }
+        this.executionStartedAt = Date.now();
 
-		if (this.handler) {
-			try {
-				await this.parseBody();
-			} catch(e) {
-				this.error(e);
-			}
-		}
+        try {
+            this.initGetArgs();
+            this.parseCookies();
+    
+            if (this.handler) {
+                await this.parseBody();
+            }
+    
+            await this.handle();
 
-        await this.handle();
+            this.executionCompletedAt = Date.now();
+        } catch(e) {
+            // error serving the request
+            // end the response and throw an error, it will be catched and displayed by Request
+            this.response.end();
+            throw new StructuredError(`Error in request to ${this.uri}`, e);
+        }
     }
 
 	public async respondWith(data: any): Promise<void> {
@@ -245,11 +258,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
                 try {
                     this.body = queryStringDecode(bodyRaw) as Body;
                 } catch (e) {
-                    console.error(`Error parsing urlencoded request body for request to ${this.request.url}, (${e.message}).
-                    Raw data:
-                        ${bodyRaw}
-
-                    `);
+                    throw new StructuredError(`Error parsing urlencoded request body, raw data: ${bodyRaw}`, e);
                 }
             } else if (this.request.headers['content-type'].indexOf('multipart/form-data') > -1) {
                 // multipart/form-data
@@ -259,21 +268,13 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
                     try {
                         this.body = this.parseBodyMultipart(this.bodyRaw.toString('utf-8'), boundary) as Body;
                     } catch (e) {
-                        console.error(`Error parsing multipart request body for request to ${this.request.url}, (${e.message}).
-                        Raw data:
-                            ${this.bodyRaw.toString('utf-8')}
-                            
-                        `);
+                        throw new StructuredError(`Error parsing multipart request body, raw data: ${this.bodyRaw.toString('utf-8')}`, e);
                     }
 
                     try {
                         this.files = this.multipartBodyFiles(this.bodyRaw.toString('binary'), boundary);
                     } catch (e) {
-                        this.error(`Error parsing multipart request body files: (${e.message}).
-                        Raw data:
-                            ${this.bodyRaw.toString('utf-8')}
-                            
-                        `);
+                        throw new StructuredError(`Error parsing multipart request body files, raw data ${this.bodyRaw.toString('utf-8')}`, e);
                     }
                 }
             } else if (this.request.headers['content-type'].indexOf('application/json') > -1) {
@@ -282,7 +283,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
                     this.body = JSON.parse(this.bodyRaw.toString());
                 } catch (e) {
                     // failed to parse the body
-                    this.body = undefined as Body;
+                    throw new StructuredError(`Error parsing JSON request body, raw data: ${this.bodyRaw.toString('utf-8')}`, e);
                 }
             }
         }
@@ -404,7 +405,8 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
                     await this.respondWith(response);
                 }
             } catch(e) {
-                console.log('Error executing request handler ', e, this.handler.callback.toString());
+                throw new StructuredError(`Error executing request handler ${this.handler.callback.name}`, e);
+                // console.log('Error executing request handler ', e, this.handler.callback.toString());
             }
 
             if (!this.handler.staticAsset) {
@@ -454,8 +456,16 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 		return this.request.headers['x-requested-with'] == 'xmlhttprequest';
 	}
 
-	private error(e: Error | string): void {
-		const message = typeof e === 'string' ? e : e.message;
-		console.error(`Error in request to ${this.uri}: ${message}`);
-	}
+    // returns time taken to serve the request in milliseconds
+    public duration(): number {
+        if (this.executionStartedAt === null || this.executionCompletedAt === null) {
+            return 0;
+        }
+        return this.executionCompletedAt - this.executionStartedAt;
+    }
+
+    // true if request is fully served
+    public complete(): boolean {
+        return this.executionCompletedAt !== null;
+    }
 }

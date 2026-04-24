@@ -5,6 +5,7 @@ import { ComponentEntry, ComponentEvents } from "../types/component.types.js";
 import { DOMFragment } from './dom/DOMFragment.js';
 import { DOMNode } from './dom/DOMNode.js';
 import { EventEmitter } from '../EventEmitter.js';
+import { StructuredError } from '../StructuredError.js';
 
 export class Component<Events extends Record<string, any> = ComponentEvents> extends EventEmitter<Events> {
     id: string;
@@ -162,7 +163,7 @@ export class Component<Events extends Record<string, any> = ComponentEvents> ext
                     this as Component
                 ) : {}) || {};
         } catch(e) {
-            throw new Error(`Error executing getData in component ${this.name}: ${e.message}`);
+            throw new StructuredError(`Error executing getData in component ${this.name}`, e);
         }
         if (data === undefined) {
             if (this.entry && this.entry.hasServerPart) {
@@ -427,7 +428,7 @@ export class Component<Events extends Record<string, any> = ComponentEvents> ext
         try {
             this.dom.innerHTML = this.document.application.handlebars.compile(html, data);
         } catch(e) {
-            throw new Error(`Error compiling Handlebars template in component ${this.name}, error: ${e.message}`);
+            throw new StructuredError(`Error compiling Handlebars template in component ${this.name}`, e);
         }
     }
 }
