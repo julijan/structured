@@ -86,7 +86,6 @@ function createTsconfig() {
                 "allowSyntheticDefaultImports": true, // albe to do import { default as varname } from 'module'
                 "preserveSymlinks": true,
                 "removeComments": true,
-                "baseUrl": ".",
                 "rootDir": ".",
                 paths
             },
