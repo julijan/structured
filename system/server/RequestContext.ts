@@ -1,5 +1,5 @@
 import { IncomingMessage, ServerResponse } from "node:http";
-import { LooseObject, PostedDataDecoded, RequestBodyFile, RequestBodyRecordValue, RequestCallback, RequestHandler, URIArguments, URISegmentPattern } from "../Types.js";
+import { LooseObject, PostedDataDecoded, RequestBodyFile, RequestBodyRecordValue, RequestHandler, URIArguments, URISegmentPattern } from "../Types.js";
 import { Application } from "./Application.js";
 import zlib from "node:zlib";
 import { mergeDeep, queryStringDecode, queryStringDecodedSetValue } from "../Util.js";
@@ -18,7 +18,6 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 
 	uri: string;
 
-    private readonly pageNotFoundCallback: RequestCallback<void | Document, LooseObject | undefined>;
     private readonly handler: RequestHandler | null;
 
 	readonly request: IncomingMessage;
@@ -56,8 +55,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 		app: Application,
 		request: IncomingMessage,
 		response: ServerResponse,
-		handler: RequestHandler | null,
-		pageNotFoundCallback: RequestCallback<void | Document, LooseObject | undefined>
+		handler: RequestHandler | null
 	) {
 		this.timeStart = Date.now();
 
@@ -71,8 +69,6 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 		this.handler = handler;
 
 		this.body = undefined as Body;
-
-		this.pageNotFoundCallback = pageNotFoundCallback;
 	}
 
     public async exec(): Promise<void> {
@@ -105,7 +101,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
                     await this.respondWith(res[0]);
                 }
             }
-            
+
             // end the response and throw an error, it will be catched and displayed by Request
             this.response.end();
             throw new StructuredError(`Error in request to ${this.uri}`, e);
@@ -191,20 +187,15 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
     }
 
 	public async show404(): Promise<void> {
-		// emit pageNotFound before running the callback
-		// to allow user to modify RequestContext.data if needed
-		this.app.emit('pageNotFound', this);
+        this.response.statusCode = 404;
 
-		this.response.statusCode = 404;
-
-		// run pageNotFoundCallback callback
-		const res = await this.pageNotFoundCallback.apply(this.app, [this]);
-
-		
-		// if pageNotFoundCallback returned a Document, send it as a response
-		if (res instanceof Document) {
-			await this.respondWith(res);
-		}
+		// emit pageNotFound and await the result
+		// if a result is returned, send it as a response
+        // this allows user to display a custom 404 page, or return text/json
+		const res = await this.app.emit('pageNotFound', this);
+        if (res.length > 0 && !!res[0]) {
+            await this.respondWith(res[0]);
+        }
 	}
 
 	// extract any GET args from the URL-provided query string eg. /page?key=val

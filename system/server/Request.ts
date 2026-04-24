@@ -10,18 +10,11 @@ import { Application } from "./Application.js";
 import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { RequestContext } from "./RequestContext.js";
-import { Document } from "./Document.js";
 import { StructuredError } from "../StructuredError.js";
 
 export class Request {
 
     private app: Application;
-
-    pageNotFoundCallback: RequestCallback<void | Document, LooseObject | undefined> =  async ({ response }) => {
-        response.statusCode = 404;
-        response.write('Page not found');
-        response.end();
-    };
 
     constructor(app: Application) {
         this.app = app;
@@ -172,8 +165,7 @@ export class Request {
                 this.app,
                 request,
                 response,
-                handler,
-                this.pageNotFoundCallback
+                handler
             );
             await ctx.exec();
         } catch(e) {
