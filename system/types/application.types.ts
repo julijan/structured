@@ -1,6 +1,7 @@
 export type ApplicationEvents = 'serverStarted' |
                                 'beforeRequestHandler' |
                                 'afterRequestHandler' |
+                                'requestHandleError' |
                                 'beforeRoutes' |
                                 'afterRoutes' |
                                 'beforeComponentsLoad' |

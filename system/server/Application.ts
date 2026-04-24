@@ -135,7 +135,7 @@ export class Application {
         evt: E,
         callback: (
             payload:
-                E extends 'beforeRequestHandler' | 'afterRequestHandler' | 'beforeAssetAccess' | 'afterAssetAccess' | 'pageNotFound' ? RequestContext :
+                E extends 'beforeRequestHandler' | 'afterRequestHandler' | 'beforeAssetAccess' | 'afterAssetAccess' | 'pageNotFound' | 'requestHandleError' ? RequestContext<RequestContextData> :
                 E extends 'documentCreated' ? Document :
                 E extends 'afterComponentsLoaded' ? Components :
                 E extends 'serverStarted' ? Server :
