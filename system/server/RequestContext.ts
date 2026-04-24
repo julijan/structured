@@ -95,6 +95,17 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
             this.executionCompletedAt = Date.now();
         } catch(e) {
             // error serving the request
+
+            // emit requestHandleError and await the result
+            // if a result is returned send it as a response
+            // allows users to send a Document or any response on "server error"
+            const res = await this.app.emit('requestHandleError', this);
+            if (res.length > 0) {
+                if (!!res[0]) {
+                    await this.respondWith(res[0]);
+                }
+            }
+            
             // end the response and throw an error, it will be catched and displayed by Request
             this.response.end();
             throw new StructuredError(`Error in request to ${this.uri}`, e);
