@@ -134,13 +134,14 @@ new Application(config);
     - `serverStarted` - executed once the built-in http server is started and running. Callback receives Server (exported from node:http) instance as the first argument
     - `beforeRequestHandler` - runs before any request handler (route) is executed. Callback receives `RequestContext` as the first argument. Useful for example to set `RequestContext.data: RequestContextData` (user defined data, to make it available to routes and components)
     - `afterRequestHandler` - runs after any request handler (route) is executed. Callback receives `RequestContext` as the first argument
+    - `requestHandleError` - runs if there were errors while serving the request. Callback's result is sent as a response - a good use case is showing a "server error" page. Callback receives `RequestContext` as the first argument
     - `afterRoutes` - runs after all routes are loaded from `StructuredConfig.routes.path`. Callback receives no arguments
     - `beforeComponentsLoad` - runs before components are loaded from `StructuredConfig.components.path`. Callback receives no arguments
     - `afterComponentsLoaded` - runs after all components are loaded from `StructuredConfig.components.path`. Callback receives instance of Components as the first argument
     - `documentCreated` - runs whenever an instance of a [Document](#document) is created. Callback receives the Document instance as the first argument. You will often use this, for example if you want to include a CSS file to all pages `Document.head.addCSS(...)`
     - `beforeAssetAccess` - runs when assets are being accessed, before response is sent. Callback receives `RequestContext` as the first argument
     - `afterAssetAccess` - runs when assets are being accessed, after response is sent. Callback receives `RequestContext` as the first argument
-    - `pageNotFound` - runs when a request is received for which there is no registered request handler (route), and the requested URL is not an asset. Callback receives `RequestContext` as the first argument
+    - `pageNotFound` - runs when a request is received for which there is no registered request handler (route), and the requested URL is not an asset. Callback's result is sent as a response - a good use case is showing a 404 page. Callback receives `RequestContext` as the first argument
     - **Callback to any of the `ApplicationEvents` is expected to be an async function**
 - `importEnv<T extends LooseObject>(smartPrimitives: boolean = true): T` - import ENV variables that start with `StructuredConfig.envPrefix`_ (if envPrefix is omitted from config, all ENV variables are returned). It is a generic method so that you can specify the expected return type. If `smartPrimitives = true` importEnv will convert the ENV values to type it feels is appropriate:
     - numeric values -> `number`
@@ -322,9 +323,10 @@ class RequestContext<Body extends LooseObject | undefined = LooseObject> = {
     // redirect to given URI, with given statusCode (default 302)
     redirect: (to: string, statusCode?: number) => void;
 
-    // show a 404 page and send a 404 status code
-    // by default it will be a page with content "Page not found"
-    // to change this you can set app.request.pageNotFoundCallback to a function that returns a Document
+    // show a blank page and send a 404 status code
+    // to show a custom page, text, json, etc... register an event handler for pageNotFound event
+    // for example:
+    // app.on('pageNotFound', (ctx) => { return await ctx.createDocument('Page not found', 'NotFound'); })
     show404: () => Promise<void>
 }
 ```
