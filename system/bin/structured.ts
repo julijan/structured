@@ -82,7 +82,7 @@ function createTsconfig() {
                 "moduleResolution" : "node16",
                 "outDir": "./build",
                 "module": "Node16",
-                "target": "ES2021",
+                "target": "es2022",
                 "allowSyntheticDefaultImports": true, // albe to do import { default as varname } from 'module'
                 "preserveSymlinks": true,
                 "removeComments": true,

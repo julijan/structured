@@ -8,7 +8,7 @@
         "moduleResolution" : "node16",
         "outDir": "./build",
         "module": "Node16",
-        "target": "ES2021",
+        "target": "es2022",
         "alwaysStrict": true,
         "allowSyntheticDefaultImports": true, // able to do import { default as varname } from 'module'
         "declaration": true,
