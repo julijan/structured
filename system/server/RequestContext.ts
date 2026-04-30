@@ -8,6 +8,7 @@ import path from "node:path";
 import { existsSync, readFileSync, ReadStream } from "node:fs";
 import { Layout } from "./Layout.js";
 import { StructuredError } from "../StructuredError.js";
+import { minimatch } from "minimatch";
 
 export class RequestContext<Body extends LooseObject | undefined = LooseObject> {
 
@@ -418,7 +419,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
             // handler not found, check if a static asset is requested
             let staticAsset = false;
 
-            if (this.app.config.url.isAsset(this.request.url || '')) {
+            if (this.isAsset()) {
                 // static asset
                 // unless accessing /assets/ts/* go directory up to get out of build
                 const basePath = this.request.url?.startsWith('/assets/ts/') ? './' : '../';
@@ -469,5 +470,17 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
     // true if request is fully served
     public complete(): boolean {
         return this.executionCompletedAt !== null;
+    }
+
+    public isAsset(): boolean {
+        return this.app.config.url.staticAssets.some((pattern) => {
+            return minimatch(this.uri, pattern, {
+                nonegate: true,
+                nobrace: true,
+                noext: true,
+                nocomment: true,
+                partial: false,
+            });
+        });
     }
 }

@@ -15,11 +15,11 @@ export const config: StructuredConfig = {
         // setting this to false disallows the use of ClientComponent.redraw and ClientComponent.add
         componentRender: '/componentRender',
 
-        // function that receives the requested URL and returns boolean, if true, treat as static asset
-        // if there is a registered request handler that matches this same URL, it takes precedence over this
-        isAsset: function(uri: string) {
-            return uri.indexOf('/assets/') === 0;
-        }
+        // array of glob patterns that should be treated as static assets
+        // make sure to only include files you want to be publicly accessible
+        staticAssets: [
+            '/assets/**/*'
+        ]
     },
     routes: {
         path: '/app/routes'

@@ -4,7 +4,7 @@ export type StructuredConfig = {
     url: {
         removeTrailingSlash: boolean;
         componentRender: false | string;
-        isAsset: (url: string) => boolean;
+        staticAssets: Array<string>;
     },
     routes: {
         readonly path: string;
