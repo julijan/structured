@@ -49,7 +49,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 
 	readonly timeStart: number;
 
-    // only true if ReadStream instace is sent as a response
+    // only true if ReadStream instance is sent as a response
     private streamingData: boolean = false;
 
 	constructor(
@@ -103,7 +103,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
                 }
             }
 
-            // end the response and throw an error, it will be catched and displayed by Request
+            // end the response and throw an error, it will be caught and displayed by Request
             this.response.end();
             throw new StructuredError(`Error in request to ${this.uri}`, e);
         }
