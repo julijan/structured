@@ -9,6 +9,7 @@ import { existsSync, readFileSync, ReadStream } from "node:fs";
 import { Layout } from "./Layout.js";
 import { StructuredError } from "../StructuredError.js";
 import { minimatch } from "minimatch";
+import { Transform } from "node:stream";
 
 export class RequestContext<Body extends LooseObject | undefined = LooseObject> {
 
@@ -118,7 +119,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 			this.sendResponse(await data.toString(), 'text/html; charset=utf-8');
 		} else if (data === undefined || data === null) {
 			this.sendResponse('', 'text/plain; charset=utf-8');
-		}  else if (data instanceof ReadStream) {
+		}  else if (data instanceof ReadStream || data instanceof Transform) {
             this.streamingData = true;
             data.once('end', () => {
                 // streaming complete, end the response
