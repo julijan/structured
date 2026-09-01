@@ -273,6 +273,11 @@ class RequestContext<Body extends LooseObject | undefined = LooseObject> = {
     request: IncomingMessage;
     response: ServerResponse;
 
+    // client IP address as determined by common header names
+    // falls back to request.socket.remoteAddress
+    // null if all attempts to determine the IP address have failed
+    ipAddress: string | null;
+
     // captured URI arguments
     // for example if the requested URI was /users/8 and the pattern was /users/(userId:num)
     // args will be { userId: 8 }
