@@ -24,6 +24,10 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 
 	readonly request: IncomingMessage;
 	readonly response: ServerResponse;
+
+    // client's IP address
+    ipAddress: string | null = null;
+
 	args: URIArguments = {};
 	
 
@@ -71,6 +75,8 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 		this.handler = handler;
 
 		this.body = undefined as Body;
+
+        this.ipAddress = this.requestIPAddress();
 	}
 
     public async exec(): Promise<void> {
@@ -483,5 +489,38 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
                 partial: false,
             });
         });
+    }
+
+    // uses common header names used for passing the request client IP address
+    // falls back to request.socket.remoteAddress
+    private requestIPAddress(): string | null {
+        const headerList = [
+            'x-client-ip',
+            'x-real-ip',
+            'cf-connecting-ip',
+            'true-client-ip',
+            'x-cluster-client-ip',
+            'x-forwarded-for',
+        ];
+
+        for (const headerName of headerList) {
+            if (headerName in this.request.headers) {
+                const value = this.request.headers[headerName];
+                if (typeof value === 'string' && value.trim().length > 0) {
+                    // x-forwarded-for handled separately as it may contain a list of IPs
+                    if (headerName === 'x-forwarded-for') {
+                        const ips = value.split(',');
+                        const ip = ips[0].trim();
+                        if (ip.length > 0) {
+                            return ip;
+                        }
+                    } else {
+                        return value.trim();
+                    }
+                }
+            }
+        }
+
+        return this.request.socket.remoteAddress || null;
     }
 }
