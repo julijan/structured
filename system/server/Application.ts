@@ -143,10 +143,9 @@ export class Application {
                 E extends 'sessionsStart' ? Session :
                 E extends 'sessionsStop' ? Session :
                 E extends 'sessionCreated' ? SessionEntry :
-                E extends 'sessionExpired' ?  string :
+                E extends 'sessionExpired' | 'sessionExtended' | 'sessionClear' ?  string :
                 E extends 'sessionValueSet' ? [string, string, any] :
                 E extends 'sessionValueRemove' ? [string, string] :
-                E extends 'sessionClear' ? string :
                 undefined
         ) => void
     ): void {
