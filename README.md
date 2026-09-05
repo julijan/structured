@@ -142,6 +142,13 @@ new Application(config);
     - `beforeAssetAccess` - runs when assets are being accessed, before response is sent. Callback receives `RequestContext` as the first argument
     - `afterAssetAccess` - runs when assets are being accessed, after response is sent. Callback receives `RequestContext` as the first argument
     - `pageNotFound` - runs when a request is received for which there is no registered request handler (route), and the requested URL is not an asset. Callback's result is sent as a response - a good use case is showing a 404 page. Callback receives `RequestContext` as the first argument
+    - `sessionsStart` - runs after session handling is enabled, payload is instance of `Session`
+    - `sessionsStop` - runs after session handling is disabled, payload is instance of `Session`
+    - `sessionCreated` - runs after a new session is created, payload is `SessionEntry`
+    - `sessionExpired` - runs after a session expires, payload is `sessionId`
+    - `sessionValueSet` - runs after a value is set in session, payload is `[sessionId, key, value]`
+    - `sessionValueRemove` - runs after a value is removed from session, payload is `[sessionId, key]`
+    - `sessionClear` - runs after session data is cleared, payload is `string` (sessionId)
     - **Callback to any of the `ApplicationEvents` is expected to be an async function**
 - `importEnv<T extends LooseObject>(smartPrimitives: boolean = true): T` - import ENV variables that start with `StructuredConfig.envPrefix`_ (if envPrefix is omitted from config, all ENV variables are returned). It is a generic method so that you can specify the expected return type. If `smartPrimitives = true` importEnv will convert the ENV values to type it feels is appropriate:
     - numeric values -> `number`
