@@ -53,9 +53,6 @@ export class Application {
         this.request = new Request(this);
         this.components = new Components(this);
 
-        // enable sessions
-        this.session.start();
-
         if (this.config.autoInit) {
             this.init();
         }
@@ -112,6 +109,9 @@ export class Application {
         }, this, true);
 
         await this.start();
+
+        // enable sessions
+        this.session.start();
 
         this.initialized = true;
     }
