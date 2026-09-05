@@ -56,6 +56,11 @@ export class Session {
         this.application.emit('sessionsStop', this);
     }
 
+    // replaces the current sessions object with given object
+    public load(sessions: Record<string, SessionEntry>): void {
+        this.sessions = sessions;
+    }
+
     private sessionInit(ctx: RequestContext): void {
         ctx.sessionId = this.generateId();
         this.application.cookies.set(ctx.response, this.application.config.session.cookieName, ctx.sessionId, this.application.config.session.durationSeconds);
