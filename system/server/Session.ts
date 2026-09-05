@@ -48,10 +48,12 @@ export class Session {
 
     public start(): void {
         this.enabled = true;
+        this.application.emit('sessionsStart', this);
     }
 
     public stop(): void {
         this.enabled = false;
+        this.application.emit('sessionsStop', this);
     }
 
     private sessionInit(ctx: RequestContext): void {
@@ -66,6 +68,8 @@ export class Session {
         }
 
         this.sessions[ctx.sessionId] = sessionEntry;
+
+        this.application.emit('sessionCreated', sessionEntry);
     }
 
     private generateId(): string {
@@ -82,6 +86,7 @@ export class Session {
             if (time - sess.lastRequest > sessDurationMilliseconds) {
                 // expired session
                 delete this.sessions[sessionId];
+                this.application.emit('sessionExpired', sessionId);
             }
         }
 
@@ -97,6 +102,7 @@ export class Session {
         if (this.sessions[sessionId]) {
             const session = this.sessions[sessionId];
             session.data[key] = value;
+            this.application.emit('sessionValueSet', [sessionId, key, value]);
         }
     }
     
@@ -121,6 +127,7 @@ export class Session {
         if (sessionId === undefined) {return;}
         if (this.sessions[sessionId] && this.sessions[sessionId].data[key]) {
             delete this.sessions[sessionId].data[key];
+            this.application.emit('sessionValueRemove', [sessionId, key]);
         }
     }
 
@@ -129,6 +136,7 @@ export class Session {
         if (sessionId === undefined) {return;}
         if (this.sessions[sessionId]) {
             this.sessions[sessionId].data = {};
+            this.application.emit('sessionClear', sessionId);
         }
     }
 

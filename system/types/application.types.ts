@@ -9,4 +9,11 @@ export type ApplicationEvents = 'serverStarted' |
                                 'documentCreated' |
                                 'beforeAssetAccess' |
                                 'afterAssetAccess' |
-                                'pageNotFound';
+                                'pageNotFound' |
+                                'sessionsStart' |
+                                'sessionsStop' |
+                                'sessionCreated' |
+                                'sessionExpired' |
+                                'sessionValueSet' |
+                                'sessionValueRemove' |
+                                'sessionClear';

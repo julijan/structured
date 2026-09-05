@@ -15,6 +15,7 @@ import { Request } from './Request.js';
 import { Handlebars } from './Handlebars.js';
 import { Cookies } from './Cookies.js';
 import { RequestContext } from './RequestContext.js';
+import { SessionEntry } from '../Types.js';
 
 export class Application {
     readonly config: StructuredConfig;
@@ -139,6 +140,13 @@ export class Application {
                 E extends 'documentCreated' ? Document :
                 E extends 'afterComponentsLoaded' ? Components :
                 E extends 'serverStarted' ? Server :
+                E extends 'sessionsStart' ? Session :
+                E extends 'sessionsStop' ? Session :
+                E extends 'sessionCreated' ? SessionEntry :
+                E extends 'sessionExpired' ?  string :
+                E extends 'sessionValueSet' ? [string, string, any] :
+                E extends 'sessionValueRemove' ? [string, string] :
+                E extends 'sessionClear' ? string :
                 undefined
         ) => void
     ): void {
