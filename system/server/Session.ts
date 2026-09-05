@@ -37,6 +37,7 @@ export class Session {
                             this.application.config.session.durationSeconds
                         );
                         this.sessions[ctx.sessionId].lastRequest = new Date().getTime();
+                        this.application.emit('sessionExtended', ctx.sessionId);
                     }
                 }
             }

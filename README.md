@@ -146,6 +146,7 @@ new Application(config);
     - `sessionsStop` - runs after session handling is disabled, payload is instance of `Session`
     - `sessionCreated` - runs after a new session is created, payload is `SessionEntry`
     - `sessionExpired` - runs after a session expires, payload is `sessionId`
+    - `sessionExtended` - runs after client with an existing session makes a request, payload is `sessionId`
     - `sessionValueSet` - runs after a value is set in session, payload is `[sessionId, key, value]`
     - `sessionValueRemove` - runs after a value is removed from session, payload is `[sessionId, key]`
     - `sessionClear` - runs after session data is cleared, payload is `string` (sessionId)

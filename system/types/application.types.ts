@@ -13,6 +13,7 @@ export type ApplicationEvents = 'serverStarted' |
                                 'sessionsStart' |
                                 'sessionsStop' |
                                 'sessionCreated' |
+                                'sessionExtended' |
                                 'sessionExpired' |
                                 'sessionValueSet' |
                                 'sessionValueRemove' |
