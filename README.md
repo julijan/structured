@@ -206,6 +206,8 @@ Session allows you to store temporary data for the users of your web application
 
 Session data is tied to a visitor via sessionId, which is always available on `RequestContext`, which means you can interact with session data from routes and server side part of your components.
 
+*Session data is stored in memory, which means it is lost when you restart the app. If you want to have persistent sessions that survive restart, you can use [structured-plugin-session-redis](https://www.npmjs.com/package/structured-plugin-session-redis).*
+
 **Configuration**\
 `StructuredConfig`.`session`:
 ```
