@@ -592,6 +592,9 @@ Your lucky number is {{luckyNumber}}<br>
 ```
 
 That's it. `AnotherComponent` will receive the `luckyNumber` as a number, you can pass any type of data, string, number, boolean, object, array... it will be received by the child as the same type of data. However, *keep in mind the data gets serialized and de-serialized in the process, so if you pass an object to a child, it won't be a reference to the original object, rather a copy of it*.
+
+Since version 1.7.6, additional data types can be passed to child components without them breaking due to serialization: Date, BigInt, RegExp, Map, Uint8Array. *Let me know if you need support for more types that JSON.stringify breaks.*
+
 \
 Let's see how we can use the passed data within `AnotherComponent`, create `/app/views/AnotherComponent/AnotherComponent.html`:
 ```
