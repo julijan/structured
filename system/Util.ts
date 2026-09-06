@@ -1,3 +1,4 @@
+import { AttributeEncodedObject, SerializableDate, SerializableRegExp, Serializable, ValueSerializable, SerializableBigInt, SerializableMap, SerializableUint8Array } from './types/component.types.js';
 import { LooseObject } from './types/general.types.js';
 import { PostedDataDecoded } from "./types/request.types.js";
 
@@ -337,11 +338,104 @@ function bytesToBase64(bytes: Uint8Array) {
     }, ''));
 }
 
-export function attributeValueToString(key: string, value: any): string {
-    return 'base64:' + bytesToBase64(new TextEncoder().encode(JSON.stringify({key, value})));
+// convert given value to a ValueSerializable
+// returns {value, type?: 'date' | 'regexp' | 'map' | 'bigint' | 'uint8array'}
+// this allows the return type to be serialized to JSON preserving Date and RegExp values when deserialized
+export function toSerializableValue(value: any): ValueSerializable {
+    if (value instanceof Date) {
+        return {
+            type: 'date',
+            value: value.toISOString(),
+        }
+    }
+
+    if (typeof value === 'bigint') {
+        return {
+            type: 'bigint',
+            value: value.toString(),
+        }
+    }
+
+    if (value instanceof RegExp) {
+        return {
+            type: 'regexp',
+            value: {
+                source: value.source,
+                flags: value.flags,
+            }
+        }
+    }
+
+    if (value instanceof Map) {
+        return {
+            type: 'map',
+            value: [...value.entries()],
+        }
+    }
+
+    if (value instanceof Uint8Array) {
+        return {
+            type: 'uint8array',
+            value: Array.from(value),
+        }
+    }
+
+    return {
+        value,
+    }
 }
 
-export function attributeValueFromString(attributeValue: string): string|{
+// return the original value of a value that was converted to ValueSerializable using toSerializableValue
+export function fromSerializableValue(data: SerializableDate): Date;
+export function fromSerializableValue(data: SerializableRegExp): RegExp;
+export function fromSerializableValue(data: SerializableMap): Map<any, any>;
+export function fromSerializableValue(data: SerializableBigInt): BigInt;
+export function fromSerializableValue(data: SerializableUint8Array): Uint8Array;
+export function fromSerializableValue(data: Serializable): any;
+export function fromSerializableValue(data: ValueSerializable): any
+{
+    if (!('type' in data)) {
+        return data.value;
+    }
+
+    if (data.type === 'date') {
+        return new Date(data.value);
+    }
+
+    if (data.type === 'regexp') {
+        return new RegExp(data.value.source, data.value.flags);
+    }
+
+    if (data.type === 'map') {
+        return new Map(data.value);
+    }
+
+    if (data.type === 'bigint') {
+        return BigInt(data.value);
+    }
+
+    if (data.type === 'uint8array') {
+        return new Uint8Array(data.value);
+    }
+
+    return undefined;
+}
+
+// returns base64 encoded, serialized AttributeEncodedObject
+// this can be safely set as attribute value in HTML
+// and the the original value can be retrieved preserving it's type (with some exceptions)
+export function attributeValueToString(key: string, value: any): string {
+    const valueObject: AttributeEncodedObject = {
+        key,
+        data: toSerializableValue(value),
+    };
+    return 'base64:' + bytesToBase64(new TextEncoder().encode(JSON.stringify(valueObject)));
+}
+
+// returns the key/value pair stored in a HTML attribute
+// (or a plain attribute value if attribute was not set using attributeValueToString)
+// value type is preserved (with some exceptions)
+export function attributeValueFromString(attributeValue: string): string | {
     key: string,
     value: any
 } {
@@ -355,7 +449,7 @@ export function attributeValueFromString(attributeValue: string): string|{
                 return attributeValue;
             }
         
-            const valObj = JSON.parse(decoded);
+            const valObj: AttributeEncodedObject = JSON.parse(decoded);
         
             if (!('key' in valObj)) {
                 // unrecognized object
@@ -363,8 +457,11 @@ export function attributeValueFromString(attributeValue: string): string|{
                 // "value" property is also always present except when value is undefined
                 return decoded;
             }
-        
-            return valObj;
+
+            return {
+                key: valObj.key,
+                value: fromSerializableValue(valObj.data),
+            }
     
         } catch (e) {
             return attributeValue;

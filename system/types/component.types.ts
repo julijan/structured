@@ -66,6 +66,45 @@ export type ComponentEvents = {
     ready: undefined,
 }
 
+export type Serializable = {
+    value: any,
+}
+
+export type SerializableDate = {
+    type: 'date',
+    value: string,
+}
+
+export type SerializableRegExp = {
+    type: 'regexp',
+    value: {
+        source: string,
+        flags: string,
+    },
+}
+
+export type SerializableMap = {
+    type: 'map',
+    value: Array<[any, any]>,
+}
+
+export type SerializableBigInt = {
+    type: 'bigint',
+    value: string,
+}
+
+export type SerializableUint8Array = {
+    type: 'uint8array',
+    value: Array<number>,
+}
+
+export type ValueSerializable = Serializable | SerializableDate | SerializableRegExp | SerializableMap | SerializableBigInt | SerializableUint8Array;
+
+export type AttributeEncodedObject = {
+    key: string,
+    data: ValueSerializable,
+}
+
 export type ClientComponentTransition = {
     fade: false | number;
     slide: false | number;
