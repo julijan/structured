@@ -161,8 +161,6 @@ export function queryStringDecode(queryString: string, initialValue: PostedDataD
                     return val !== null;
                 });
 
-                // console.log(arrayValues);
-
                 initialValue[item.key] = arrayItems;
             }
         }
@@ -344,6 +342,7 @@ function bytesToBase64(bytes: Uint8Array) {
 export function toSerializableValue(value: any): ValueSerializable {
     if (value instanceof Date) {
         return {
+            __structured_value: true,
             type: 'date',
             value: value.toISOString(),
         }
@@ -351,6 +350,7 @@ export function toSerializableValue(value: any): ValueSerializable {
 
     if (typeof value === 'bigint') {
         return {
+            __structured_value: true,
             type: 'bigint',
             value: value.toString(),
         }
@@ -358,6 +358,7 @@ export function toSerializableValue(value: any): ValueSerializable {
 
     if (value instanceof RegExp) {
         return {
+            __structured_value: true,
             type: 'regexp',
             value: {
                 source: value.source,
@@ -368,6 +369,7 @@ export function toSerializableValue(value: any): ValueSerializable {
 
     if (value instanceof Map) {
         return {
+            __structured_value: true,
             type: 'map',
             value: [...value.entries()],
         }
@@ -375,12 +377,14 @@ export function toSerializableValue(value: any): ValueSerializable {
 
     if (value instanceof Uint8Array) {
         return {
+            __structured_value: true,
             type: 'uint8array',
             value: Array.from(value),
         }
     }
 
     return {
+        __structured_value: true,
         value,
     }
 }
@@ -421,15 +425,41 @@ export function fromSerializableValue(data: ValueSerializable): any
     return undefined;
 }
 
+export function serializableObject(data: LooseObject): LooseObject {
+    const copy: LooseObject = {}
+    objectEach(data, (key, val) => {
+        if (isObject(val)) {
+            copy[key] = serializableObject(val);
+        } else {
+            copy[key] = toSerializableValue(val);
+        }
+    });
+    return copy;
+}
+
+export function deserializeObject(data: LooseObject): LooseObject {
+    const copy: LooseObject = {};
+    objectEach(data, (key, val) => {
+        if (typeof val === 'object' && val !== null && val !== undefined) {
+            if ('__structured_value' in val) {
+                // found a value object
+                copy[key] = fromSerializableValue(val);
+            } else {
+                copy[key] = deserializeObject(val);
+            }
+        } else {
+            copy[key] = fromSerializableValue(val);
+        }
+    });
+    return copy;
+}
+
 // returns base64 encoded, serialized AttributeEncodedObject
 // this can be safely set as attribute value in HTML
 // and the the original value can be retrieved preserving it's type (with some exceptions)
 export function attributeValueToString(key: string, value: any): string {
-    const valueObject: AttributeEncodedObject = {
-        key,
-        data: toSerializableValue(value),
-    };
-    return 'base64:' + bytesToBase64(new TextEncoder().encode(JSON.stringify(valueObject)));
+    const data = serializableObject({key, data: value});
+    return 'base64:' + bytesToBase64(new TextEncoder().encode(JSON.stringify(data)));
 }
 
 // returns the key/value pair stored in a HTML attribute
@@ -448,8 +478,8 @@ export function attributeValueFromString(attributeValue: string): string | {
                 // expected to start with "{", if not return as is
                 return attributeValue;
             }
-        
-            const valObj: AttributeEncodedObject = JSON.parse(decoded);
+
+            const valObj: AttributeEncodedObject = deserializeObject(JSON.parse(decoded)) as AttributeEncodedObject;
         
             if (!('key' in valObj)) {
                 // unrecognized object
@@ -460,7 +490,7 @@ export function attributeValueFromString(attributeValue: string): string | {
 
             return {
                 key: valObj.key,
-                value: fromSerializableValue(valObj.data),
+                value: valObj.data,
             }
     
         } catch (e) {
@@ -474,11 +504,11 @@ export function attributeValueEscape(str: string): string {
     return str.replaceAll('"', '&quot;');
 }
 
-export function isObject(item: any): boolean {
-    if (typeof window === 'undefined') {
-        return (item && typeof item === 'object' && !Array.isArray(item)) && ! Buffer.isBuffer(item);
-    }
-    return (item && typeof item === 'object' && !Array.isArray(item));
+export function isObject(value: any): boolean {
+    if (value === null || typeof value !== 'object') return false;
+
+    const proto = Object.getPrototypeOf(value);
+    return proto === Object.prototype || proto === null;
 }
 
 // deep comparison of 2 objects
