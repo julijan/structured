@@ -95,8 +95,8 @@ export class ClientComponent extends EventEmitter {
 
         // initialize the proxy for fn (user defined component functions)
         // proxy is there to:
-        // a) prvent assigning the same function multiple times (which would defeat the point on fn)
-        // b) if the fuction is not defined, return a function that console.warn's about missing function
+        // a) prevent assigning the same function multiple times (which would defeat the point on fn)
+        // b) if the function is not defined, return a function that console.warn's about missing function
         const self = this;
         this.fn = new Proxy(this.store, {
             set(target, key: string, val: (args?: any) => any) {
@@ -358,10 +358,8 @@ export class ClientComponent extends EventEmitter {
             this.redrawRequest = null;
         }
 
-        // remove event listeners bound to self
-        // these have been attached in initializer of this component
-        // and will get re-bound once initializer is called after redraw
-        this.unbindOwn();
+        // remove all bound event listeners as DOM will get replaced in the process
+        this.unbindAll();
 
         // request a component to be re-rendered on the server
         // unwrap = true so that component container is excluded
@@ -384,9 +382,6 @@ export class ClientComponent extends EventEmitter {
 
         // mark component as not loaded
         this.isReady = false;
-
-        // remove all bound event listeners as DOM will get replaced in the process
-        this.unbindAll();
 
         // destroy existing children as their associated domNode is no longer part of the DOM
         // new children will be initialized based on the new DOM
@@ -1311,21 +1306,10 @@ export class ClientComponent extends EventEmitter {
         }
     }
 
-    // remove all listeners bound to self
-    // such event listeners have been bound by initializer of this component
-    // used on redraw because such events will get bound again
-    private unbindOwn() {
-        this.bound.forEach((bound) => {
-            if (bound.element === this) {
-                this.unbind(bound.element, bound.event, bound.callback);
-            }
-        });
-    }
-
-    // remove all bound event listeners using ClientComponent.bind
+    // remove all bound event listeners attached using ClientComponent.bind
     private unbindAll() {
         this.bound.forEach((bound) => {
-            this.unbind(bound.element, bound.event, bound.callbackOriginal);
+            this.unbind(bound.element, bound.event, bound.callback);
         });
         this.bound = [];
     }
