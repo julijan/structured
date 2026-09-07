@@ -67,18 +67,18 @@ export type ComponentEvents = {
 }
 
 export type Serializable = {
-    __structured_value: true,
+    __sv: 1,
     value: any,
 }
 
 export type SerializableDate = {
-    __structured_value: true,
+    __sv: 1,
     type: 'date',
     value: string,
 }
 
 export type SerializableRegExp = {
-    __structured_value: true,
+    __sv: 1,
     type: 'regexp',
     value: {
         source: string,
@@ -87,19 +87,19 @@ export type SerializableRegExp = {
 }
 
 export type SerializableMap = {
-    __structured_value: true,
+    __sv: 1,
     type: 'map',
     value: Array<[any, any]>,
 }
 
 export type SerializableBigInt = {
-    __structured_value: true,
+    __sv: 1,
     type: 'bigint',
     value: string,
 }
 
 export type SerializableUint8Array = {
-    __structured_value: true,
+    __sv: 1,
     type: 'uint8array',
     value: Array<number>,
 }

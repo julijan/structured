@@ -330,7 +330,7 @@ export function stripTags(contentWithHTML: string, keepTags: Array<string> = [])
 export function toSerializableValue(value: any): ValueSerializable {
     if (value instanceof Date) {
         return {
-            __structured_value: true,
+            __sv: 1,
             type: 'date',
             value: value.toISOString(),
         }
@@ -338,7 +338,7 @@ export function toSerializableValue(value: any): ValueSerializable {
 
     if (typeof value === 'bigint') {
         return {
-            __structured_value: true,
+            __sv: 1,
             type: 'bigint',
             value: value.toString(),
         }
@@ -346,7 +346,7 @@ export function toSerializableValue(value: any): ValueSerializable {
 
     if (value instanceof RegExp) {
         return {
-            __structured_value: true,
+            __sv: 1,
             type: 'regexp',
             value: {
                 source: value.source,
@@ -357,7 +357,7 @@ export function toSerializableValue(value: any): ValueSerializable {
 
     if (value instanceof Map) {
         return {
-            __structured_value: true,
+            __sv: 1,
             type: 'map',
             value: [...value.entries()],
         }
@@ -365,14 +365,14 @@ export function toSerializableValue(value: any): ValueSerializable {
 
     if (value instanceof Uint8Array) {
         return {
-            __structured_value: true,
+            __sv: 1,
             type: 'uint8array',
             value: Array.from(value),
         }
     }
 
     return {
-        __structured_value: true,
+        __sv: 1,
         value,
     }
 }
@@ -429,7 +429,7 @@ export function deserializeObject(data: LooseObject): LooseObject {
     const copy: LooseObject = {};
     objectEach(data, (key, val) => {
         if (typeof val === 'object' && val !== null && val !== undefined) {
-            if ('__structured_value' in val) {
+            if ('__sv' in val) {
                 // found a value object
                 copy[key] = fromSerializableValue(val);
             } else {
