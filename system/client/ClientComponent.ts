@@ -259,7 +259,7 @@ export class ClientComponent extends EventEmitter {
     // keys are converted to camelCase
     // values are expected to be encoded using attributeValueToString
     // and will be decoded using attributeValueFromString
-    private attributeData(node: HTMLElement): LooseObject {
+    public attributeData(node: HTMLElement): LooseObject {
         const data: LooseObject = {};
 
         for (let i = 0; i < node.attributes.length; i++) {
