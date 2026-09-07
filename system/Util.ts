@@ -324,18 +324,6 @@ export function stripTags(contentWithHTML: string, keepTags: Array<string> = [])
     });
 }
 
-function base64ToBytes(base64: string) {
-    const binString = atob(base64);
-    // @ts-ignore
-    return Uint8Array.from(binString, (m) => m.codePointAt(0));
-  }
-  
-function bytesToBase64(bytes: Uint8Array) {
-    return btoa(bytes.reduce((prev, curr) => {
-        return prev + String.fromCharCode(curr);
-    }, ''));
-}
-
 // convert given value to a ValueSerializable
 // returns {value, type?: 'date' | 'regexp' | 'map' | 'bigint' | 'uint8array'}
 // this allows the return type to be serialized to JSON preserving Date and RegExp values when deserialized
@@ -454,12 +442,27 @@ export function deserializeObject(data: LooseObject): LooseObject {
     return copy;
 }
 
+export function escapeAttributeValue(value: string): string {
+    return value
+    .replace(/~/g, '~~')  // literal ~ replaced with ~~
+    .replace(/"/g, '~q'); // quotes replaced with ~q
+}
+
+export function unescapeAttributeValue(str: string): string {
+    // tempToken is used to replace literal ~ (at this point ~~)
+    const tempToken = `--${randomString(10)}--`;
+    return str
+    .split('~~').join(tempToken) // preserve literal ~
+    .split('~q').join('"') // replace ~q with "
+    .split(tempToken).join('~'); // restore literal ~
+}
+
 // returns base64 encoded, serialized AttributeEncodedObject
 // this can be safely set as attribute value in HTML
 // and the the original value can be retrieved preserving it's type (with some exceptions)
 export function attributeValueToString(key: string, value: any): string {
     const data = serializableObject({key, data: value});
-    return 'base64:' + bytesToBase64(new TextEncoder().encode(JSON.stringify(data)));
+    return escapeAttributeValue(JSON.stringify(data));
 }
 
 // returns the key/value pair stored in a HTML attribute
@@ -469,22 +472,14 @@ export function attributeValueFromString(attributeValue: string): string | {
     key: string,
     value: any
 } {
-
-    if (attributeValue.indexOf('base64:') === 0) {
+    if (attributeValue.indexOf('{') === 0) {
         try {
-            const decoded = new TextDecoder().decode(base64ToBytes(attributeValue.substring(7)));
-        
-            if (decoded.indexOf('{') !== 0) {
-                // expected to start with "{", if not return as is
-                return attributeValue;
-            }
-
+            const decoded = unescapeAttributeValue(attributeValue);      
             const valObj: AttributeEncodedObject = deserializeObject(JSON.parse(decoded)) as AttributeEncodedObject;
         
             if (!('key' in valObj)) {
                 // unrecognized object
                 // object encoded using attributeValueToString will always have the "key" property
-                // "value" property is also always present except when value is undefined
                 return decoded;
             }
 
@@ -498,10 +493,6 @@ export function attributeValueFromString(attributeValue: string): string | {
         }
     }
     return attributeValue;
-}
-
-export function attributeValueEscape(str: string): string {
-    return str.replaceAll('"', '&quot;');
 }
 
 export function isObject(value: any): boolean {
