@@ -726,8 +726,9 @@ Properties:
 - `store: DataStoreView`
 
 Methods:
-- `getData(key?: string)` - return all data (exported by server side code of the component) if key omitted, otherwise return given key
+- `getData(key?: string)` - return all data (exported by server side code of the component) if key omitted, otherwise return value for given key
 - `setData(key: string, value: any)` - set data, which will be available server-side if component is redrawn
+- `attributeData(node: HTMLElement)` - get attribute data of given DOM node as an object. It decodes attributes set using the attr helper
 - `store.get<T>(key): T | undefined` - get data from client side data store (client side data storage of the component, not connected to server side data)
 - `store.set(key: string, value: any)` - set data in client side data store
 - `find(componentName: string, recursive: boolean = true): ClientComponent | null` - find a child component
