@@ -1306,8 +1306,8 @@ export class ClientComponent extends EventEmitter {
                 bound.element.off(bound.event, bound.callback);
             } else {
                 bound.element.removeEventListener(bound.event, bound.callback as EventListenerOrEventListenerObject);
-                this.bound.splice(boundIndex, 1);
             }
+            this.bound.splice(boundIndex, 1);
         }
     }
 
