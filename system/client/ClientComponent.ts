@@ -1213,14 +1213,23 @@ export class ClientComponent extends EventEmitter {
     // if not a ClientComponent (e: Event, eventData: T, element: HTMLElement | Window)
     // this should be used instead of "addEventListener" and "on" methods
     // because that makes sure any event listeners bound are cleaned up when the component is destroyed
-    public bind<T extends any>(element: ClientComponent, event: string, callback: EventEmitterCallback<T>): void
-    public bind<T extends LooseObject | undefined, Evt extends Event = Event>(element: HTMLElement | Window | Array<HTMLElement | Window>, event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap>, callback: ClientComponentEventCallback<T, Evt>): void
+    public bind<T extends any>(
+        element: ClientComponent,
+        event: string,
+        callback: EventEmitterCallback<T>
+    ): void
+    public bind<T extends LooseObject | undefined, Evt extends Event = Event>(
+        element: HTMLElement | Window | Array<HTMLElement | Window>,
+        event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap>,
+        callback: ClientComponentEventCallback<T, Evt>,
+        options?: AddEventListenerOptions
+    ): void
     public bind<T extends LooseObject | undefined = undefined, Evt extends Event = Event>(
         element: HTMLElement | Window | Array<HTMLElement | Window> | ClientComponent,
         event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap> | string,
-        callback: ClientComponentEventCallback<T, Evt> | EventEmitterCallback<T>
+        callback: ClientComponentEventCallback<T, Evt> | EventEmitterCallback<T>,
+        options?: AddEventListenerOptions
     ): void {
-        
         // multiple elements given
         // bind for each individually
         if (Array.isArray(element)) {
@@ -1265,7 +1274,7 @@ export class ClientComponent extends EventEmitter {
                 callback: callbackWrapper,
                 callbackOriginal: callback
             });
-            element.addEventListener(event, callbackWrapper);
+            element.addEventListener(event, callbackWrapper, options);
         } else if (element instanceof ClientComponent) {
             // binding to ClientComponent
             const cb = callback as EventEmitterCallback<T>;
