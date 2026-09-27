@@ -1317,10 +1317,14 @@ export class ClientComponent extends EventEmitter {
 
     // remove all bound event listeners attached using ClientComponent.bind
     private unbindAll() {
-        this.bound.forEach((bound) => {
-            this.unbind(bound.element, bound.event, bound.callback);
+        // copy references to ClientComponentBoundEvent into a new array
+        // unbind will be altering ClientComponent.bound
+        // so working on it directly can leave some events unbound
+        // looping from array end would be another way to approach this
+        const bound = Array.from(this.bound);
+        bound.forEach((boundEvent) => {
+            this.unbind(boundEvent.element, boundEvent.event, boundEvent.callback);
         });
-        this.bound = [];
     }
 
     public log(msg: any): void {
