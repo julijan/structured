@@ -43,8 +43,10 @@ export class Session {
             }
         });
 
-        // start garbage collecting
-        this.garbageCollect();
+        // schedule garbage collection after first garbageCollectIntervalSeconds has passed
+        setTimeout(() => {
+            this.garbageCollect();
+        }, app.config.session.garbageCollectIntervalSeconds * 1000);
     }
 
     public start(): void {
@@ -84,6 +86,7 @@ export class Session {
 
     // remove expired session entries
     private garbageCollect(): void {
+        console.log('gc');
         const time = new Date().getTime();
         const sessDurationMilliseconds = this.application.config.session.durationSeconds * 1000;
 
