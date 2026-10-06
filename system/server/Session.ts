@@ -86,7 +86,6 @@ export class Session {
 
     // remove expired session entries
     private garbageCollect(): void {
-        console.log('gc');
         const time = new Date().getTime();
         const sessDurationMilliseconds = this.application.config.session.durationSeconds * 1000;
 
