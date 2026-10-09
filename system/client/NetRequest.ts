@@ -50,7 +50,11 @@ export class NetRequest {
             this.xhr.onreadystatechange = () => {
                 if (this.xhr.readyState == 4) {
                     // got the response
-                    resolve(this.xhr.responseText);
+                    if (this.responseType !== 'text') {
+                        resolve(this.xhr.response);
+                    } else {
+                        resolve(this.xhr.responseText);
+                    }
                 }
             };
             // reject on error
