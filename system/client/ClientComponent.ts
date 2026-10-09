@@ -20,6 +20,7 @@ import { NetRequest } from './NetRequest.js';
 import { EventEmitter } from '../EventEmitter.js';
 import { ClientApplication } from './ClientApplication.js';
 import { EventEmitterCallback } from '../types/eventEmitter.types.js';
+import { ClientForm } from './ClientForm.js';
 
 export class ClientComponent extends EventEmitter {
     readonly name: string;
@@ -62,6 +63,8 @@ export class ClientComponent extends EventEmitter {
         element: HTMLElement,
         className: string
     }> = [];
+
+    private forms: Array<ClientForm> = [];
 
     private refs: Record<string, HTMLElement | ClientComponent> = {};
     private refsArray: Record<string, Array<HTMLElement | ClientComponent>> = {};
@@ -161,6 +164,7 @@ export class ClientComponent extends EventEmitter {
         this.initRefs();
         this.initModels();
         this.initConditionals();
+        this.initForms();
 
         // update conditionals whenever any data in component's store has changed
         this.store.onChange('*', () => {
@@ -208,6 +212,7 @@ export class ClientComponent extends EventEmitter {
         this.refsArray = {};
         this.conditionalClassNames.length = 0;
         this.conditionalCallbacks = {};
+        this.forms.length = 0;
         this.conditionals.length = 0;
         this.redrawRequest = null;
         this.initializerExecuted = false;
@@ -457,6 +462,29 @@ export class ClientComponent extends EventEmitter {
                 this.initConditionals(child as HTMLElement);
             }
         });
+    }
+
+    private initForms(node?: HTMLElement) {
+        const isSelf = node === undefined;
+        if (node === undefined) {
+            node = this.domNode;
+        }
+
+        if (node.hasAttribute('data-form')) {
+            this.forms.push(new ClientForm(node));
+        }
+
+        node.childNodes.forEach((child) => {
+            if (child.nodeType === 1 && (isSelf || !node?.hasAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`))) {
+                this.initForms(child as HTMLElement);
+            }
+        });
+    }
+
+    public getForm(formName: string): ClientForm | null {
+        return this.forms.find((form) => {
+            return form.name === formName;
+        }) ?? null;
     }
 
     // initialize refs and refsArray within this component

@@ -1,0 +1,1 @@
+export type InputDataType = 'string' | 'number' | 'boolean' | 'file';
