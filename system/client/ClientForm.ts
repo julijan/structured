@@ -34,6 +34,8 @@ export class ClientForm extends EventEmitter {
 	}
 
 	public async submit<T>(): Promise<T> {
+		const data = this.getData();
+		await this.emit('beforeSubmit', data);
 		const net = new Net();
 		try {
 			const res = await net.request(
@@ -42,14 +44,14 @@ export class ClientForm extends EventEmitter {
 				{
 					'content-type': 'application/json',
 				},
-				JSON.stringify(this.getData()),
+				JSON.stringify(data),
 				this.responseType
 			);
 
-			await this.emit('submit', res);
+			await this.emit('done', res);
 			return res as T;
 		} catch (e) {
-			this.emit('error', e);
+			await this.emit('error', e);
 			throw e;
 		}
 	}
