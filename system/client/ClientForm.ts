@@ -60,7 +60,7 @@ export class ClientForm extends EventEmitter {
 
 		const data: LooseObject = {}
 
-		const inputs = this.form.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select');
+		const inputs = this.form.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select, textarea');
 
 		for (let i = 0; i < inputs.length; i++) {
 			const input = inputs[i];
