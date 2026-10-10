@@ -827,6 +827,82 @@ If string no type casting is attempted.
 
 `data-nullable` - value of this attribute is unused, as long as the attribute is present on the input, empty values will be casted to `null`. Can be used in conjunction with `data-type`
 
+### Forms
+As of version 1.8.5 Structured improves on native HTML form element. This is an opt-in feature, forms behave as usual unless you add a `data-form`="`formName`" attribute to them.
+
+In web apps, we often want to submit data user has entered into a form, however, forms are very limited:
+- all data reaches server as a string
+- request method is limited to GET/POST
+
+Forms that have a `data-form` attribute bypass the above limitations.
+
+Data in these forms retains the desired types when the form is submitted, and you can use request methods other than GET/POST.
+
+Example:
+```
+<form
+    action="/route/name"
+    method="PUT"
+    data-form="smartForm"
+>
+
+    <input type="text" name="myString">
+    <input type="number" name="myNumber">
+    <input type="checkbox" name="myBoolean" data-type="boolean">
+
+    <input type="number" name="myNullableNumber" data-nullable="">
+
+    <button type="submit">
+        Submit
+    </button>
+
+</form>
+```
+
+When above form is submitted, server will receive:
+```
+{
+    myString: string,
+    myNumber: number,
+    myBoolean: boolean,
+    myNullableNumber: number | null,
+}
+```
+
+On inputs within these forms you can use `data-type` to override type assumed by input type, and use `data-nullable` to change how empty value is treated.
+
+Unlike a regular form, these are submitted using an AJAX request, so there is no page load, to react on submit, you can access these forms (instance of `ClientForm`) from your client side JS as:
+```
+const form = this.getForm('smartForm');
+form?.on('beforeSubmit', (data) => {
+    // emitted once user clicked a submit button, before request is sent
+    // you can modify the data that gets submitted, show loaders, do client side-validation or perform other actions here
+    data.test = 123;
+});
+form?.on('done', (res) => {
+    // emitted once data is submitted and the response is received
+    console.log(res);
+});
+```
+
+You can also submit the form without user clicking the submit button when you need to as:
+```
+...
+form.submit();
+...
+```
+
+You can also access the form data without submitting the form as:
+```
+...
+form.getData();
+...
+```
+
+By default, `data-form` forms assume a JSON response from the server, if you expect something else, you can specify it by adding `data-response-type` attribute to the form with value `XMLHttpRequestResponseType` (`arraybuffer` | `blob` | `document` | `json` | `text`).
+
+> [!WARNING]
+> `data-form` forms **don't support file inputs**! If you must submit files - these are not the way to go. The reason for the lack of support for file is that we must submit data to the server as JSON in order for data types to be preserved, and File is not serializable - converting it to a base64 encoded string would be possible, but this way it would not end up in RequestContext.files.
 
 ### Layout
 Prior to version 0.8.7:
