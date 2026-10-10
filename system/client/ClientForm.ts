@@ -167,7 +167,13 @@ export class ClientForm extends EventEmitter {
 			// radio
 			if (input.type === 'radio') {
 				if (input.checked) {
-					data[name] = input.value;
+					if (type === 'boolean') {
+						data[name] = input.value === 'true' || input.value === '1';
+					} else if (type === 'number') {
+						data[name] = parseFloat(input.value);
+					} else {
+						data[name] = input.value;
+					}
 				}
 				continue;
 			}
