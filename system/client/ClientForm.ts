@@ -73,35 +73,7 @@ export class ClientForm extends EventEmitter {
 
 			// file input
 			if (type === 'file') {
-				if ('files' in input) {
-
-					// invalid input or no file selected, input.files = null
-					if (input.files === null || input.files.length === 0) {
-						if (nullable) {
-							data[name] = null;
-							continue;
-						}
-
-						data[name] = multiple ? [] : undefined;
-						continue;
-					}
-
-					// files selected
-
-					// multiple
-					if (multiple) {
-						data[name] = Array.from(input.files);
-						continue;
-					}
-
-					// single
-					data[name] = input.files[0];
-					continue;
-				}
-
-				// input has no "files" property but is marked as a file
-				// null if nullable, otherwise empty array if multiple, undefined if single
-				data[name] = nullable ? null : (multiple ? [] : undefined);
+				console.warn('ClientForm does not support file inputs');
 				continue;
 			}
 
