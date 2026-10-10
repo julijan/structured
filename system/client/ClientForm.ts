@@ -46,12 +46,6 @@ export class ClientForm extends EventEmitter {
 				this.responseType
 			);
 
-			if (this.responseType === 'json') {
-				const data = JSON.parse(res);
-				await this.emit('submit', data);
-				return data;
-			}
-
 			await this.emit('submit', res);
 			return res as T;
 		} catch (e) {
