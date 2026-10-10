@@ -69,7 +69,7 @@ export class ClientForm extends EventEmitter {
 			const type = this.inputDataType(input);
 			const nullable = input.hasAttribute('data-nullable');
 			const multiple = input.hasAttribute('multiple');
-			const isArray = name.endsWith(']');
+			const isArray = name.endsWith('[]') || /\[\d+\]$/.test(name);
 
 			// file input
 			if (type === 'file') {
