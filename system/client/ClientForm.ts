@@ -255,7 +255,7 @@ export class ClientForm extends EventEmitter {
 		const recognized: Array<XMLHttpRequestResponseType> = ['text', 'json', 'document', 'arraybuffer', 'blob'];
 
 		if (!recognized.includes(responseType)) {
-			return 'text';
+			return 'json';
 		}
 
 		return responseType;
