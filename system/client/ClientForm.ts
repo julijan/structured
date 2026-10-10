@@ -110,7 +110,9 @@ export class ClientForm extends EventEmitter {
 				// multiple
 				if (multiple) {
 					const values: Array<number | string> = [];
-					const optionsSelected = input.querySelectorAll('option:selected');
+					const optionsSelected = Array.from(input.querySelectorAll('option')).filter((opt) => {
+						return opt.selected;
+					});
 
 					if (nullable && optionsSelected.length === 0) {
 						data[name] = null;
