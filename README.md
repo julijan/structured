@@ -901,6 +901,9 @@ form.getData();
 
 By default, `data-form` forms assume a JSON response from the server, if you expect something else, you can specify it by adding `data-response-type` attribute to the form with value `XMLHttpRequestResponseType` (`arraybuffer` | `blob` | `document` | `json` | `text`).
 
+> [!NOTE]
+> You can override the name of the input using data-name attribute. This can be useful in case you have several groups of radio inputs that should add their values to the same array (introduced in version 1.8.8).
+
 > [!WARNING]
 > `data-form` forms **don't support file inputs**! If you must submit files - these are not the way to go. The reason for the lack of support for file is that we must submit data to the server as JSON in order for data types to be preserved, and File is not serializable - converting it to a base64 encoded string would be possible, but this way it would not end up in RequestContext.files.
 
