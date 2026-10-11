@@ -112,12 +112,13 @@ export class ClientForm extends EventEmitter {
 			}
 
 			if (input.type === 'checkbox') {
+				const value = type === 'number' ? parseInt(input.value) : input.value;
 				if (isArray) {
 					if (!Array.isArray(data[name])) {
 						data[name] = [];
 					}
 					if (input.checked) {
-						data[name].push(input.value);
+						data[name].push(value);
 						continue;
 					}
 				} else {
@@ -127,7 +128,7 @@ export class ClientForm extends EventEmitter {
 					}
 
 					if (input.checked) {
-						data[name] = input.value;
+						data[name] = value;
 						continue;
 					} else if (nullable) {
 						data[name] = null;
