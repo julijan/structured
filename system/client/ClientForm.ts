@@ -65,7 +65,7 @@ export class ClientForm extends EventEmitter {
 		for (let i = 0; i < inputs.length; i++) {
 			const input = inputs[i];
 
-			const name = input.getAttribute('name');
+			const name = input.getAttribute('data-name') || input.getAttribute('name');
 			if (name === null) {continue;}
 
 			const type = this.inputDataType(input);
