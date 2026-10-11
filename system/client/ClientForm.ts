@@ -73,13 +73,25 @@ export class ClientForm extends EventEmitter {
 		for (let i = 0; i < inputs.length; i++) {
 			const input = inputs[i];
 
-			const name = input.getAttribute('data-name') || input.getAttribute('name');
+			let name = input.getAttribute('data-name') || input.getAttribute('name');
 			if (name === null) {continue;}
 
 			const type = this.inputDataType(input);
 			const nullable = input.hasAttribute('data-nullable');
 			const multiple = input.hasAttribute('multiple');
 			const isArray = name.endsWith('[]') || /\[\d+\]$/.test(name);
+
+			if (isArray) {
+				// remove [] or [\d+] from name if isArray
+				// isArray will make sure values are added to an array
+				// but keeping [] in name will wrap the array into an extra array during queryStringDecode
+				for (let i = name.length - 1; i > -1; i--) {
+					if (name[i] === '[') {
+						name = name.substring(0, i);
+						break;
+					}
+				}
+			}
 
 			if (isArray && !Array.isArray(data[name])) {
 				data[name] = [];
