@@ -124,25 +124,18 @@ export class ClientForm extends EventEmitter {
 			}
 
 			if (input.type === 'checkbox') {
-				const value = type === 'number' ? parseInt(input.value) : input.value;
-				if (isArray) {
-					if (input.checked) {
-						setData(name, value, isArray);
-						continue;
-					}
-				} else {
-					if (type === 'boolean') {
-						setData(name, input.checked, isArray);
-						continue;
-					}
-
-					if (input.checked) {
-						setData(name, value, isArray);
-						continue;
-					} else if (nullable) {
-						setData(name, null, isArray);
-						continue;
-					}
+				if (type === 'boolean') {
+					setData(name, input.checked, isArray);
+					continue;
+				}
+				
+				if (input.checked) {
+					const value = type === 'number' ? parseInt(input.value) : input.value;
+					setData(name, value, isArray);
+					continue;
+				} else if (nullable) {
+					setData(name, null, isArray);
+					continue;
 				}
 
 				continue;
