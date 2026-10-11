@@ -73,6 +73,10 @@ export class ClientForm extends EventEmitter {
 			const multiple = input.hasAttribute('multiple');
 			const isArray = name.endsWith('[]') || /\[\d+\]$/.test(name);
 
+			if (isArray && !Array.isArray(data[name])) {
+				data[name] = [];
+			}
+
 			// file input
 			if (type === 'file') {
 				console.warn('ClientForm does not support file inputs');
@@ -114,9 +118,6 @@ export class ClientForm extends EventEmitter {
 			if (input.type === 'checkbox') {
 				const value = type === 'number' ? parseInt(input.value) : input.value;
 				if (isArray) {
-					if (!Array.isArray(data[name])) {
-						data[name] = [];
-					}
 					if (input.checked) {
 						data[name].push(value);
 						continue;
