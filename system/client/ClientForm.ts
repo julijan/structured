@@ -62,6 +62,14 @@ export class ClientForm extends EventEmitter {
 
 		const inputs = this.form.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select, textarea');
 
+		const setData = (key: string, value: any, isArray: boolean) => {
+			if (isArray) {
+				data[key].push(value);
+			} else {
+				data[key] = value;
+			}
+		}
+
 		for (let i = 0; i < inputs.length; i++) {
 			const input = inputs[i];
 
@@ -93,7 +101,7 @@ export class ClientForm extends EventEmitter {
 					});
 
 					if (nullable && optionsSelected.length === 0) {
-						data[name] = null;
+						setData(name, null, isArray);
 						continue;
 					}
 
@@ -107,11 +115,11 @@ export class ClientForm extends EventEmitter {
 
 				// single
 				if (input.value === '' && nullable) {
-					data[name] = null;
+					setData(name, null, isArray);
 					continue;
 				}
 				
-				data[name] = type === 'number' ? parseFloat(input.value) : input.value;
+				setData(name, type === 'number' ? parseFloat(input.value) : input.value, isArray);
 				continue;
 			}
 
@@ -119,20 +127,20 @@ export class ClientForm extends EventEmitter {
 				const value = type === 'number' ? parseInt(input.value) : input.value;
 				if (isArray) {
 					if (input.checked) {
-						data[name].push(value);
+						setData(name, value, isArray);
 						continue;
 					}
 				} else {
 					if (type === 'boolean') {
-						data[name] = input.checked;
+						setData(name, input.checked, isArray);
 						continue;
 					}
 
 					if (input.checked) {
-						data[name] = value;
+						setData(name, value, isArray);
 						continue;
 					} else if (nullable) {
-						data[name] = null;
+						setData(name, null, isArray);
 						continue;
 					}
 				}
@@ -144,11 +152,11 @@ export class ClientForm extends EventEmitter {
 			if (input.type === 'radio') {
 				if (input.checked) {
 					if (type === 'boolean') {
-						data[name] = input.value === 'true' || input.value === '1';
+						setData(name, input.value === 'true' || input.value === '1', isArray);
 					} else if (type === 'number') {
-						data[name] = parseFloat(input.value);
+						setData(name, parseFloat(input.value), isArray);
 					} else {
-						data[name] = input.value;
+						setData(name, input.value, isArray);
 					}
 				}
 				continue;
@@ -156,7 +164,7 @@ export class ClientForm extends EventEmitter {
 
 			// simple inputs
 			if (input.value.trim().length === 0 && nullable) {
-				data[name] = null;
+				setData(name, null, isArray);
 				continue;
 			}
 
@@ -164,20 +172,19 @@ export class ClientForm extends EventEmitter {
 				const int = parseFloat(input.value);
 				if (isNaN(int)) {
 					if (nullable) {
-						data[name] = null;
+						setData(name, null, isArray);
 						continue;
 					}
 					
-					data[name] = 0;
+					setData(name, 0, isArray);
 					continue;
 				}
 
-				data[name] = int;
+				setData(name, int, isArray);
 				continue;
 			}
 
-			data[name] = input.value;
-
+			setData(name, input.value, isArray);
 		}
 
 
