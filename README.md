@@ -827,6 +827,10 @@ If string no type casting is attempted.
 
 `data-nullable` - value of this attribute is unused, as long as the attribute is present on the input, empty values will be casted to `null`. Can be used in conjunction with `data-type`
 
+If you need to toggle a value in store data, you can use `this.store.toggle(storeKey: string)`. If `storeKey` is not set, it becomes `true` after initial call to `store.toggle`.
+
+Elements with attribute `data-toggle`="`storeKey`" toggle value for `storeKey` *(introduced in v1.9.0)*.
+
 ### Forms
 As of version 1.8.5 Structured improves on native HTML form element. This is an opt-in feature, forms behave as usual unless you add a `data-form`="`formName`" attribute to them.
 
