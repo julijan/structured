@@ -695,7 +695,7 @@ export const init: InitializerFunction = async function() {
 
     const child = this.find('AnotherComponent'); // ClientComponent | null
     if (child) {
-        child.on('truth', (messageBringingTruth: string) => {
+        this.bind(child, 'truth', (messageBringingTruth: string) => {
             console.log(`Admittedly, truth is: ${messageBringingTruth}`);
         });
     }
@@ -738,7 +738,7 @@ Methods:
 	`element: HTMLElement | Window | Array<HTMLElement | Window> | ClientComponent`,\
     `event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap> | string`,\
     `callback: ClientComponentEventCallback<T> | EventEmitterCallback<T>`\
-    ): `void` - adds event listener(s) to given HTML element(s) / components. This is preferred over `HTMLElement`.`.addEventListener` / `ClientComponent`.`on` because when the component is redrawn/removed, the event listeners added using bind method are automatically restored/removed. Callback receives event as the first argument. Any "data-" prefixed attributes found on `element` are parsed into an object and provided as second argument to callback (you can specify data using attr helper if you want to pass in something other than a string). Third argument provided to callback is the `element`. The method is generic, allowing you to specify expected data type received as the second argument.
+    ): `void` - adds event listener(s) to given HTML element(s) / components. Callback receives event as the first argument. Any "data-" prefixed attributes found on `element` are parsed into an object and provided as second argument to callback (you can specify data using attr helper if you want to pass in something other than a string). Third argument provided to callback is the `element`. The method is generic, allowing you to specify expected data type received as the second argument.
 - `ref<T>(refName: string): T` - get a HTMLElement or ClientComponent that has attribute `ref="[refName]"`
 - `arrayRef<T>(refName: string): Array<T>` - get an array of HTMLElement or ClientComponent that have attribute `array:ref="[refName]"`
 - `add(appendTo: HTMLElement, componentName: string, data?: LooseObject): Promise<ClientComponent | null>` - add `componentName` component to `appendTo` element, optionally passing `data` to the component when it's being rendered. Returns a promise that resolves with added ClientComponent or null if something went wrong
