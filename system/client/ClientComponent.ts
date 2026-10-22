@@ -796,16 +796,11 @@ export class ClientComponent extends EventEmitter {
         }
     }
 
-    // conditionals (data-if and data-classname-[className]) both support methods in condition
-    // eg. data-if="someMethod()"
-    // this allows users to define callbacks used in conditionals' conditions
-    // by default, this also runs updateConditionals
-    // as there might be conditionals that are using this callback
-    public conditionalCallback(name: string, callback: (args?: any) => boolean, updateConditionals: boolean = true): void {
+    // register a conditional callback
+    // conditionals (data-if and data-classname-[className]) both support functions as condition
+    // eg. data-if="callbackName()"
+    public conditionalCallback(name: string, callback: (args?: any) => boolean): void {
         this.conditionalCallbacks[name] = callback;
-        if (updateConditionals) {
-            this.updateConditionals(false);
-        }
     }
 
     // updates conditionals (data-if and data-classname-[className])
