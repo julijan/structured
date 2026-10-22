@@ -432,51 +432,62 @@ export class ClientComponent extends EventEmitter {
         }
     }
 
-    // populates conditionals and conditionalClassNames
-    // these react to changes to store data
-    // to show/hide elements or apply/remove class names to/from them
-    private initConditionals(node?: HTMLElement): void {
+    // runs given callback on all HTML elements within the component
+    // without entering child components
+    private eachElement(callback: (element: HTMLElement) => void, node?: HTMLElement): void {
         const isSelf = node === undefined;
         if (node === undefined) {
             node = this.domNode;
         }
 
-        for (const attribute of node.attributes) {
-            // data-if
-            if (attribute.name === 'data-if') {
-                this.conditionals.push(node);
-            }
+        // run callback with current node
+        callback(node);
 
-            // data-classname-[className]
-            if (attribute.name.startsWith('data-classname')) {
-                const className = attribute.name.substring(15);
-                this.conditionalClassNames.push({
-                    element: node,
-                    className
-                });
-            }
-        }
-
+        // resume with children
         node.childNodes.forEach((child) => {
-            if (child.nodeType === 1 && (isSelf || !node?.hasAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`))) {
-                this.initConditionals(child as HTMLElement);
+            if (
+                // only consider element nodes
+                child.nodeType === 1 &&
+                // do not enter nodes that belong to child components
+                (
+                    isSelf ||
+                    !node.hasAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`)
+                )
+            ) {
+                // resume from child node
+                this.eachElement(callback, child as HTMLElement);
             }
         });
     }
 
-    private initForms(node?: HTMLElement) {
-        const isSelf = node === undefined;
-        if (node === undefined) {
-            node = this.domNode;
-        }
+    // populates conditionals and conditionalClassNames
+    // these react to changes to store data
+    // to show/hide elements or apply/remove class names to/from them
+    private initConditionals(): void {
+        this.eachElement((element) => {
+            for (const attribute of element.attributes) {
+                // data-if
+                if (attribute.name === 'data-if') {
+                    this.conditionals.push(element);
+                }
+    
+                // data-classname-[className]
+                if (attribute.name.startsWith('data-classname')) {
+                    const className = attribute.name.substring(15);
+                    this.conditionalClassNames.push({
+                        element,
+                        className
+                    });
+                }
+            }
 
-        if (node.hasAttribute('data-form')) {
-            this.forms.push(new ClientForm(node));
-        }
+        });
+    }
 
-        node.childNodes.forEach((child) => {
-            if (child.nodeType === 1 && (isSelf || !node?.hasAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`))) {
-                this.initForms(child as HTMLElement);
+    private initForms(): void {
+        this.eachElement((element) => {
+            if (element.hasAttribute('data-form')) {
+                this.forms.push(new ClientForm(element));
             }
         });
     }
@@ -498,160 +509,150 @@ export class ClientComponent extends EventEmitter {
     // under refsArray as { refName: Array<HTMLElement> } and can be returned using refArray method
     // in contrast to ref, array:ref's refName does not need to be unique, in fact, since it's used
     // to group as set of DOM nodes, it only makes sense if multiple DOM nodes share the same refName
-    private initRefs(node?: HTMLElement): void {
-        const isSelf = node === undefined;
-        if (node === undefined) {
-            node = this.domNode;
-        }
-
-        if (node.hasAttribute('ref')) {
-            this.refs[node.getAttribute('ref') || 'undefined'] = node;
-        }
-
-        if (node.hasAttribute('array:ref')) {
-            const key = node.getAttribute('array:ref') || 'undefined';
-            if (!(key in this.refsArray)) {
-                this.refsArray[key] = [];
+    private initRefs(): void {
+        this.eachElement((element) => {
+            if (element.hasAttribute('ref')) {
+                this.refs[element.getAttribute('ref') || 'undefined'] = element;
             }
-            this.refsArray[key].push(node);
-        }
-
-        node.childNodes.forEach((child) => {
-            if (child.nodeType === 1 && (isSelf || !node?.hasAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`))) {
-                this.initRefs(child as HTMLElement);
+    
+            if (element.hasAttribute('array:ref')) {
+                const key = element.getAttribute('array:ref') || 'undefined';
+                if (!(key in this.refsArray)) {
+                    this.refsArray[key] = [];
+                }
+                this.refsArray[key].push(element);
             }
         });
 
+        // promote initialized refs
+        // making the ref reference the child ClientComponent instead of the HTML element
         this.promoteRefs();
     }
 
     // make inputs with data-model="field" work
     // nested data works too, data-model="obj[nested][key]" or data-model="obj[nested][key][]"
-    private initModels(node?: HTMLElement, modelNodes: Array<HTMLInputElement> = []) {
-        const isSelf = node === undefined;
-        if (node === undefined) {
-            node = this.domNode;
-        }
+    private initModels(): void {
+        const modelNodes: Array<HTMLInputElement> = [];
 
-        if (node.hasAttribute('data-model') && (node.tagName === 'INPUT' || node.tagName === 'SELECT' || node.tagName === 'TEXTAREA')) {
+        this.eachElement((element) => {
+            const isInput =
+                element.tagName === 'INPUT' ||
+                element.tagName === 'SELECT' ||
+                element.tagName === 'TEXTAREA';
+            if (!isInput) {return;}
+
+            const isModel = element.hasAttribute('data-model');
+
+            if (!isModel) {return;}
+
             // found a model node, store to array modelNodes
-            modelNodes.push(node as HTMLInputElement);
-        } else {
-            // not a model, but may contain models
-            // init model nodes recursively from here
-            node.childNodes.forEach((child) => {
-                if (child.nodeType === 1 && (isSelf || !node?.hasAttribute(`data-${window.structuredClientConfig.componentNameAttribute}`))) {
-                    this.initModels(child as HTMLElement, modelNodes);
-                }
-            });
-        }
+            modelNodes.push(element as HTMLInputElement);
+        });
 
-        if (isSelf) {
-            // all model nodes are now contained in modelNodes array
+        // all model nodes are now contained in modelNodes array
 
-            // given a HTMLInput element that has data-model attribute, returns an object with the data
-            // for example:
-            // data-model="name" may result with { name: "John" }
-            // data-model="user[name]" may result with { user: { name: "John" } }
-            const modelData = (node: HTMLInputElement): LooseObject => {
-                const field = node.getAttribute('data-model');
-                if (field) {
-                    const isCheckbox = node.tagName === 'INPUT' && node.type === 'checkbox';
-                    const valueRaw = isCheckbox ? node.checked : node.value;
-                    let valueCasted: string | number | boolean | null = valueRaw;
+        // given a HTMLInput element that has data-model attribute, returns an object with the data
+        // for example:
+        // data-model="name" may result with { name: "John" }
+        // data-model="user[name]" may result with { user: { name: "John" } }
+        const modelData = (node: HTMLInputElement): LooseObject => {
+            const field = node.getAttribute('data-model');
+            if (field) {
+                const isCheckbox = node.tagName === 'INPUT' && node.type === 'checkbox';
+                const valueRaw = isCheckbox ? node.checked : node.value;
+                let valueCasted: string | number | boolean | null = valueRaw;
 
-                    if (!isCheckbox && typeof valueRaw === 'string') {
-                        // if data-type is found on node try casting data to desired type
-                        // recognized values are string (no type casting), number and boolean
-                        // data casting not done for checkboxes, they always yield a boolean
-                        const dataType = isCheckbox ? 'boolean' : node.getAttribute('data-type') || 'string';
+                if (!isCheckbox && typeof valueRaw === 'string') {
+                    // if data-type is found on node try casting data to desired type
+                    // recognized values are string (no type casting), number and boolean
+                    // data casting not done for checkboxes, they always yield a boolean
+                    const dataType = isCheckbox ? 'boolean' : node.getAttribute('data-type') || 'string';
 
-                        // if data-nullable is found on node, empty string is considered null
-                        const nullable = node.hasAttribute('data-nullable');
+                    // if data-nullable is found on node, empty string is considered null
+                    const nullable = node.hasAttribute('data-nullable');
 
-                        if (nullable && valueRaw.trim().length === 0) {
-                            // value is an empty string, if nullable, set value to null
-                            valueCasted = null;
-                        } else {
-                            if (dataType === 'number') {
-                                // cast to number
+                    if (nullable && valueRaw.trim().length === 0) {
+                        // value is an empty string, if nullable, set value to null
+                        valueCasted = null;
+                    } else {
+                        if (dataType === 'number') {
+                            // cast to number
 
-                                if (valueRaw.trim().length === 0) {
-                                    // empty string, assume 0
-                                    valueCasted = 0;
+                            if (valueRaw.trim().length === 0) {
+                                // empty string, assume 0
+                                valueCasted = 0;
+                            } else {
+                                // value not empty
+                                const num = parseFloat(valueRaw);
+    
+                                if (isNaN(num)) {
+                                    // invalid number entered, null if nullable, otherwise 0
+                                    valueCasted = nullable ? null : 0;
                                 } else {
-                                    // value not empty
-                                    const num = parseFloat(valueRaw);
-        
-                                    if (isNaN(num)) {
-                                        // invalid number entered, null if nullable, otherwise 0
-                                        valueCasted = nullable ? null : 0;
-                                    } else {
-                                        valueCasted = num;
-                                    }
-                                }
-
-                            } else if (dataType === 'boolean') {
-
-                                // "1" and "true" casted to true, otherwise false
-                                if (valueRaw === '1' || valueRaw === 'true') {
-                                    valueCasted = true;
-                                } else {
-                                    valueCasted = false;
+                                    valueCasted = num;
                                 }
                             }
-                        }
 
-                    }
+                        } else if (dataType === 'boolean') {
 
-                    const value = queryStringDecodedSetValue(field, valueCasted);
-                    return value;
-                }
-                return {}
-            }
-
-            // given a loose object, sets all keys with corresponding value on current component
-            const update = (data: LooseObject) => {
-                objectEach(data, (key, val) => {
-                    this.store.set(key, val);
-                });
-            }
-
-            // data for the initial update, we want to gather all data up in one object
-            // so that nested keys don't trigger more updates than necessary
-            let data: LooseObject = {}
-            modelNodes.forEach((modelNode) => {
-                // on change, update component data
-                this.bind(modelNode, 'input', () => {
-                    let data = modelData(modelNode);
-                    const key = Object.keys(data)[0];
-                    if (typeof data[key] === 'object') {
-                        const dataExisting = this.store.get<LooseObject>(key);
-                        if (dataExisting !== undefined) {
-                            data = mergeDeep({}, {[key]: dataExisting}, data);
-                        } else {
-                            data = mergeDeep({}, data);
+                            // "1" and "true" casted to true, otherwise false
+                            if (valueRaw === '1' || valueRaw === 'true') {
+                                valueCasted = true;
+                            } else {
+                                valueCasted = false;
+                            }
                         }
                     }
-    
-                    update(data);
-                });
 
-                // include current node's data into initial update data
-                const field = modelNode.getAttribute('data-model');
-                if (field) {
-                    // don't update radio inputs, unless checked
-                    const updateModel = modelNode.type !== 'radio' || modelNode.checked;
-                    if (updateModel) {
-                        const valueObject = modelData(modelNode);
-                        data = mergeDeep(data, valueObject);
+                }
+
+                const value = queryStringDecodedSetValue(field, valueCasted);
+                return value;
+            }
+            return {}
+        }
+
+        // given a loose object, sets all keys with corresponding value on current component
+        const update = (data: LooseObject) => {
+            objectEach(data, (key, val) => {
+                this.store.set(key, val);
+            });
+        }
+
+        // data for the initial update, we want to gather all data up in one object
+        // so that nested keys don't trigger more updates than necessary
+        let data: LooseObject = {}
+        modelNodes.forEach((modelNode) => {
+            // on change, update component data
+            this.bind(modelNode, 'input', () => {
+                let data = modelData(modelNode);
+                const key = Object.keys(data)[0];
+                if (typeof data[key] === 'object') {
+                    const dataExisting = this.store.get<LooseObject>(key);
+                    if (dataExisting !== undefined) {
+                        data = mergeDeep({}, {[key]: dataExisting}, data);
+                    } else {
+                        data = mergeDeep({}, data);
                     }
                 }
+
+                update(data);
             });
 
-            // run the initial data update with data gathered from all model nodes
-            update(data);
-        }
+            // include current node's data into initial update data
+            const field = modelNode.getAttribute('data-model');
+            if (field) {
+                // don't update radio inputs, unless checked
+                const updateModel = modelNode.type !== 'radio' || modelNode.checked;
+                if (updateModel) {
+                    const valueObject = modelData(modelNode);
+                    data = mergeDeep(data, valueObject);
+                }
+            }
+        });
+
+        // run the initial data update with data gathered from all model nodes
+        update(data);
     }
 
     // normally, ref will return a HTMLElement, however if ref attribute is found on a component tag
