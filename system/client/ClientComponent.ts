@@ -69,6 +69,9 @@ export class ClientComponent extends EventEmitter {
     private refs: Record<string, HTMLElement | ClientComponent> = {};
     private refsArray: Record<string, Array<HTMLElement | ClientComponent>> = {};
 
+    // input nodes with data-model attribute
+    private modelNodes: Array<HTMLInputElement> = [];
+
     isReady: boolean = false;
 
     // data-attr are parsed into an object
@@ -159,12 +162,20 @@ export class ClientComponent extends EventEmitter {
             this.store.import(undefined, false, false);
         }
         
-        // initialize refs, data, models and conditionals
-        // promote refs to ClientComponent where ref is on a component tag
-        this.initRefs();
+        // iterate through all HTML elements within this component to detect refs, conditionals, models, etc...
+        this.eachElement((element) => {
+            this.initRef(element);
+            this.initModel(element);
+            this.initConditional(element);
+            this.initForm(element);
+        });
+
+        // promote initialized refs
+        // making the ref reference the child ClientComponent instead of the HTML element
+        this.promoteRefs();
+
+        // make collected model nodes work
         this.initModels();
-        this.initConditionals();
-        this.initForms();
 
         // update conditionals whenever any data in component's store has changed
         this.store.onChange('*', () => {
@@ -210,6 +221,7 @@ export class ClientComponent extends EventEmitter {
         this.isReady = false;
         this.refs = {};
         this.refsArray = {};
+        this.modelNodes.length = 0;
         this.conditionalClassNames.length = 0;
         this.conditionalCallbacks = {};
         this.forms.length = 0;
@@ -463,33 +475,28 @@ export class ClientComponent extends EventEmitter {
     // populates conditionals and conditionalClassNames
     // these react to changes to store data
     // to show/hide elements or apply/remove class names to/from them
-    private initConditionals(): void {
-        this.eachElement((element) => {
-            for (const attribute of element.attributes) {
-                // data-if
-                if (attribute.name === 'data-if') {
-                    this.conditionals.push(element);
-                }
-    
-                // data-classname-[className]
-                if (attribute.name.startsWith('data-classname')) {
-                    const className = attribute.name.substring(15);
-                    this.conditionalClassNames.push({
-                        element,
-                        className
-                    });
-                }
+    private initConditional(element: HTMLElement): void {
+        for (const attribute of element.attributes) {
+            // data-if
+            if (attribute.name === 'data-if') {
+                this.conditionals.push(element);
             }
 
-        });
+            // data-classname-[className]
+            if (attribute.name.startsWith('data-classname')) {
+                const className = attribute.name.substring(15);
+                this.conditionalClassNames.push({
+                    element,
+                    className
+                });
+            }
+        }
     }
 
-    private initForms(): void {
-        this.eachElement((element) => {
-            if (element.hasAttribute('data-form')) {
-                this.forms.push(new ClientForm(element));
-            }
-        });
+    private initForm(element: HTMLElement): void {
+        if (element.hasAttribute('data-form')) {
+            this.forms.push(new ClientForm(element));
+        }
     }
 
     public getForm(formName: string): ClientForm | null {
@@ -509,48 +516,37 @@ export class ClientComponent extends EventEmitter {
     // under refsArray as { refName: Array<HTMLElement> } and can be returned using refArray method
     // in contrast to ref, array:ref's refName does not need to be unique, in fact, since it's used
     // to group as set of DOM nodes, it only makes sense if multiple DOM nodes share the same refName
-    private initRefs(): void {
-        this.eachElement((element) => {
-            if (element.hasAttribute('ref')) {
-                this.refs[element.getAttribute('ref') || 'undefined'] = element;
-            }
-    
-            if (element.hasAttribute('array:ref')) {
-                const key = element.getAttribute('array:ref') || 'undefined';
-                if (!(key in this.refsArray)) {
-                    this.refsArray[key] = [];
-                }
-                this.refsArray[key].push(element);
-            }
-        });
+    private initRef(element: HTMLElement): void {
+        if (element.hasAttribute('ref')) {
+            this.refs[element.getAttribute('ref') || 'undefined'] = element;
+        }
 
-        // promote initialized refs
-        // making the ref reference the child ClientComponent instead of the HTML element
-        this.promoteRefs();
+        if (element.hasAttribute('array:ref')) {
+            const key = element.getAttribute('array:ref') || 'undefined';
+            if (!(key in this.refsArray)) {
+                this.refsArray[key] = [];
+            }
+            this.refsArray[key].push(element);
+        }
+    }
+
+    private initModel(element: HTMLElement): void {
+        const isModel = element.hasAttribute('data-model');
+        if (!isModel) {return;}
+
+        const isInput =
+            element.tagName === 'INPUT' ||
+            element.tagName === 'SELECT' ||
+            element.tagName === 'TEXTAREA';
+        if (!isInput) {return;}
+
+        // found a model node, store to array modelNodes
+        this.modelNodes.push(element as HTMLInputElement);
     }
 
     // make inputs with data-model="field" work
     // nested data works too, data-model="obj[nested][key]" or data-model="obj[nested][key][]"
     private initModels(): void {
-        const modelNodes: Array<HTMLInputElement> = [];
-
-        this.eachElement((element) => {
-            const isInput =
-                element.tagName === 'INPUT' ||
-                element.tagName === 'SELECT' ||
-                element.tagName === 'TEXTAREA';
-            if (!isInput) {return;}
-
-            const isModel = element.hasAttribute('data-model');
-
-            if (!isModel) {return;}
-
-            // found a model node, store to array modelNodes
-            modelNodes.push(element as HTMLInputElement);
-        });
-
-        // all model nodes are now contained in modelNodes array
-
         // given a HTMLInput element that has data-model attribute, returns an object with the data
         // for example:
         // data-model="name" may result with { name: "John" }
@@ -622,7 +618,7 @@ export class ClientComponent extends EventEmitter {
         // data for the initial update, we want to gather all data up in one object
         // so that nested keys don't trigger more updates than necessary
         let data: LooseObject = {}
-        modelNodes.forEach((modelNode) => {
+        this.modelNodes.forEach((modelNode) => {
             // on change, update component data
             this.bind(modelNode, 'input', () => {
                 let data = modelData(modelNode);
