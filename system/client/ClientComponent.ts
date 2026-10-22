@@ -34,18 +34,6 @@ export class ClientComponent extends EventEmitter {
     readonly net: Net = new Net();
     private initializerExecuted: boolean = false;
 
-    // user defined component functions
-    // these are stored in components DataStoreView and survive redraw
-    // should be used when adding EventEmitter callbacks to self or components not nested within current component
-    // in order to prevent same callback to be bound when the component is redrawn
-    // not necessary for components nested within this component as those will get destroyed in the process
-    // example bad:
-    // this.on('beforeRedraw', () => {...}) // this will get bound on every redraw and will fire multiple times
-    // example good
-    // this.fn.beforeRedraw = () => {...}
-    // this.on('beforeRedraw', this.fn.beforeRedraw)
-    public readonly fn: Record<string, (...args: Array<any>) => any | undefined>;
-
     destroyed: boolean = false;
 
     private redrawRequest: XMLHttpRequest | null = null;
@@ -98,26 +86,6 @@ export class ClientComponent extends EventEmitter {
         // it uses component's id to create an isolated data context within global DataStore
         this.app = app;
         this.store = new DataStoreView(this.app.store, this);
-
-        // initialize the proxy for fn (user defined component functions)
-        // proxy is there to:
-        // a) prevent assigning the same function multiple times (which would defeat the point on fn)
-        // b) if the function is not defined, return a function that console.warn's about missing function
-        const self = this;
-        this.fn = new Proxy(this.store, {
-            set(target, key: string, val: (args?: any) => any) {
-                const fnKey = `fn_${key}`;
-                if (target.has(fnKey)) {return true;}
-                target.set(fnKey, val);
-                return true;
-            },
-
-            get(target, key: string): (args?: any) => any {
-                return target.get<(args?: any) => any>(`fn_${key}`) || (() => {
-                    self.warn(`Function ${key} not defined`);
-                });
-            },
-        }) as unknown as Record<string, (args?: any) => any>;
 
         if (this.isRoot) {
             // only root gets initialized by itself
