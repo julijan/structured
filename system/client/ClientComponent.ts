@@ -168,6 +168,7 @@ export class ClientComponent extends EventEmitter {
             this.initModel(element);
             this.initConditional(element);
             this.initForm(element);
+            this.initToggle(element);
         });
 
         // promote initialized refs
@@ -649,6 +650,16 @@ export class ClientComponent extends EventEmitter {
 
         // run the initial data update with data gathered from all model nodes
         update(data);
+    }
+
+    // elements with data-toggle="[storeKey]" will toggle the value for storeKey
+    private initToggle(element: HTMLElement): void {
+        const toggleKey = element.getAttribute('data-toggle');
+        if (toggleKey !== null && toggleKey.length > 0) {
+            this.bind(element, 'click', () => {
+                this.store.toggle(toggleKey);
+            });
+        }
     }
 
     // normally, ref will return a HTMLElement, however if ref attribute is found on a component tag
