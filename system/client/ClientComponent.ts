@@ -22,7 +22,7 @@ import { ClientApplication } from './ClientApplication.js';
 import { EventEmitterCallback } from '../types/eventEmitter.types.js';
 import { ClientForm } from './ClientForm.js';
 
-export class ClientComponent extends EventEmitter {
+export class ClientComponent {
     readonly name: string;
     children: Array<ClientComponent> = [];
     readonly parent: ClientComponent;
@@ -32,6 +32,7 @@ export class ClientComponent extends EventEmitter {
     store: DataStoreView;
     private app: ClientApplication;
     readonly net: Net = new Net();
+    private eventEmitter: EventEmitter = new EventEmitter();
     private initializerExecuted: boolean = false;
 
     destroyed: boolean = false;
@@ -66,7 +67,6 @@ export class ClientComponent extends EventEmitter {
     private data: LooseObject = {};
 
     constructor(parent: ClientComponent | null, name: string, domNode: HTMLElement, app: ClientApplication) {
-        super();
         this.name = name;
         this.domNode = domNode;
         if (parent === null) {
@@ -166,10 +166,10 @@ export class ClientComponent extends EventEmitter {
             // runInitializer will recursively call initializers on children
             // root/redrawRoot becomes ready once all initializers within it were executed
             this.bind(this, 'initializerExecuted', async () => {
-                this.emit('ready');
+                this.eventEmitter.emit('ready');
 
                 if (isRedraw) {
-                    await this.emit('afterRedraw');
+                    await this.eventEmitter.emit('afterRedraw');
                 }
             });
 
@@ -180,7 +180,7 @@ export class ClientComponent extends EventEmitter {
                 this.runInitializer(isRedraw);
             });
         } else {
-            this.emit('ready');
+            this.eventEmitter.emit('ready');
         }
 
     }
@@ -222,7 +222,7 @@ export class ClientComponent extends EventEmitter {
         }
 
         // EventEmitter ready to receive events once it's initializer is executed
-        await this.emitterReady();
+        await this.eventEmitter.emitterReady();
 
         // run children initializers
         for (let i = 0; i < this.children.length; i++) {
@@ -230,7 +230,7 @@ export class ClientComponent extends EventEmitter {
         }
 
         this.initializerExecuted = true;
-        this.emit('initializerExecuted');
+        this.eventEmitter.emit('initializerExecuted');
     }
 
     // populates this.data with data found as data- prefixed attributes on this.domNode
@@ -336,7 +336,7 @@ export class ClientComponent extends EventEmitter {
 
         if (this.destroyed) {return;}
 
-        await this.emit('beforeRedraw');
+        await this.eventEmitter.emit('beforeRedraw');
 
         // abort existing redraw call, if in progress
         if (this.redrawRequest !== null) {
@@ -1166,7 +1166,7 @@ export class ClientComponent extends EventEmitter {
             this.redrawRequest = null;
         }
 
-        await this.emit('beforeDestroy');
+        await this.eventEmitter.emit('beforeDestroy');
 
         // remove children recursively
         const children = Array.from(this.children);
@@ -1194,10 +1194,10 @@ export class ClientComponent extends EventEmitter {
         // mark destroyed
         this.destroyed = true;
 
-        await this.emit('afterDestroy');
+        await this.eventEmitter.emit('afterDestroy');
 
         // destroy EventEmitter (unbinding all event listeners)
-        this.emitterDestroy();
+        this.eventEmitter.emitterDestroy();
     }
 
     // removing is same as destroying the component
@@ -1283,7 +1283,7 @@ export class ClientComponent extends EventEmitter {
                 callback: cb,
                 callbackOriginal: cb
             });
-            element.on(event as string, cb);
+            element.getEmitter().on(event, cb);
         }
     }
 
@@ -1306,7 +1306,7 @@ export class ClientComponent extends EventEmitter {
         if (boundIndex > -1) {
             const bound = this.bound[boundIndex];
             if (bound.element instanceof ClientComponent) {
-                bound.element.off(bound.event, bound.callback);
+                bound.element.getEmitter().off(bound.event, bound.callback);
             } else {
                 bound.element.removeEventListener(bound.event, bound.callback as EventListenerOrEventListenerObject);
             }
@@ -1324,6 +1324,14 @@ export class ClientComponent extends EventEmitter {
         bound.forEach((boundEvent) => {
             this.unbind(boundEvent.element, boundEvent.event, boundEvent.callback);
         });
+    }
+
+    public getEmitter(): EventEmitter {
+        return this.eventEmitter;
+    }
+
+    public async emit(eventName: string, payload?: any): Promise<void> {
+        return await this.eventEmitter.emit(eventName, payload);
     }
 
     public log(msg: any): void {
