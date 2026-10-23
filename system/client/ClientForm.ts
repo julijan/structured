@@ -62,11 +62,52 @@ export class ClientForm extends EventEmitter {
 
 		const inputs = this.form.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select, textarea');
 
-		const setData = (key: string, value: any, isArray: boolean) => {
+		const setData = (key: string, value: any, type: InputDataType, isArray: boolean) => {
+
+			const toType = (value: any, targetType: InputDataType): any => {
+				// leave null as-is
+				if (value === null) {
+					return null;
+				}
+
+				// map array elements to target type
+				if (Array.isArray(value)) {
+					return value.map((item) => {
+						return toType(item, targetType);
+					});
+				}
+
+				// 1, '1' or 'true' = true
+				if (targetType === 'boolean') {
+					if (typeof value === 'boolean') {
+						return value;
+					}
+
+					return value === 1 || value === '1' || value === 'true';
+				}
+
+				// parseFloat(value), if isNaN return 0
+				if (targetType === 'number') {
+					if (typeof value === 'number') {
+						return value;
+					}
+
+					const int = parseFloat(value);
+					if (isNaN(int)) {
+						return 0;
+					}
+	
+					return int;
+				}
+
+				// no type casting needed
+				return value;
+			}
+
 			if (isArray) {
-				data[key].push(value);
+				data[key].push(toType(value, type));
 			} else {
-				data[key] = value;
+				data[key] = toType(value, type);
 			}
 		}
 
@@ -80,6 +121,12 @@ export class ClientForm extends EventEmitter {
 			const nullable = input.hasAttribute('data-nullable');
 			const multiple = input.hasAttribute('multiple');
 			const isArray = name.endsWith('[]') || /\[\d+\]$/.test(name);
+
+			// file input
+			if (type === 'file') {
+				console.warn('ClientForm does not support file inputs');
+				continue;
+			}
 
 			if (isArray) {
 				// remove [] or [\d+] from name if isArray
@@ -97,12 +144,6 @@ export class ClientForm extends EventEmitter {
 				data[name] = [];
 			}
 
-			// file input
-			if (type === 'file') {
-				console.warn('ClientForm does not support file inputs');
-				continue;
-			}
-
 			// select
 			if (input instanceof HTMLSelectElement) {
 				// multiple
@@ -113,40 +154,39 @@ export class ClientForm extends EventEmitter {
 					});
 
 					if (nullable && optionsSelected.length === 0) {
-						setData(name, null, isArray);
+						setData(name, null, type, isArray);
 						continue;
 					}
 
 					for (let i = 0; i < optionsSelected.length; i++) {
 						const option = optionsSelected[i] as HTMLOptionElement;
-						values.push(type === 'number' ? parseFloat(option.value) : option.value);
+						values.push(option.value);
 					}
-					data[name] = values;
+					setData(name, values, type, isArray);
 					continue;
 				}
 
 				// single
 				if (input.value === '' && nullable) {
-					setData(name, null, isArray);
+					setData(name, null, type, isArray);
 					continue;
 				}
 				
-				setData(name, type === 'number' ? parseFloat(input.value) : input.value, isArray);
+				setData(name, input.value, type, isArray);
 				continue;
 			}
 
 			if (input.type === 'checkbox') {
 				if (type === 'boolean') {
-					setData(name, input.checked, isArray);
+					setData(name, input.checked, type, isArray);
 					continue;
 				}
 				
 				if (input.checked) {
-					const value = type === 'number' ? parseInt(input.value) : input.value;
-					setData(name, value, isArray);
+					setData(name, input.value, type, isArray);
 					continue;
 				} else if (nullable) {
-					setData(name, null, isArray);
+					setData(name, null, type, isArray);
 					continue;
 				}
 
@@ -156,40 +196,18 @@ export class ClientForm extends EventEmitter {
 			// radio
 			if (input.type === 'radio') {
 				if (input.checked) {
-					if (type === 'boolean') {
-						setData(name, input.value === 'true' || input.value === '1', isArray);
-					} else if (type === 'number') {
-						setData(name, parseFloat(input.value), isArray);
-					} else {
-						setData(name, input.value, isArray);
-					}
+					setData(name, input.value, type, isArray);
 				}
 				continue;
 			}
 
 			// simple inputs
 			if (input.value.trim().length === 0 && nullable) {
-				setData(name, null, isArray);
+				setData(name, null, type, isArray);
 				continue;
 			}
 
-			if (type === 'number') {
-				const int = parseFloat(input.value);
-				if (isNaN(int)) {
-					if (nullable) {
-						setData(name, null, isArray);
-						continue;
-					}
-					
-					setData(name, 0, isArray);
-					continue;
-				}
-
-				setData(name, int, isArray);
-				continue;
-			}
-
-			setData(name, input.value, isArray);
+			setData(name, input.value, type, isArray);
 		}
 
 
