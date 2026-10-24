@@ -1214,7 +1214,7 @@ export class ClientComponent {
     // because that makes sure any event listeners bound are cleaned up when the component is destroyed
     public bind<T extends any>(
         element: ClientComponent | Array<ClientComponent>,
-        event: string,
+        event: string | Array<string>,
         callback: EventEmitterCallback<T>
     ): void
     public bind<T extends LooseObject | undefined, Evt extends Event = Event>(
