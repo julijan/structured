@@ -482,7 +482,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
         return this.app.config.staticAssets.paths.some((pattern) => {
             return minimatch(this.uri, pattern, {
                 nonegate: true,
-                nobrace: true,
+                nobrace: false,
                 noext: true,
                 nocomment: true,
                 partial: false,
@@ -494,7 +494,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
         return this.app.config.staticAssets.typeScriptPaths.some((pattern) => {
             return minimatch(this.uri, pattern, {
                 nonegate: true,
-                nobrace: true,
+                nobrace: false,
                 noext: true,
                 nocomment: true,
                 partial: false,
@@ -507,7 +507,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
         const cacheConf = this.app.config.staticAssets.cache.find((cacheConfEntry) => {
             return minimatch(this.uri, cacheConfEntry.pattern, {
                 nonegate: true,
-                nobrace: true,
+                nobrace: false,
                 noext: true,
                 nocomment: true,
                 partial: false,
