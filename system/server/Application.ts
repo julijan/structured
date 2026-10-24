@@ -101,6 +101,7 @@ export class Application {
             const filePath = path.resolve(import.meta.dirname, '..', uri);
             if (existsSync(filePath)) {
                 response.setHeader('Content-Type', 'application/javascript');
+                response.setHeader('Cache-Control', 'public, max-age=86400');
                 return readFileSync(filePath);
             } else {
                 response.statusCode = 404;
