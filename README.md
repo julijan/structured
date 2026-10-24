@@ -86,8 +86,20 @@ type StructuredConfig = {
     url: {
         removeTrailingSlash: boolean,
         componentRender: false | string,
-        isAsset: (url: string) => boolean
     },
+    staticAssets: {
+        paths: Array<string>;
+        typeScriptPaths: Array<string>;
+        cache: Array<{
+            pattern: string,
+            cacheMinutes: number,
+            immutable?: boolean
+        }>;
+        cacheStructuredClientJS: {
+            enabled: boolean,
+            cacheMinutes: number,
+        };
+    };
     routes: {
         readonly path: string
     },
