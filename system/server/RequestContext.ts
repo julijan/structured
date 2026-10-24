@@ -4,7 +4,6 @@ import { Application } from "./Application.js";
 import zlib from "node:zlib";
 import { mergeDeep, queryStringDecode, queryStringDecodedSetValue } from "../Util.js";
 import { Document } from "./Document.js";
-import path from "node:path";
 import { existsSync, readFileSync, ReadStream } from "node:fs";
 import { Layout } from "./Layout.js";
 import { StructuredError } from "../StructuredError.js";
@@ -429,11 +428,10 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
             if (this.isAsset()) {
                 // static asset
                 // unless accessing /assets/ts/* go directory up to get out of build
-                const basePath = this.request.url?.startsWith('/assets/ts/') ? './' : '../';
-                const assetPath = path.resolve(basePath + this.request.url);
+                const assetPath = this.app.directory(this.uri);
                 if (existsSync(assetPath)) {
                     await this.app.emit('beforeAssetAccess', this);
-                    const extension = (this.request.url || '').split('.').pop();
+                    const extension = (this.uri || '').split('.').pop();
                     let contentType = 'application/javascript';
                     if (extension) {
                         const typeByExtension = this.app.contentType(extension);
@@ -481,6 +479,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 
     public isAsset(): boolean {
         return this.app.config.staticAssets.paths.some((pattern) => {
+            console.log(this.uri);
             return minimatch(this.uri, pattern, {
                 nonegate: true,
                 nobrace: true,
