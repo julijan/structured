@@ -1237,7 +1237,8 @@ export class ClientComponent {
                     // @ts-ignore
                     el,
                     event,
-                    callback
+                    callback,
+                    options
                 );
             });
             return;
@@ -1250,7 +1251,8 @@ export class ClientComponent {
                     // @ts-ignore
                     element,
                     eventName,
-                    callback
+                    callback,
+                    options
                 );
             });
             return;
