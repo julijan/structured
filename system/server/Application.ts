@@ -101,7 +101,10 @@ export class Application {
             const filePath = path.resolve(import.meta.dirname, '..', uri);
             if (existsSync(filePath)) {
                 response.setHeader('Content-Type', 'application/javascript');
-                response.setHeader('Cache-Control', 'public, max-age=86400');
+                if (this.config.staticAssets.cacheStructuredClientJS.enabled) {
+                    const cacheSeconds = this.config.staticAssets.cacheStructuredClientJS.cacheMinutes * 60;
+                    response.setHeader('Cache-Control', `public, max-age=${cacheSeconds}`);
+                }
                 return readFileSync(filePath);
             } else {
                 response.statusCode = 404;

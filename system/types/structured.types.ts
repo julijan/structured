@@ -13,6 +13,10 @@ export type StructuredConfig = {
             cacheMinutes: number,
             immutable?: boolean
         }>;
+        cacheStructuredClientJS: {
+            enabled: boolean,
+            cacheMinutes: number,
+        },
     };
     routes: {
         readonly path: string;
