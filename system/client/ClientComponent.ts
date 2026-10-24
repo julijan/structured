@@ -1213,7 +1213,7 @@ export class ClientComponent {
     // this should be used instead of "addEventListener" and "on" methods
     // because that makes sure any event listeners bound are cleaned up when the component is destroyed
     public bind<T extends any>(
-        element: ClientComponent,
+        element: ClientComponent | Array<ClientComponent>,
         event: string,
         callback: EventEmitterCallback<T>
     ): void
@@ -1224,7 +1224,7 @@ export class ClientComponent {
         options?: AddEventListenerOptions
     ): void
     public bind<T extends LooseObject | undefined = undefined, Evt extends Event = Event>(
-        element: HTMLElement | Window | Array<HTMLElement | Window> | ClientComponent,
+        element: HTMLElement | Window | Array<HTMLElement | Window> | ClientComponent | Array<ClientComponent>,
         event: keyof HTMLElementEventMap | Array<keyof HTMLElementEventMap> | string,
         callback: ClientComponentEventCallback<T, Evt> | EventEmitterCallback<T>,
         options?: AddEventListenerOptions
@@ -1234,9 +1234,10 @@ export class ClientComponent {
         if (Array.isArray(element)) {
             element.forEach((el) => {
                 this.bind(
-                    el as HTMLElement | Window,
-                    event as keyof HTMLElementEventMap,
-                    callback as ClientComponentEventCallback<T, Evt>
+                    // @ts-ignore
+                    el,
+                    event,
+                    callback
                 );
             });
             return;
@@ -1246,9 +1247,10 @@ export class ClientComponent {
         if (Array.isArray(event)) {
             event.forEach((eventName) => {
                 this.bind(
-                    element as HTMLElement | Window,
+                    // @ts-ignore
+                    element,
                     eventName,
-                    callback as ClientComponentEventCallback<T>
+                    callback
                 );
             });
             return;
