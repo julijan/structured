@@ -428,7 +428,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
             if (this.isAsset()) {
                 // static asset
                 // unless accessing /assets/ts/* go directory up to get out of build
-                const assetPath = this.app.directory(this.uri);
+                const assetPath = this.app.directory(`${this.isTypeScriptAsset() ? '/build/' : ''}${this.uri}`);
                 if (existsSync(assetPath)) {
                     await this.app.emit('beforeAssetAccess', this);
                     const extension = (this.uri || '').split('.').pop();
@@ -480,6 +480,18 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 
     public isAsset(): boolean {
         return this.app.config.staticAssets.paths.some((pattern) => {
+            return minimatch(this.uri, pattern, {
+                nonegate: true,
+                nobrace: true,
+                noext: true,
+                nocomment: true,
+                partial: false,
+            });
+        });
+    }
+
+    private isTypeScriptAsset(): boolean {
+        return this.app.config.staticAssets.typeScriptPaths.some((pattern) => {
             return minimatch(this.uri, pattern, {
                 nonegate: true,
                 nobrace: true,

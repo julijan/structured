@@ -22,6 +22,9 @@ export const config: StructuredConfig = {
         paths: [
             '/assets/**/*'
         ],
+        // glob patterns within assets that contain typescript files
+        // these will be served from /build
+        typeScriptPaths: [],
         // array of { pattern: "[globPattern]", cacheMinutes: number, immutable?: boolean }
         cache: [],
     },

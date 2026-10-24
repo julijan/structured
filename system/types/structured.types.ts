@@ -7,6 +7,7 @@ export type StructuredConfig = {
     },
     staticAssets: {
         paths: Array<string>;
+        typeScriptPaths: Array<string>;
         cache: Array<{
             pattern: string,
             cacheMinutes: number,
