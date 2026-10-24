@@ -15,11 +15,13 @@ export const config: StructuredConfig = {
         // setting this to false disallows the use of ClientComponent.redraw and ClientComponent.add
         componentRender: '/componentRender',
 
+    },
+    staticAssets: {
         // array of glob patterns that should be treated as static assets
         // make sure to only include files you want to be publicly accessible
-        staticAssets: [
+        paths: [
             '/assets/**/*'
-        ]
+        ],
     },
     routes: {
         path: '/app/routes'

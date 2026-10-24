@@ -4,8 +4,10 @@ export type StructuredConfig = {
     url: {
         removeTrailingSlash: boolean;
         componentRender: false | string;
-        staticAssets: Array<string>;
     },
+    staticAssets: {
+        paths: Array<string>,
+    };
     routes: {
         readonly path: string;
     },

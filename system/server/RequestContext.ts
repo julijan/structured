@@ -480,7 +480,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
     }
 
     public isAsset(): boolean {
-        return this.app.config.url.staticAssets.some((pattern) => {
+        return this.app.config.staticAssets.paths.some((pattern) => {
             return minimatch(this.uri, pattern, {
                 nonegate: true,
                 nobrace: true,
