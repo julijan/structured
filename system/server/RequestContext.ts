@@ -439,6 +439,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
                             contentType = typeByExtension;
                         }
                     }
+                    this.assetCache();
                     this.sendResponse(readFileSync(assetPath), contentType);
                     staticAsset = true;
                     await this.app.emit('afterAssetAccess', this);
@@ -479,7 +480,6 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 
     public isAsset(): boolean {
         return this.app.config.staticAssets.paths.some((pattern) => {
-            console.log(this.uri);
             return minimatch(this.uri, pattern, {
                 nonegate: true,
                 nobrace: true,
@@ -488,6 +488,33 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
                 partial: false,
             });
         });
+    }
+
+    // set Cache-Control header for current static asset if it matches a pattern in config
+    private assetCache(): void {
+        const cacheConf = this.app.config.staticAssets.cache.find((cacheConfEntry) => {
+            return minimatch(this.uri, cacheConfEntry.pattern, {
+                nonegate: true,
+                nobrace: true,
+                noext: true,
+                nocomment: true,
+                partial: false,
+            });
+        });
+        if (!!cacheConf) {
+            const maxAgeSeconds = cacheConf.cacheMinutes * 60;
+            const immutable = cacheConf.immutable ?? false;
+
+            const directives: Array<string> = [
+                `max-age=${maxAgeSeconds}`,
+            ];
+
+            if (immutable) {
+                directives.push('immutable');
+            }
+
+            this.response.setHeader('Cache-Control', `public, ${directives.join(', ')}`);
+        }
     }
 
     // uses common header names used for passing the request client IP address

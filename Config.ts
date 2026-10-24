@@ -22,6 +22,8 @@ export const config: StructuredConfig = {
         paths: [
             '/assets/**/*'
         ],
+        // array of { pattern: "[globPattern]", cacheMinutes: number, immutable?: boolean }
+        cache: [],
     },
     routes: {
         path: '/app/routes'

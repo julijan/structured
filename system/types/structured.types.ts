@@ -6,7 +6,12 @@ export type StructuredConfig = {
         componentRender: false | string;
     },
     staticAssets: {
-        paths: Array<string>,
+        paths: Array<string>;
+        cache: Array<{
+            pattern: string,
+            cacheMinutes: number,
+            immutable?: boolean
+        }>;
     };
     routes: {
         readonly path: string;
