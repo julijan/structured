@@ -56,7 +56,7 @@ export class ClientForm extends EventEmitter {
 		}
 	}
 
-	public getData(): LooseObject {
+	public getData<T extends LooseObject>(): T {
 
 		const data: LooseObject = {}
 
@@ -228,7 +228,7 @@ export class ClientForm extends EventEmitter {
 			prev = mergeDeep(prev, objCurr);
 
 			return prev;
-		}, {} as LooseObject);
+		}, {} as LooseObject) as T;
 	}
 
 	private getName(): string {
