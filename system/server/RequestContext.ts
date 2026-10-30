@@ -1,5 +1,5 @@
 import { IncomingMessage, ServerResponse } from "node:http";
-import { LooseObject, PostedDataDecoded, RequestBodyFile, RequestBodyRecordValue, RequestHandler, URIArguments, URISegmentPattern } from "../Types.js";
+import { LooseObject, PostedDataDecoded, RequestBodyFile, RequestHandler, URIArguments, URISegmentPattern } from "../Types.js";
 import { Application } from "./Application.js";
 import zlib from "node:zlib";
 import { mergeDeep, queryStringDecode, queryStringDecodedSetValue } from "../Util.js";
@@ -38,7 +38,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
 
 	// files extracted from request body
 	// currently only multipart/form-data
-	files?: Record<string, RequestBodyRecordValue>;
+	files: Record<string, RequestBodyFile> = {};
 
 	// RequestContext.data is place for user defined data
 	// it is initialized as an empty object here and
