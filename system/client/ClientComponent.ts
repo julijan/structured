@@ -12,7 +12,8 @@ import {
     mergeDeep,
     objectEach,
     queryStringDecodedSetValue,
-    toCamelCase
+    toCamelCase,
+    toSnakeCase
 } from '../Util.js';
 import { DataStoreView } from './DataStoreView.js';
 import { Net } from './Net.js';
@@ -265,6 +266,17 @@ export class ClientComponent {
         }
 
         return data;
+    }
+
+    public getAttribute<T>(node: HTMLElement, attributeName: string): T | undefined {
+        const attributes = this.attributeData(node);
+        if (!(attributeName in attributes)) {return undefined;}
+        return attributes[attributeName];
+    }
+
+    public setAttribute(node: HTMLElement, attributeName: string, value: any): void {
+        const key = `data-${toSnakeCase(attributeName)}`;
+        node.setAttribute(key, attributeValueToString(attributeName, value));
     }
 
     // array of attribute data all the way up to root, or the first component with no dependencies (no data-use attribute)
