@@ -1,7 +1,7 @@
 import { EventEmitter } from "../EventEmitter.js";
 import { LooseObject, RequestMethod } from "../Types.js";
 import { InputDataType } from "../types/client.types.js";
-import { mergeDeep, queryStringDecode } from "../Util.js";
+import { attributeValueFromString, mergeDeep, queryStringDecode } from "../Util.js";
 import { Net } from "./Net.js";
 
 export class ClientForm extends EventEmitter {
@@ -201,6 +201,20 @@ export class ClientForm extends EventEmitter {
 				continue;
 			}
 
+			// handle data-type="any" on input[type="hidden"]
+			// value is ignored, instead input is expected to have {{{attr 'value' any}}}
+			if (input.type === 'hidden' && type === 'any') {
+				if (input.hasAttribute('data-value')) {
+					const valueDecoded = attributeValueFromString(input.getAttribute('data-value') ?? '');
+					if (typeof valueDecoded === 'string') {
+						setData(name, valueDecoded, type, isArray);
+					} else {
+						setData(name, valueDecoded.value, type, isArray);
+					}
+					continue;
+				}
+			}
+
 			// simple inputs
 			if (input.value.trim().length === 0 && nullable) {
 				setData(name, null, type, isArray);
@@ -290,6 +304,10 @@ export class ClientForm extends EventEmitter {
 
 		if (type === 'boolean') {
 			return 'boolean';
+		}
+
+		if (type === 'any') {
+			return 'any';
 		}
 
 		return 'string';

@@ -1,1 +1,1 @@
-export type InputDataType = 'string' | 'number' | 'boolean' | 'file';
+export type InputDataType = 'string' | 'number' | 'boolean' | 'any' | 'file';
