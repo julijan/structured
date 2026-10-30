@@ -249,7 +249,7 @@ export class ClientComponent {
         const data: LooseObject = {};
 
         for (let i = 0; i < node.attributes.length; i++) {
-            if (/^((number|string|boolean|object|any):)?data-[^\s]+/.test(node.attributes[i].name)) {
+            if (/^data-[^\s]+/.test(node.attributes[i].name)) {
                 // data-attr, convert to dataAttr and store value
                 const value = node.attributes[i].value;
                 const attrData = attributeValueFromString(value);
