@@ -1,5 +1,5 @@
 import { StoreChangeCallback } from '../types/store.types.js';
-import { LooseObject } from '../types/general.types.js';
+import { BooleanKeys, LooseObject } from '../types/general.types.js';
 import {
     ClientComponentEventCallback,
     ClientComponentBoundEvent,
@@ -23,14 +23,14 @@ import { ClientApplication } from './ClientApplication.js';
 import { EventEmitterCallback } from '../types/eventEmitter.types.js';
 import { ClientForm } from './ClientForm.js';
 
-export class ClientComponent {
+export class ClientComponent<StoreType extends LooseObject = LooseObject> {
     readonly name: string;
-    children: Array<ClientComponent> = [];
-    readonly parent: ClientComponent;
+    children: Array<ClientComponent<any>> = [];
+    readonly parent: ClientComponent<any>;
     readonly domNode: HTMLElement;
     readonly isRoot: boolean;
-    readonly root: ClientComponent;
-    store: DataStoreView;
+    readonly root: ClientComponent<any>;
+    store: DataStoreView<StoreType>;
     private app: ClientApplication;
     readonly net: Net = new Net();
     private eventEmitter: EventEmitter = new EventEmitter();
@@ -67,7 +67,7 @@ export class ClientComponent {
     // data-attr are parsed into an object
     private data: LooseObject = {};
 
-    constructor(parent: ClientComponent | null, name: string, domNode: HTMLElement, app: ClientApplication) {
+    constructor(parent: ClientComponent<any> | null, name: string, domNode: HTMLElement, app: ClientApplication) {
         this.name = name;
         this.domNode = domNode;
         if (parent === null) {
@@ -209,7 +209,7 @@ export class ClientComponent {
         if (initializer !== null) {
             // run own initializer, if one exists
             try {
-                await initializer.apply(this, [{
+                await initializer.apply(this as ClientComponent<LooseObject>, [{
                     net: this.net,
                     isRedraw
                 }]);
@@ -284,7 +284,7 @@ export class ClientComponent {
     public pathData(): Array<{
         [key: string]: string;
     }> {
-        let current: ClientComponent = this;
+        let current: ClientComponent<StoreType> = this;
         const data = [];
         do {
             data.push(current.data);
@@ -300,7 +300,7 @@ export class ClientComponent {
     // sets data-[key]="value" attribute on this.domNode, value passed through attributeValueToString
     // if updateStore is true (default) value is also applied to this.store
     // returns this to allow chaining
-    public setData(key: string, value: any, updateStore: boolean = true): ClientComponent {
+    public setData(key: string, value: any, updateStore: boolean = true): ClientComponent<StoreType> {
         const dataKey = `data-${key}`;
         this.domNode.setAttribute(dataKey, attributeValueToString(key, value));
         const keyCamelCase = toCamelCase(key);
@@ -605,7 +605,7 @@ export class ClientComponent {
                 let data = modelData(modelNode);
                 const key = Object.keys(data)[0];
                 if (typeof data[key] === 'object') {
-                    const dataExisting = this.store.get<LooseObject>(key);
+                    const dataExisting = this.store.get<any>(key);
                     if (dataExisting !== undefined) {
                         data = mergeDeep({}, {[key]: dataExisting}, data);
                     } else {
@@ -637,7 +637,7 @@ export class ClientComponent {
         const toggleKey = element.getAttribute('data-toggle');
         if (toggleKey !== null && toggleKey.length > 0) {
             this.bind(element, 'click', () => {
-                this.store.toggle(toggleKey);
+                this.store.toggle(toggleKey as Extract<BooleanKeys<StoreType>, string>);
             });
         }
     }
@@ -719,7 +719,7 @@ export class ClientComponent {
             }
             
             const property = parts[2];
-            const value = this.store.get(property);
+            const value = this.store.get(property as Extract<keyof StoreType, string>);
             const isComparison = parts[3] !== undefined;
             if (isComparison) {
                 // comparison (case 2)
@@ -731,7 +731,7 @@ export class ClientComponent {
                 } catch(e) {
                     // parts[4] failed to be parsed as a primitive
                     // assume it's a store value to allow comparing one store value to another
-                    rightHandSide = this.store.get(parts[4]);
+                    rightHandSide = this.store.get(parts[4] as Extract<keyof StoreType, string>);
                 }
 
                 const comparisonSymbol = parts[3];
@@ -766,7 +766,7 @@ export class ClientComponent {
             } else {
                 // not a comparison (case 1)
                 const negated = parts[1] === '!';
-                const isTrue = this.store.get<boolean>(property);
+                const isTrue = this.store.get<any>(property as Extract<keyof StoreType, string>);
                 if (negated) {
                     return !isTrue;
                 }
@@ -1225,7 +1225,7 @@ export class ClientComponent {
     // this should be used instead of "addEventListener" and "on" methods
     // because that makes sure any event listeners bound are cleaned up when the component is destroyed
     public bind<T extends any>(
-        element: ClientComponent | Array<ClientComponent>,
+        element: ClientComponent<any> | Array<ClientComponent<any>>,
         event: string | Array<string>,
         callback: EventEmitterCallback<T>
     ): void

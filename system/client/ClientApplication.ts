@@ -1,18 +1,19 @@
 import { DataStore } from './DataStore.js';
 import { ClientComponent } from './ClientComponent.js';
 import { InitializerFunction } from '../types/component.types.js';
+import { LooseObject } from '../Types.js';
 
 export class ClientApplication {
     root: ClientComponent;
     store: DataStore = new DataStore();
-    initializers: Record<string, InitializerFunction> = {}
+    initializers: Record<string, InitializerFunction<LooseObject>> = {}
 
     constructor() {
         this.loadInitializers();
         this.root = new ClientComponent(null, 'root', document.body, this);
     }
 
-    public getInitializer(componentName: string): InitializerFunction | null {
+    public getInitializer(componentName: string): InitializerFunction<LooseObject> | null {
         if (!this.hasInitializer(componentName)) {return null;}
         return this.initializers[componentName];
     }
@@ -43,7 +44,7 @@ export class ClientApplication {
                     console.error('Error in component ${componentName}: ' + e.message, this);
                 }
             }
-        `) as InitializerFunction;
+        `) as InitializerFunction<LooseObject>;
 
         // assign it
         this.initializers[componentName] = initializerFunction;

@@ -39,7 +39,7 @@ export type ComponentEntry = {
     attributes?: Record<string, string>;
 
     // client side component initializer
-    initializer?: InitializerFunction;
+    initializer?: InitializerFunction<LooseObject>;
 };
 
 export interface ComponentScaffold<I extends LooseObject = LooseObject, O extends LooseObject = LooseObject, K extends KeysOfUnion<O> = KeysOfUnion<O>> {
@@ -131,9 +131,9 @@ export type ClientComponentBoundEvent<Data extends LooseObject | undefined, Elem
 export type ClientComponentEventCallback<T, E extends Event = Event> = (e: E, data: T, element: HTMLElement | Window) => void;
 
 // client side component initializer function
-export type InitializerFunction = (this: ClientComponent, ctx: InitializerFunctionContext) => Promise<void>;
+export type InitializerFunction<StoreType extends LooseObject = LooseObject> = (this: ClientComponent<StoreType>, ctx: InitializerFunctionContext) => Promise<void>;
 export type Initializers = {
-    [key: string]: InitializerFunction;
+    [key: string]: InitializerFunction<LooseObject>;
 };
 export type InitializerFunctionContext = {
     net: Net;

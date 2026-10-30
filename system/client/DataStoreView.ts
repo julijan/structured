@@ -1,3 +1,4 @@
+import { BooleanKeys, LooseObject } from '../Types.js';
 import { StoreChangeCallback } from '../types/store.types.js';
 import { ClientComponent } from './ClientComponent.js';
 import { DataStore } from './DataStore.js';
@@ -6,34 +7,35 @@ import { DataStore } from './DataStore.js';
 // it is initialized with component ID and global store so that from component
 // one can set/get a value without having to pass in a component id
 
-export class DataStoreView {
+export class DataStoreView<StoreType extends LooseObject> {
 
     private store: DataStore;
     private component: ClientComponent;
     private destroyed = false;
 
-    constructor(store: DataStore, component: ClientComponent) {
+    constructor(store: DataStore, component: ClientComponent<any>) {
         this.store = store;
         this.component = component;
     }
 
-    public set(key: string, val: any, force: boolean = false, triggerListeners: boolean = true): DataStoreView {
+    public set<Key extends keyof StoreType>(key: Key, val: StoreType[Key], force: boolean = false, triggerListeners: boolean = true): DataStoreView<StoreType> {
         if (! this.destroyed) {
-            this.store.set(this.component, key, val, force, triggerListeners);
+            this.store.set(this.component, key as string, val, force, triggerListeners);
         }
         return this;
     }
 
-    public get<T>(key: string): T|undefined {
+    public get<Key extends Extract<keyof StoreType, string>>(key: Key): StoreType[Key] | undefined {
         if (this.destroyed) {return undefined;}
         return this.store.get(this.componentId(), key);
     }
 
-    public toggle(key: string): void {
-        this.set(key, !this.get(key));
+    public toggle<Key extends Extract<BooleanKeys<StoreType>, string>>(key: Key): void {
+        const value = this.get<Key>(key);
+        this.set<Key>(key, !value as StoreType[Key]);
     }
 
-    public keys(): Array<string> {
+    public keys(): Array<keyof StoreType> {
         if (this.destroyed) {return [];}
         return Object.keys(this.store.get(this.componentId()) || {});
     }
@@ -73,7 +75,7 @@ export class DataStoreView {
 
     // add callback to be called when a given key's value is changed
     // if key === '*' then it will be called when any of the key's values is changed
-    public onChange(key: string, callback: StoreChangeCallback): DataStoreView {
+    public onChange(key: string, callback: StoreChangeCallback): DataStoreView<StoreType> {
         if (this.destroyed) {return this;}
         this.store.onChange(this.componentId(), key, callback);
         return this;
