@@ -5,7 +5,7 @@ import { attributeValueFromString, mergeDeep, queryStringDecode } from "../Util.
 import { Net } from "./Net.js";
 
 export class ClientForm extends EventEmitter<{
-	beforeSubmit: LooseObject,
+	beforeSubmit: ClientFormSubmitEvent,
 	done: any,
 	error: Error,
 }> {
@@ -30,7 +30,11 @@ export class ClientForm extends EventEmitter<{
 		const submitButtons = this.form.querySelectorAll('button[type="submit"]');
 		submitButtons.forEach((btn) => {
 			btn.addEventListener('click', () => {
-				this.submit();
+				try {
+					this.submit();
+				} catch(e) {
+					this.emit('error', e);
+				}
 			});
 		});
 
@@ -38,8 +42,14 @@ export class ClientForm extends EventEmitter<{
 	}
 
 	public async submit<T>(): Promise<T> {
-		const data = this.getData();
-		await this.emit('beforeSubmit', data);
+		const event = new ClientFormSubmitEvent(this.getData());
+		await this.emit('beforeSubmit', event);
+		
+		// event was canceled in beforeSubmit callback
+		if (event.isCanceled()) {
+			throw new Error('submit canceled');
+		}
+		
 		const net = new Net();
 		try {
 			const res = await net.request(
@@ -48,7 +58,7 @@ export class ClientForm extends EventEmitter<{
 				{
 					'content-type': 'application/json',
 				},
-				JSON.stringify(data),
+				JSON.stringify(event.data),
 				this.responseType
 			);
 
@@ -315,5 +325,22 @@ export class ClientForm extends EventEmitter<{
 		}
 
 		return 'string';
+	}
+}
+
+export class ClientFormSubmitEvent {
+	private canceled: boolean = false;
+	public data: LooseObject;
+
+	constructor(data: LooseObject) {
+		this.data = data;
+	}
+
+	public cancel(): void {
+		this.canceled = true;
+	}
+
+	public isCanceled(): boolean {
+		return this.canceled;
 	}
 }
