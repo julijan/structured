@@ -4,7 +4,11 @@ import { InputDataType } from "../types/client.types.js";
 import { attributeValueFromString, mergeDeep, queryStringDecode } from "../Util.js";
 import { Net } from "./Net.js";
 
-export class ClientForm extends EventEmitter {
+export class ClientForm extends EventEmitter<{
+	beforeSubmit: LooseObject,
+	done: any,
+	error: Error,
+}> {
 	readonly form: HTMLElement;
 	readonly name: string;
 	readonly action: string;
