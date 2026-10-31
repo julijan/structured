@@ -31,7 +31,7 @@ export class EventEmitter<T extends Record<string, any> = Record<string, any>> {
     }
 
     // emit event with given payload
-    public async emit(eventName: Extract<keyof T, string>, payload?: any): Promise<void> {
+    public async emit<Key extends Extract<keyof T, string>>(eventName: Key, payload?: T[Key]): Promise<void> {
         if (this.destroyed) {return;}
         if (!this.ready) {
             // emitter not ready, queue event

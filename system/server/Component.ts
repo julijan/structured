@@ -81,7 +81,7 @@ export class Component<Events extends Record<string, any> = ComponentEvents> ext
         }
 
         if (! isDocument) {
-            this.document.emit('componentCreated', this);
+            this.document.emit('componentCreated', this as Component<ComponentEvents>);
         }
     }
     
