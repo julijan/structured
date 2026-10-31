@@ -4,9 +4,12 @@ import { InputDataType } from "../types/client.types.js";
 import { attributeValueFromString, mergeDeep, queryStringDecode } from "../Util.js";
 import { Net } from "./Net.js";
 
-export class ClientForm extends EventEmitter<{
-	beforeSubmit: ClientFormSubmitEvent,
-	done: any,
+export class ClientForm<
+	DataType extends LooseObject = LooseObject,
+	ResponseType extends any = any
+> extends EventEmitter<{
+	beforeSubmit: ClientFormSubmitEvent<DataType>,
+	done: ResponseType,
 	error: Error,
 }> {
 	readonly form: HTMLElement;
@@ -41,7 +44,7 @@ export class ClientForm extends EventEmitter<{
 		this.emitterReady();
 	}
 
-	public async submit<T>(): Promise<T> {
+	public async submit(): Promise<ResponseType> {
 		const event = new ClientFormSubmitEvent(this.getData());
 		await this.emit('beforeSubmit', event);
 		
@@ -62,15 +65,15 @@ export class ClientForm extends EventEmitter<{
 				this.responseType
 			);
 
-			await this.emit('done', res);
-			return res as T;
+			await this.emit('done', res as ResponseType);
+			return res as ResponseType;
 		} catch (e) {
 			await this.emit('error', e);
 			throw e;
 		}
 	}
 
-	public getData<T extends LooseObject>(): T {
+	public getData(): DataType {
 
 		const data: LooseObject = {}
 
@@ -256,7 +259,7 @@ export class ClientForm extends EventEmitter<{
 			prev = mergeDeep(prev, objCurr);
 
 			return prev;
-		}, {} as LooseObject) as T;
+		}, {} as LooseObject) as DataType;
 	}
 
 	private getName(): string {
@@ -328,11 +331,11 @@ export class ClientForm extends EventEmitter<{
 	}
 }
 
-export class ClientFormSubmitEvent {
+export class ClientFormSubmitEvent<DataType> {
 	private canceled: boolean = false;
-	public data: LooseObject;
+	public data: DataType;
 
-	constructor(data: LooseObject) {
+	constructor(data: DataType) {
 		this.data = data;
 	}
 

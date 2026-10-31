@@ -480,10 +480,13 @@ export class ClientComponent<StoreType extends LooseObject = LooseObject> {
         }
     }
 
-    public getForm(formName: string): ClientForm | null {
+    public getForm<
+        DataType extends LooseObject = LooseObject,
+        ResponseType = any
+    >(formName: string): ClientForm<DataType, ResponseType> | null {
         return this.forms.find((form) => {
             return form.name === formName;
-        }) ?? null;
+        }) as ClientForm<DataType, ResponseType> ?? null;
     }
 
     // initialize refs and refsArray within this component
