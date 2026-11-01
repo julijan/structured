@@ -75,14 +75,24 @@ export class DataStoreView<StoreType extends LooseObject> {
 
     // add callback to be called when a given key's value is changed
     // if key === '*' then it will be called when any of the key's values is changed
-    public onChange(key: string, callback: StoreChangeCallback): DataStoreView<StoreType> {
+    public onChange<Key extends Extract<keyof StoreType, string> | '*'>(
+        key: Key,
+        callback: StoreChangeCallback<
+            Key extends '*' ?
+                Extract<keyof StoreType, string> :
+                Key,
+            StoreType[Key]
+        >
+    ): DataStoreView<StoreType> {
         if (this.destroyed) {return this;}
         this.store.onChange(this.componentId(), key, callback);
         return this;
     }
 
     // return all onChange listeners for the owner component
-    public onChangeCallbacks(): Record<string, Array<StoreChangeCallback>> {
+    public onChangeCallbacks(): Record<
+        string, Array<StoreChangeCallback<Extract<keyof StoreType, string> | '*', any>>
+    > {
         return this.store.onChangeCallbacks(this.componentId());
     }
 }

@@ -386,7 +386,7 @@ export class ClientComponent<StoreType extends LooseObject = LooseObject> {
         // new DOM may contain same children (same componentId) however by destroying the children
         // any store change listeners will be lost, before destroying each child
         // keep a copy of the store change listeners, which we'll use later to restore those listeners
-        const childStoreChangeCallbacks: Record<string, Record<string, Array<StoreChangeCallback>>> = {}
+        const childStoreChangeCallbacks: Record<string, Record<string, Array<StoreChangeCallback<string, any>>>> = {}
         const childrenOld = Array.from(this.children);
         for (let i = 0; i < childrenOld.length; i++) {
             const child = childrenOld[i];

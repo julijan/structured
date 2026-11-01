@@ -13,7 +13,7 @@ export class DataStore {
 
     protected changeListeners: {
         [componentId: string]: {
-            [key: string]: Array<StoreChangeCallback>;
+            [key: string]: Array<StoreChangeCallback<string, any>>;
         };
     } = {};
 
@@ -76,7 +76,7 @@ export class DataStore {
 
     // add callback to be called when a given key's value is changed
     // if key === '*' then it will be called when any of the key's values is changed
-    public onChange(componentId: string, key: string, callback: StoreChangeCallback): DataStore {
+    public onChange(componentId: string, key: string, callback: StoreChangeCallback<string, any>): DataStore {
         if (! (componentId in this.changeListeners)) {
             this.changeListeners[componentId] = {};
         }
@@ -90,7 +90,7 @@ export class DataStore {
     }
 
     // return all on change callbacks for given component
-    public onChangeCallbacks(componentId: string): Record<string, Array<StoreChangeCallback>> {
+    public onChangeCallbacks(componentId: string): Record<string, Array<StoreChangeCallback<string, any>>> {
         return this.changeListeners[componentId];
     }
 

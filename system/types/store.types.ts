@@ -1,1 +1,6 @@
-export type StoreChangeCallback = (key: string, value: any, oldValue: any, componentId: string) => void;
+export type StoreChangeCallback<Key, Val> = (
+	key: Key,
+	value: Val,
+	oldValue: Val | undefined,
+	componentId: string
+) => void;
