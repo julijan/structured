@@ -32,9 +32,9 @@ export class ClientForm<
 
 		const submitButtons = this.form.querySelectorAll('button[type="submit"]');
 		submitButtons.forEach((btn) => {
-			btn.addEventListener('click', () => {
+			btn.addEventListener('click', async () => {
 				try {
-					this.submit();
+					await this.submit();
 				} catch(e) {
 					this.emit('error', e);
 				}
