@@ -73,7 +73,7 @@ export class Application {
         }
 
         await this.emit('beforeComponentsLoad');
-        this.components.loadComponents();
+        await this.components.loadComponents();
         await this.emit('afterComponentsLoaded', this.components);
 
 

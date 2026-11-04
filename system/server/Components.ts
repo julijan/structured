@@ -17,7 +17,7 @@ export class Components {
         this.config = app.config;
     }
 
-    public loadComponents(relativeToPath?: string): void {
+    public async loadComponents(relativeToPath?: string): Promise<void> {
         if (relativeToPath === undefined) {
             relativeToPath = path.resolve((this.config.runtime === 'Node.js' ? '../' : './') + this.config.components.path);
             if (! existsSync(relativeToPath)) {
@@ -25,15 +25,15 @@ export class Components {
             }
         }
         const components = readdirSync(relativeToPath);
-        
-        components.forEach(async (component) => {
+
+        for (const component of components) {
             // check if directory
             // absolute path to a directory, or the component's HTML file
             const absolutePath = relativeToPath + '/' + component;
             const isDirectory = statSync(absolutePath).isDirectory();
 
             if (isDirectory) {
-                this.loadComponents(absolutePath);
+                await this.loadComponents(absolutePath);
             } else {
                 // file, register component entry
                 if (component.endsWith('.html') || component.endsWith('.hbs')) {
@@ -99,7 +99,7 @@ export class Components {
                     this.componentNames.push(entry.name);
                 }
             }
-        });
+        }
     }
 
     // get component by name
