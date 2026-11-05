@@ -195,7 +195,7 @@ export class Request {
             }
             if (named) {
                 const nameParts = /^\(([^\/:\)]+)/.exec(segmentIn);
-                const isNumber = /:num\)$/.test(segmentIn);
+                const isNumber = segmentIn.endsWith(':num)') || segmentIn.endsWith(':number)');
                 if (nameParts) {
                     segmentPattern.name = nameParts[1];
                     if (isNumber) {
