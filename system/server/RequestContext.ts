@@ -4,7 +4,7 @@ import { Application } from "./Application.js";
 import zlib from "node:zlib";
 import { mergeDeep, queryStringDecode, queryStringDecodedSetValue } from "../Util.js";
 import { Document } from "./Document.js";
-import { existsSync, readFileSync, ReadStream } from "node:fs";
+import { existsSync, readFileSync, ReadStream, statSync } from "node:fs";
 import { Layout } from "./Layout.js";
 import { StructuredError } from "../StructuredError.js";
 import { minimatch } from "minimatch";
@@ -430,22 +430,20 @@ export class RequestContext<
             if (this.isAsset()) {
                 // static asset
                 // unless accessing /assets/ts/* go directory up to get out of build
-                const assetPath = this.app.directory(`${this.isTypeScriptAsset() ? '/build/' : ''}${this.uri}`);
-                if (existsSync(assetPath)) {
-                    await this.app.emit('beforeAssetAccess', this);
-                    const extension = (this.uri || '').split('.').pop();
-                    let contentType = 'application/javascript';
-                    if (extension) {
-                        const typeByExtension = this.app.contentType(extension);
-                        if (typeByExtension) {
-                            contentType = typeByExtension;
-                        }
+                const assetPath = this.assetPath();
+                await this.app.emit('beforeAssetAccess', this);
+                const extension = (this.uri || '').split('.').pop();
+                let contentType = 'application/javascript';
+                if (extension) {
+                    const typeByExtension = this.app.contentType(extension);
+                    if (typeByExtension) {
+                        contentType = typeByExtension;
                     }
-                    this.assetCache();
-                    this.sendResponse(readFileSync(assetPath), contentType);
-                    staticAsset = true;
-                    await this.app.emit('afterAssetAccess', this);
                 }
+                this.assetCache();
+                this.sendResponse(readFileSync(assetPath), contentType);
+                staticAsset = true;
+                await this.app.emit('afterAssetAccess', this);
             }
 
             if (! staticAsset) {
@@ -480,8 +478,18 @@ export class RequestContext<
         return this.executionCompletedAt !== null;
     }
 
+    // returns absolute path to file on disk
+    // does no checks whether this is an asset request - only makes sense when isAsset is true
+    private assetPath(): string {
+        return this.app.directory(`${this.isTypeScriptAsset() ? '/build/' : ''}${this.uri}`);
+    }
+
+    // URI is asset if all of the following is true:
+    // any glob pattern in config.staticAssets matches the URI
+    // path exists
+    // not a directory
     public isAsset(): boolean {
-        return this.app.config.staticAssets.paths.some((pattern) => {
+        if (!this.app.config.staticAssets.paths.some((pattern) => {
             return minimatch(this.uri, pattern, {
                 nonegate: true,
                 nobrace: false,
@@ -489,7 +497,27 @@ export class RequestContext<
                 nocomment: true,
                 partial: false,
             });
-        });
+        })) {
+            // path not defined as a static asset
+            return false;
+        }
+
+        const assetPath = this.assetPath();
+
+        // make sure file exists
+        if (!existsSync(assetPath)) {
+            // path is defined as an asset but it does not exist on disk
+            return false;
+        }
+
+        // make sure it is not a directory
+        const stat = statSync(assetPath);
+        if (stat.isDirectory()) {
+            // directory, can't be served
+            return false;
+        }
+
+        return true;
     }
 
     private isTypeScriptAsset(): boolean {
