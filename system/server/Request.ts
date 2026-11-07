@@ -5,12 +5,15 @@ import {
     URISegmentPattern,
     RequestHandler,
     RequestCallback,
+    URIPattern,
+    ExtractUrlParams,
 } from "../types/request.types.js";
 import { Application } from "./Application.js";
 import { existsSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { RequestContext } from "./RequestContext.js";
 import { StructuredError } from "../StructuredError.js";
+import { Route } from "./Route.js";
 
 export class Request {
 
@@ -29,10 +32,12 @@ export class Request {
     // callback.this will be the scope if scope is provided, otherwise scope is the Application instance
     // if pattern is given as array, one request handler will be created for each element of the array
     // if isStaticAsset = true, (before/after)RequestHandler event not emitted, body and GET args not parsed
-    public on<R extends any, Body extends LooseObject | undefined = LooseObject>(
+    // NOTE: this method might become private in the future
+    // using the route method instead of this is recommended because it provides type safety for RequestContext.args
+    public on<Response extends any, Body extends LooseObject | undefined = LooseObject>(
         methods: RequestMethod|Array<RequestMethod>,
-        pattern: string|RegExp|Array<string|RegExp>,
-        callback: RequestCallback<R, Body>,
+        pattern: URIPattern,
+        callback: RequestCallback<Response, Body, LooseObject>,
         scope?: any,
         isStaticAsset: boolean = false
     ): void {
@@ -72,6 +77,18 @@ export class Request {
 
             return valA - valB;
         });
+    }
+
+    // recommended alternative to "on" for creating routes
+    // using route provides type safety when accessing RequestContext.args
+    // returns instance of Route which exposes a handle method
+    // used as:
+    // Request.route(requestMethod, uriPattern).handle<Response, Body>(callback)
+    public route<Pattern extends URIPattern>(
+        requestMethod: RequestMethod | Array<RequestMethod>,
+        uriPattern: Pattern
+    ): Route<ExtractUrlParams<Pattern>> {
+        return new Route(this, requestMethod, uriPattern);
     }
 
     // if there is a handler registered for the given URI, returns the handler, null otherwise

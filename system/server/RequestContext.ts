@@ -10,7 +10,10 @@ import { StructuredError } from "../StructuredError.js";
 import { minimatch } from "minimatch";
 import { Transform } from "node:stream";
 
-export class RequestContext<Body extends LooseObject | undefined = LooseObject> {
+export class RequestContext<
+    Body extends LooseObject | undefined = LooseObject,
+    Segments extends LooseObject = LooseObject
+> {
 
     private executionStartedAt: number | null = null;
     private executionCompletedAt: number | null = null;
@@ -27,8 +30,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
     // client's IP address
     ipAddress: string | null = null;
 
-	args: URIArguments = {};
-	
+	args: Segments = {} as Segments;
 
 	cookies: Record<string, string> = {};
 
@@ -401,7 +403,7 @@ export class RequestContext<Body extends LooseObject | undefined = LooseObject> 
                 // extract URI arguments, if pattern included capture groups, those will be included
                 // for example pattern /users/(userId:num) -> { userId: number }
                 const URIArgs = this.extractURIArguments(this.uri, this.handler.match);
-                this.args = URIArgs;
+                this.args = URIArgs as Segments;
             }
 
             
