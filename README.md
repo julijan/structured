@@ -280,9 +280,17 @@ Route file name has no effect on how the route (request handler) behaves, the on
 > [!TIP]
 > You can, and should, define the output/input types for your routes.
 > ```
-> app.request.on<OutputType, InputType>(...)
+> app.request.on<Response, Body>(...)
 > ```
 > This allows TypeScript to validate that you are returning the desired type in all return paths and makes interaction with received (POST, PUT) data easier.
+
+> [!TIP]
+> Version 1.9.3 introduces a new way to register routes.
+> ```
+> app.request.route(requestMethod, uriPattern).handle<Response, Body>(callback)
+> ```
+> This is the recommended way to register routes because it provides type safety for RequestContext.args.\
+> `Request`.`on` method remains public for now for backwards compatibility.
 
 ### RequestContext
 RequestContext is created for every received request. It contains all the data related to the request, as well as data you include in `RequestContextData`.
