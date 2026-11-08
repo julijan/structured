@@ -63,7 +63,7 @@ export class Application {
         if (this.initialized) {return;}
 
         // max listeners per event
-        this.eventEmitter.setMaxListeners(10);
+        this.eventEmitter.setMaxListeners(50);
 
         // load handlebars helpers
         try {
